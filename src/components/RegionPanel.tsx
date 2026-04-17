@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
 import { useMapStore } from '../store/mapStore'
 import { HIMALAYA_REGIONS, type HimalayaRegion, type HimalayaPlace } from '../data/himalaya'
 

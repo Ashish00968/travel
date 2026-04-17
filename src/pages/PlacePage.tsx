@@ -6,13 +6,7 @@ import 'lite-youtube-embed'
 import { HIMALAYA_REGIONS, type HimalayaVideo } from '../data/himalaya'
 import { useMapStore } from '../store/mapStore'
 
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'lite-youtube': any;
-    }
-  }
-}
+// Types defined in custom-elements.d.ts
 
 /* ═══════════════════════════════════════════════════════════════════
  * PlacePage — cinematic full-screen detail view for a sub-place
@@ -200,7 +194,7 @@ export default function PlacePage() {
           <div className="flex-1 min-w-0">
             {/* Tag pills */}
             <div className="flex flex-wrap gap-2 mb-10">
-              {region.tags.map((tag) => (
+              {region.tags?.map((tag) => (
                 <span
                   key={tag}
                   className="px-3 py-1 rounded-full

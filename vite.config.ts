@@ -11,11 +11,13 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', 'zustand'],
-          framer: ['framer-motion'],
-          maps: ['@googlemaps/js-api-loader'],
-          yt: ['lite-youtube-embed']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('framer-motion') || id.includes('@framer')) return 'framer';
+            if (id.includes('@googlemaps') || id.includes('google-maps')) return 'maps';
+            if (id.includes('lite-youtube')) return 'yt';
+            return 'vendor';
+          }
         }
       }
     }

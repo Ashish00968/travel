@@ -231,7 +231,7 @@ const SubRegionCard = memo(function SubRegionCard({ sub, regionId, idx, onClick 
 })
 
 /* ── LEVEL 2: Place Card ────────────────────────────────────────── */
-const PlaceCard = memo(function PlaceCard({ place, regionId, subId, idx }: { place: HimalayaPlace, regionId: string, subId: string, idx: number }) {
+const PlaceCard = memo(function PlaceCard({ place, regionId, subId: _subId, idx }: { place: HimalayaPlace, regionId: string, subId: string, idx: number }) {
   const [hovered, setHovered] = useState(false)
   const navigate = useNavigate()
   const bg = CARD_BG[regionId] || DEFAULT_BG

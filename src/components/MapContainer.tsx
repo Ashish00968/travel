@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
+import { setOptions, importLibrary, type LoaderOptions } from '@googlemaps/js-api-loader'
 import { useMapStore } from '../store/mapStore'
 import {
   HIMALAYA_REGIONS,
@@ -163,7 +163,7 @@ export default function MapContainer() {
   useEffect(() => {
     if (!mapRef.current) return
     if (!_configured) {
-      setOptions({ apiKey: import.meta.env.VITE_MAPS_API_KEY, version: 'weekly', libraries: ['marker'] })
+      setOptions({ apiKey: String(import.meta.env.VITE_MAPS_API_KEY), version: 'weekly', libraries: ['marker'] } as LoaderOptions)
       _configured = true
     }
 
@@ -283,7 +283,7 @@ export default function MapContainer() {
           placeGmRef.current = []
         }
         const dimStates = (exceptId: string | null) => {
-          Object.entries(stateElsRef.current).forEach(([id, el]) => {
+          Object.entries(stateElsRef.current).forEach(([_id, el]) => {
             el.style.opacity       = exceptId ? '0' : '1'
             el.style.transform     = exceptId ? 'scale(0.75)' : 'scale(1)'
             el.style.pointerEvents = exceptId ? 'none' : 'auto'
