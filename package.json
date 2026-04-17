@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@googlemaps/js-api-loader": "^2.0.2",
+    "@googlemaps/js-api-loader": "^1.16.8",
     "framer-motion": "^12.38.0",
     "lite-youtube-embed": "^0.3.4",
     "react": "^19.2.4",

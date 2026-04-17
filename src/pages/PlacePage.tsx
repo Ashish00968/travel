@@ -6,7 +6,7 @@ import 'lite-youtube-embed'
 import { HIMALAYA_REGIONS, type HimalayaVideo } from '../data/himalaya'
 import { useMapStore } from '../store/mapStore'
 
-// Types defined in custom-elements.d.ts
+// Types defined in global.d.ts
 
 /* ═══════════════════════════════════════════════════════════════════
  * PlacePage — cinematic full-screen detail view for a sub-place

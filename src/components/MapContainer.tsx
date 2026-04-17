@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { setOptions, importLibrary, type LoaderOptions } from '@googlemaps/js-api-loader'
+import { Loader } from '@googlemaps/js-api-loader'
 import { useMapStore } from '../store/mapStore'
 import {
   HIMALAYA_REGIONS,
@@ -14,8 +14,6 @@ import {
 
 /* ─── Initial map view ──────────────────────────────────────────── */
 const INIT = { lat: 33.5, lng: 77.0, zoom: 6, tilt: 55, heading: 345 }
-
-let _configured = false
 
 /* ─── Watermark / dialog suppression ───────────────────────────── */
 function suppressWarnings(root: HTMLElement) {
@@ -162,15 +160,17 @@ export default function MapContainer() {
   /* ── Init (runs once) ────────────────────────────────────────── */
   useEffect(() => {
     if (!mapRef.current) return
-    if (!_configured) {
-      setOptions({ apiKey: String(import.meta.env.VITE_MAPS_API_KEY), version: 'weekly', libraries: ['marker'] } as LoaderOptions)
-      _configured = true
-    }
+    
+    const loader = new Loader({
+      apiKey: String(import.meta.env.VITE_MAPS_API_KEY),
+      version: 'weekly',
+      libraries: ['marker']
+    })
 
     ;(async () => {
       try {
-        const { Map }                   = await importLibrary('maps')   as any
-        const { AdvancedMarkerElement } = await importLibrary('marker') as any
+        const { Map }                   = await loader.importLibrary('maps')   as any
+        const { AdvancedMarkerElement } = await loader.importLibrary('marker') as any
         AMERef.current = AdvancedMarkerElement
 
         const map = new Map(mapRef.current!, {
