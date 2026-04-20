@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+
 
 const stats = [
   { numTarget: 18, suffix: '+', label: 'PEAKS' },

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { fadeIn, fadeUp } from '../lib/variants'
+
 
 const NAV_LINKS = [
   { label: 'About',          href: '#about' },

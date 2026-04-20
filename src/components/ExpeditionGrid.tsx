@@ -170,8 +170,8 @@ export default function ExpeditionGrid() {
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
                 className="exp-grid"
               >
-                {HIMALAYA_REGIONS.map((region, idx) => (
-                  <StateCard key={region.id} region={region} idx={idx} onClick={() => handleRegionClick(region)} />
+                {HIMALAYA_REGIONS.map((region) => (
+                  <StateCard key={region.id} region={region} onClick={() => handleRegionClick(region)} />
                 ))}
               </motion.div>
             )}
@@ -186,8 +186,8 @@ export default function ExpeditionGrid() {
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
                 className="exp-grid"
               >
-                {activeRegion.subregions.map((sub, idx) => (
-                  <SubRegionCard key={sub.id} sub={sub} regionId={activeRegion.id} idx={idx} onClick={() => handleSubRegionClick(sub)} />
+                {activeRegion.subregions.map((sub) => (
+                  <SubRegionCard key={sub.id} sub={sub} regionId={activeRegion.id} onClick={() => handleSubRegionClick(sub)} />
                 ))}
               </motion.div>
             )}
@@ -202,8 +202,8 @@ export default function ExpeditionGrid() {
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
                 className="exp-grid"
               >
-                {activeSubReg.places.map((place, idx) => (
-                  <PlaceCard key={place.id} place={place} regionId={activeRegId!} idx={idx} />
+                {activeSubReg.places.map((place) => (
+                  <PlaceCard key={place.id} place={place} regionId={activeRegId!} />
                 ))}
               </motion.div>
             )}
@@ -219,7 +219,7 @@ export default function ExpeditionGrid() {
 }
 
 /* ── LEVEL 0: State Card ────────────────────────────────────────── */
-const StateCard = memo(function StateCard({ region, idx, onClick }: { region: HimalayaRegion, idx: number, onClick: () => void }) {
+const StateCard = memo(function StateCard({ region, onClick }: { region: HimalayaRegion, onClick: () => void }) {
   const bg = CARD_BG[region.id] || DEFAULT_BG
   const count = useMemo(() => region.subregions.reduce((acc, s) => acc + s.places.length, 0), [region])
   const cardRef = useRef<HTMLDivElement>(null)
@@ -285,7 +285,7 @@ const StateCard = memo(function StateCard({ region, idx, onClick }: { region: Hi
 })
 
 /* ── LEVEL 1: SubRegion Card ───────────────── */
-const SubRegionCard = memo(function SubRegionCard({ sub, regionId, idx, onClick }: { sub: HimalayaSubRegion, regionId: string, idx: number, onClick: () => void }) {
+const SubRegionCard = memo(function SubRegionCard({ sub, regionId, onClick }: { sub: HimalayaSubRegion, regionId: string, onClick: () => void }) {
   const bg = CARD_BG[regionId] || DEFAULT_BG
 
   return (
@@ -309,7 +309,7 @@ const SubRegionCard = memo(function SubRegionCard({ sub, regionId, idx, onClick 
 })
 
 /* ── LEVEL 2: Place Card ────────────────────────────────────────── */
-const PlaceCard = memo(function PlaceCard({ place, regionId, idx }: { place: HimalayaPlace, regionId: string, idx: number }) {
+const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: HimalayaPlace, regionId: string }) {
   const navigate = useNavigate()
   const bg = CARD_BG[regionId] || DEFAULT_BG
 
