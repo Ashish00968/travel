@@ -1,209 +1,327 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMapStore } from '../store/mapStore'
-import { HIMALAYA_REGIONS, type HimalayaRegion, type HimalayaPlace } from '../data/himalaya'
+import { HIMALAYA_REGIONS, type HimalayaSubRegion, type HimalayaPlace } from '../data/himalaya'
+import { useMediaQuery } from '../hooks/useMediaQuery'
 
-/* ── Region-specific hero gradients ────────────────────────────── */
-const HERO_GRADIENTS: Record<string, string> = {
-  'jammu-kashmir': 'linear-gradient(145deg,#041a18 0%,#073028 50%,#04100f 100%)',
-  'himachal-pradesh': 'linear-gradient(145deg,#1a1504 0%,#2a2008 50%,#0f0c04 100%)',
-  'ladakh':       'linear-gradient(145deg, #080d14, #04080f)',
-  'uttarakhand':  'linear-gradient(145deg, #080f08, #04090f)',
-}
-const DEFAULT_GRADIENT = 'linear-gradient(145deg, #0d1117, #06080c)'
-
-/* ── Sub-place card ─────────────────────────────────────────────── */
-function SubPlaceCard({
-  place,
-  regionId,
-}: {
-  place: HimalayaPlace
-  regionId: string
-}) {
-  const [hovered, setHovered] = useState(false)
-  const openPlace             = useMapStore((s) => s.openPlace)
-
-  return (
-    <div
-      onClick={() => openPlace(regionId, place.id)}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '14px',
-        background: hovered ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.03)',
-        border: hovered
-          ? '1px solid rgba(232,201,122,0.25)'
-          : '1px solid rgba(255,255,255,0.06)',
-        borderRadius: '10px',
-        padding: '12px 16px',
-        cursor: 'pointer',
-        transform: hovered ? 'translateX(4px)' : 'translateX(0)',
-        transition: 'all 0.2s ease',
-      }}
-    >
-      <div style={{ width: '36px', height: '36px', borderRadius: '8px', flexShrink: 0, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-        {place.emoji}
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 500, color: '#edeae2', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {place.name}
-        </div>
-        {place.meta && (
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: '#3d3b38', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {place.meta}
-          </div>
-        )}
-      </div>
-      <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '12px', color: hovered ? '#e8c97a' : '#3d3b38', transition: 'color 0.2s' }}>→</span>
-    </div>
-  )
+/* ── Type colour dots ───────────────────────────────────────────── */
+const TYPE_DOT: Record<string, string> = {
+  road:      '#e8c97a',
+  trek:      '#4ab8a0',
+  spiritual: '#c47ef5',
+  scenic:    '#7eb6e8',
+  adventure: '#e87a4a',
+  lake:      '#4a9de8',
 }
 
-/* ── Main panel ─────────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════════
+ *  RegionPanel — compact two-level popup (top-right of map)
+ *
+ *  Level 1: Region selected → shows sub-region list
+ *  Level 2: Sub-region selected → shows places list
+ *  Close / reset → panel disappears
+ * ═══════════════════════════════════════════════════════════════════ */
 export default function RegionPanel() {
   const panelOpen      = useMapStore((s) => s.panelOpen)
   const activeRegionId = useMapStore((s) => s.activeRegionId)
   const closePanel     = useMapStore((s) => s.closePanel)
+  const isMobile       = useMediaQuery('(max-width: 900px)')
+
+  /* Local drill-down: which sub-region is expanded */
+  const [activeSub, setActiveSub] = useState<string | null>(null)
+
+  /* The user explicitly requested to completely disable this panel on mobile,
+   * relying purely on the map markers for navigation. */
+  if (isMobile) return null
 
   const region = HIMALAYA_REGIONS.find((r) => r.id === activeRegionId) ?? null
 
-  const heroGrad = region
-    ? (HERO_GRADIENTS[region.id] ?? DEFAULT_GRADIENT)
-    : DEFAULT_GRADIENT
+  /* Reset local state when panel closes or region changes */
+  if (!panelOpen || !region) {
+    // clear local drill state next render
+  }
+
+  const currentSub = region?.subregions.find((s) => s.id === activeSub) ?? null
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={() => setActiveSub(null)}>
       {panelOpen && region && (
-        <>
-          <motion.div
-            key="backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closePanel}
-            style={{ position: 'fixed', inset: 0, zIndex: 499, pointerEvents: 'none' }}
-          />
+        <motion.div
+          key={`panel-${region.id}`}
+          initial={{ opacity: 0, y: -10, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -8, scale: 0.97 }}
+          transition={{ duration: 0.22, ease: [0.25, 0.8, 0.25, 1] }}
+          style={{
+            position: 'absolute',
+            top: isMobile ? 'auto' : '66px',
+            bottom: isMobile ? '0px' : 'auto',
+            right: isMobile ? '0px' : '20px',
+            width: isMobile ? '100%' : '290px',
+            zIndex: 500,
+            background: 'rgba(6,8,12,0.96)',
+            backdropFilter: 'blur(20px)',
+            border: isMobile ? 'none' : '1px solid rgba(232,201,122,0.15)',
+            borderTop: isMobile ? '1px solid rgba(232,201,122,0.15)' : '1px solid rgba(232,201,122,0.15)',
+            borderTopLeftRadius: isMobile ? '28px' : '14px',
+            borderTopRightRadius: isMobile ? '28px' : '14px',
+            borderBottomLeftRadius: isMobile ? '0' : '14px',
+            borderBottomRightRadius: isMobile ? '0' : '14px',
+            overflow: 'hidden',
+            boxShadow: isMobile ? '0 -10px 40px rgba(0,0,0,0.8)' : '0 8px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(232,201,122,0.08)',
+            fontFamily: "'DM Sans', sans-serif",
+            paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 20px)' : '0',
+          }}
+        >
+          {/* ── Mobile Grab Handle ──────────────────────────────── */}
+          {isMobile && (
+            <div style={{ width: '100%', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }} />
+            </div>
+          )}
 
-          <motion.div
-            key="panel-desktop"
-            className="region-panel-desktop"
-            initial={{ x: 440 }}
-            animate={{ x: 0 }}
-            exit={{ x: 440 }}
-            transition={{ duration: 0.45, ease: [0.25, 0.8, 0.25, 1] }}
-            style={{
-              position: 'fixed', top: 0, right: 0, height: '100vh', width: '440px', zIndex: 1100,
-              background: 'rgba(8,12,16,0.97)', backdropFilter: 'blur(24px)', borderLeft: '1px solid rgba(232,201,122,0.12)',
-              display: 'flex', flexDirection: 'column', overflow: 'hidden',
-            }}
-          >
-            <PanelContent region={region} heroGrad={heroGrad} closePanel={closePanel} />
-          </motion.div>
+          {/* ── Header ─────────────────────────────────────────── */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px 12px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              {currentSub && (
+                <button
+                  onClick={() => setActiveSub(null)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: '#e8c97a', fontSize: '16px', padding: '0 4px 0 0', lineHeight: 1,
+                  }}
+                >‹</button>
+              )}
+              <div>
+                <div style={{
+                  fontFamily: "'Space Mono', monospace", fontSize: '8px',
+                  letterSpacing: '0.18em', color: 'rgba(232,201,122,0.5)',
+                  textTransform: 'uppercase', marginBottom: '2px',
+                }}>
+                  {currentSub ? region.name : (region.state || 'Himalayas')}
+                </div>
+                <div style={{
+                  fontFamily: "'Playfair Display', serif", fontSize: '16px',
+                  fontWeight: 700, color: '#edeae2', lineHeight: 1.1,
+                }}>
+                  {currentSub ? currentSub.name : region.name}
+                </div>
+              </div>
+            </div>
 
-          <motion.div
-            key="panel-mobile"
-            className="region-panel-mobile"
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ duration: 0.45, ease: [0.25, 0.8, 0.25, 1] }}
-            style={{
-              position: 'fixed', bottom: 0, left: 0, right: 0, height: '70vh', zIndex: 1100,
-              background: 'rgba(8,12,16,0.97)', backdropFilter: 'blur(24px)', borderTop: '1px solid rgba(232,201,122,0.12)',
-              borderRadius: '20px 20px 0 0', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-            }}
-          >
-            <PanelContent region={region} heroGrad={heroGrad} closePanel={closePanel} />
-          </motion.div>
-        </>
+            <button
+              className="close-panel-btn"
+              onClick={() => { closePanel(); setActiveSub(null) }}
+              style={{
+                width: '28px', height: '28px', borderRadius: '50%',
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
+                color: '#7a7570', fontSize: '16px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'rotate(90deg) scale(1.1)';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'rotate(0deg) scale(1)';
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+              }}
+            >×</button>
+          </div>
+
+          {/* ── Body ───────────────────────────────────────────── */}
+          <div style={{ maxHeight: isMobile ? '35vh' : '320px', overflowY: 'auto', scrollbarWidth: 'none' }}>
+            <AnimatePresence mode="wait">
+
+              {/* Level 1 — Sub-regions */}
+              {!currentSub && (
+                <motion.div
+                  key="subregions"
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ opacity: 0, x: -12 }}
+                  variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+                  style={{ padding: isMobile ? '0' : '10px 12px' }}
+                >
+                  {region.subregions.map((sub, i) => (
+                    <SubRegionRow
+                      key={sub.id}
+                      sub={sub}
+                      isLast={i === region.subregions.length - 1}
+                      onClick={() => setActiveSub(sub.id)}
+                    />
+                  ))}
+                </motion.div>
+              )}
+
+              {/* Level 2 — Places inside sub-region */}
+              {currentSub && (
+                <motion.div
+                  key={`places-${currentSub.id}`}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ opacity: 0, x: 12 }}
+                  variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+                  style={{ padding: isMobile ? '0' : '10px 12px' }}
+                >
+                  {currentSub.places.map((place, i) => (
+                    <PlaceRow
+                      key={place.id}
+                      place={place}
+                      regionId={region.id}
+                      isLast={i === currentSub.places.length - 1}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* ── Footer: place count ────────────────────────────── */}
+          <div style={{
+            padding: '8px 16px',
+            borderTop: '1px solid rgba(255,255,255,0.04)',
+            fontFamily: "'Space Mono', monospace",
+            fontSize: '8px', letterSpacing: '0.14em',
+            color: 'rgba(255,255,255,0.15)',
+            textTransform: 'uppercase',
+          }}>
+            {currentSub
+              ? `${currentSub.places.length} place${currentSub.places.length !== 1 ? 's' : ''}`
+              : `${region.subregions.reduce((n, s) => n + s.places.length, 0)} places · ${region.subregions.length} areas`
+            }
+          </div>
+        </motion.div>
       )}
-
-      <style>{`
-        .region-panel-desktop { display: flex !important; }
-        .region-panel-mobile  { display: none  !important; }
-        @media (max-width: 767px) {
-          .region-panel-desktop { display: none  !important; }
-          .region-panel-mobile  { display: flex !important; }
-        }
-      `}</style>
     </AnimatePresence>
   )
 }
 
-function PanelContent({
-  region,
-  heroGrad,
-  closePanel,
-}: {
-  region: HimalayaRegion
-  heroGrad: string
-  closePanel: () => void
-}) {
-  const [closeHovered, setCloseHovered] = useState(false)
+/* ── Sub-region row (level 1) ───────────────────────────────────── */
+function SubRegionRow({ sub, onClick, isLast }: { sub: HimalayaSubRegion; onClick: () => void; isLast?: boolean }) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <motion.div
+      variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '12px 20px', cursor: 'pointer',
+        background: hovered ? 'rgba(255,255,255,0.07)' : 'transparent',
+        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.04)',
+        position: 'relative',
+        transition: 'background 0.2s',
+      }}
+    >
+      {/* Golden left accent line */}
+      <div style={{
+        position: 'absolute', top: 0, bottom: 0, left: 0, width: '2px',
+        background: '#e8c97a',
+        transform: hovered ? 'scaleY(1)' : 'scaleY(0)',
+        transformOrigin: 'center',
+        transition: 'transform 0.2s ease',
+      }} />
+
+      <div>
+        <div style={{
+          fontSize: '14px', fontWeight: 500, color: '#edeae2', marginBottom: '2px',
+        }}>{sub.name}</div>
+        <div style={{
+          fontFamily: "'Space Mono', monospace", fontSize: '9px',
+          color: 'rgba(255,255,255,0.25)', letterSpacing: '0.1em',
+        }}>
+          {sub.places.length} place{sub.places.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+      <span style={{ 
+        color: hovered ? '#e8c97a' : 'rgba(255,255,255,0.15)', 
+        fontSize: '16px', 
+        transition: 'all 0.2s ease',
+        transform: hovered ? 'translateX(6px)' : 'translateX(0)',
+        paddingLeft: '10px' 
+      }}>›</span>
+    </motion.div>
+  )
+}
+
+/* ── Place row (level 2) ────────────────────────────────────────── */
+function PlaceRow({ place, regionId, isLast }: { place: HimalayaPlace; regionId: string; isLast?: boolean }) {
+  const [hovered, setHovered]  = useState(false)
+  const openPlace              = useMapStore((s) => s.openPlace)
 
   return (
-    <>
-      <button
-        onClick={closePanel}
-        onMouseEnter={() => setCloseHovered(true)}
-        onMouseLeave={() => setCloseHovered(false)}
-        style={{
-          position: 'absolute', top: '20px', right: '20px', zIndex: 10, width: '36px', height: '36px', borderRadius: '50%',
-          background: closeHovered ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.06)',
-          border: '1px solid rgba(255,255,255,0.1)', color: closeHovered ? '#edeae2' : '#7a7570',
-          fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.2s',
-        }}
-      >
-        ×
-      </button>
+    <motion.div
+      variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
+      onClick={() => openPlace(regionId, place.id)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: '12px',
+        padding: '12px 20px', cursor: 'pointer',
+        background: hovered ? 'rgba(255,255,255,0.07)' : 'transparent',
+        borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.04)',
+        position: 'relative',
+        transition: 'background 0.2s',
+      }}
+    >
+      {/* Golden left accent line */}
+      <div style={{
+        position: 'absolute', top: 0, bottom: 0, left: 0, width: '2px',
+        background: '#e8c97a',
+        transform: hovered ? 'scaleY(1)' : 'scaleY(0)',
+        transformOrigin: 'center',
+        transition: 'transform 0.2s ease',
+      }} />
 
-      <div style={{ height: '200px', flexShrink: 0, background: heroGrad, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
-        <span style={{ fontSize: '72px', filter: 'drop-shadow(0 4px 20px rgba(0,0,0,0.6))' }}>{region.emoji}</span>
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '80px', background: 'linear-gradient(to top, rgba(8,12,16,0.97), transparent)' }} />
+      {/* Emoji icon */}
+      <div style={{
+        width: '30px', height: '30px', borderRadius: '6px', flexShrink: 0,
+        background: 'rgba(255,255,255,0.04)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px',
+        transform: hovered ? 'scale(1.08)' : 'scale(1)',
+        transition: 'transform 0.2s ease',
+      }}>
+        {place.emoji}
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: '24px', scrollbarWidth: 'thin', scrollbarColor: 'rgba(232,201,122,0.1) transparent' }}>
-        <div style={{ fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', color: '#e8c97a', textTransform: 'uppercase', marginBottom: '6px' }}>
-          {region.state?.toUpperCase() || 'HIMALAYAS'}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: '12px', fontWeight: 500, color: '#edeae2',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {place.name}
         </div>
-        <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '32px', color: '#edeae2', lineHeight: 1.1, marginBottom: '14px', fontWeight: 700 }}>
-          {region.name}
-        </h2>
-
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', padding: '5px 12px', borderRadius: '4px', marginBottom: '24px' }}>
-          <span style={{ fontFamily: "'Space Mono', monospace", fontSize: '11px', color: '#7a7570' }}>
-            ▲ {region.elevation || region.maxAlt}
-          </span>
-        </div>
-
-        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '14px', color: '#7a7570', lineHeight: 1.7, marginBottom: '32px' }}>
-          {region.cardDesc}
-        </p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
-          {region.subregions.map((sub) => (
-            <div key={sub.id}>
-              <div style={{ 
-                fontFamily: "'Space Mono', monospace", fontSize: '10px', letterSpacing: '0.15em', 
-                color: '#3d3b38', textTransform: 'uppercase', marginBottom: '12px',
-                display: 'flex', alignItems: 'center', gap: '10px'
-              }}>
-                <span>{sub.name}</span>
-                <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.05)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {sub.places.map((place) => (
-                  <SubPlaceCard key={place.id} place={place} regionId={region.id} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ height: '40px' }} />
+        {place.elevation && (
+          <div style={{
+            fontFamily: "'Space Mono', monospace", fontSize: '9px',
+            color: 'rgba(255,255,255,0.2)', letterSpacing: '0.08em',
+          }}>
+            ▲ {place.elevation}
+          </div>
+        )}
       </div>
-    </>
+
+      {/* Type dot */}
+      <div style={{
+        width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0,
+        background: TYPE_DOT[place.type] ?? '#7a7570',
+        boxShadow: `0 0 6px ${TYPE_DOT[place.type] ?? '#7a7570'}`,
+      }} />
+
+      <span style={{ 
+        color: hovered ? '#e8c97a' : 'rgba(255,255,255,0.15)', 
+        fontSize: '16px', 
+        transition: 'all 0.2s ease',
+        transform: hovered ? 'translateX(6px)' : 'translateX(0)',
+        paddingLeft: '10px'
+      }}>›</span>
+    </motion.div>
   )
 }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { fadeIn, fadeUp } from '../lib/variants'
 
 const NAV_LINKS = [
-  { label: 'About',    href: '#about' },
-  { label: 'Map',      href: '#map-section' },
-  { label: 'Regions',  href: '#regions' },
+  { label: 'About',          href: '#about' },
+  { label: 'Map',            href: '#map-section' },
+  { label: "Where I've Been", href: '#regions' },
 ]
 
 export default function Navbar() {
@@ -45,6 +47,31 @@ export default function Navbar() {
 
   return (
     <>
+      <style>{`
+        .nav-link { 
+          position: relative; 
+          font-family: 'DM Sans', sans-serif;
+          font-size: 13px;
+          text-decoration: none;
+          padding-bottom: 2px;
+          transition: color 0.3s ease;
+        }
+        .nav-link::after {
+          content: '';
+          position: absolute;
+          bottom: -2px; left: 0; right: 0; height: 1px;
+          background: #e8c97a;
+          transform: scaleX(0);
+          transform-origin: right;
+          transition: transform 0.3s ease;
+        }
+        .nav-link:hover::after, .nav-link[data-active="true"]::after {
+          transform: scaleX(1);
+          transform-origin: left;
+        }
+        @media(max-width:640px){.navbar-links{display:none!important;}}
+      `}</style>
+      
       {/* Scroll progress bar */}
       <div
         style={{
@@ -55,13 +82,16 @@ export default function Navbar() {
           zIndex: 9999,
           background: 'linear-gradient(to right, #e8c97a, #c9a84c)',
           width: `${scrollPercent}%`,
-          transition: 'width 0.1s linear',
+          transition: 'none',
           borderRadius: 0,
         }}
       />
 
       {/* Navbar */}
-      <header
+      <motion.header
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
         style={{
           position: 'fixed',
           top: 0,
@@ -76,12 +106,15 @@ export default function Navbar() {
           background: scrolled ? 'rgba(6,8,12,0.96)' : 'transparent',
           backdropFilter: scrolled ? 'blur(20px)' : 'none',
           borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : '1px solid transparent',
-          transition: 'all 0.3s ease',
+          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-bottom 0.4s ease',
           boxSizing: 'border-box',
         }}
       >
         {/* Left — Logo */}
-        <a
+        <motion.a
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6 }}
           href="/"
           style={{
             fontFamily: "'Space Mono', monospace",
@@ -92,37 +125,36 @@ export default function Navbar() {
           }}
         >
           ⛰ Peaks &amp; Paths
-        </a>
+        </motion.a>
 
         {/* Center — Nav links (hidden on mobile) */}
         <nav className="navbar-links" style={{ display: 'flex', gap: '32px' }}>
-          {NAV_LINKS.map(({ label, href }) => {
+          {NAV_LINKS.map(({ label, href }, i) => {
             const id       = href.replace('#', '')
             const isActive = activeSection === id
             return (
-              <a
+              <motion.a
                 key={label}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 + i * 0.05, duration: 0.6 }}
                 href={href}
-                style={{
-                  fontFamily: "'DM Sans', sans-serif",
-                  fontSize: '13px',
-                  color: isActive ? '#e8c97a' : '#7a7570',
-                  textDecoration: 'none',
-                  borderBottom: isActive ? '1px solid #e8c97a' : '1px solid transparent',
-                  paddingBottom: '2px',
-                  transition: 'color 0.2s, border-color 0.2s',
-                }}
+                className="nav-link"
+                data-active={isActive ? "true" : "false"}
+                style={{ color: isActive ? '#e8c97a' : '#7a7570' }}
               >
                 {label}
-              </a>
+              </motion.a>
             )
           })}
         </nav>
-        <style>{`@media(max-width:640px){.navbar-links{display:none!important;}}`}</style>
 
         {/* Right — YouTube CTA */}
-        <a
-          href="https://youtube.com"
+        <motion.a
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+          href="https://youtube.com/@ashish_0968"
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -139,8 +171,8 @@ export default function Navbar() {
           }}
         >
           ▶ YouTube
-        </a>
-      </header>
+        </motion.a>
+      </motion.header>
     </>
   )
 }

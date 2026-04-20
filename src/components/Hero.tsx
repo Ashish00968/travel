@@ -1,15 +1,57 @@
 import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 const stats = [
-  { num: '18+', label: 'PEAKS' },
-  { num: '6',   label: 'REGIONS' },
-  { num: '4900m', label: 'MAX ALT' },
+  { numTarget: 18, suffix: '+', label: 'PEAKS' },
+  { numTarget: 6, suffix: '', label: 'REGIONS' },
+  { numTarget: 4900, suffix: 'm', label: 'MAX ALT' },
 ]
+
+function useCounter(target: number, duration: number, delay: number) {
+  const [count, setCount] = useState(0)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      let start = 0
+      const step = target / (duration / 16)
+      const interval = setInterval(() => {
+        start += step
+        if (start >= target) { setCount(target); clearInterval(interval) }
+        else setCount(Math.floor(start))
+      }, 16)
+      return () => clearInterval(interval)
+    }, delay)
+    return () => clearTimeout(timer)
+  }, [target, duration, delay])
+  return count
+}
+
+const AnimatedWord = ({ word, delay }: { word: string, delay: number }) => (
+  <span style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.25em', verticalAlign: 'top' }}>
+    <motion.span
+      style={{ display: 'inline-block' }}
+      initial={{ y: '110%' }}
+      animate={{ y: '0%' }}
+      transition={{ duration: 0.8, ease: [0.25, 0.8, 0.25, 1], delay }}
+    >
+      {word}
+    </motion.span>
+  </span>
+)
 
 export default function Hero() {
   const scrollTo = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
   }
+
+  const s1 = useCounter(stats[0].numTarget, 1500, 1200)
+  const s2 = useCounter(stats[1].numTarget, 1500, 1200)
+  const s3 = useCounter(stats[2].numTarget, 1500, 1200)
+  const renderStats = [s1, s2, s3]
+
+  const line1 = "I climb.".split(' ')
+  const line2 = "I film.".split(' ')
+  const line3 = "I vanish into mountains.".split(' ')
 
   return (
     <section
@@ -25,7 +67,37 @@ export default function Hero() {
         background: '#06080c',
       }}
     >
-      {/* Grid background with mask — separate layer so absolute children aren't clipped */}
+      {/* ── Background Layer: Mountain Wallpaper ───────────────── */}
+      <motion.img 
+        src="/images/hero-wallpaper.jpg" 
+        alt="Himalayan Mountains"
+        initial={{ scale: 1.08 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 2.5, ease: [0.25, 0.8, 0.25, 1] }}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          opacity: 0.7,
+          filter: 'brightness(1.0) contrast(1.1)',
+          pointerEvents: 'none',
+        }}
+      />
+      
+      {/* ── Background Layer: Dark Gradient Overlay ────────────── */}
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(6,8,12,0.3) 0%, rgba(6,8,12,0.7) 60%, #06080c 100%)',
+          zIndex: 1,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* ── Background Layer: Grid Pattern ─────────────────────── */}
       <div
         style={{
           position: 'absolute',
@@ -38,11 +110,15 @@ export default function Hero() {
             'radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)',
           maskImage:
             'radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)',
+          zIndex: 2,
         }}
       />
+      
       {/* Content */}
       <div
         style={{
+          position: 'relative',
+          zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -62,7 +138,12 @@ export default function Hero() {
             marginBottom: '48px',
           }}
         >
-          <div style={{ width: '48px', height: '1px', background: '#e8c97a', opacity: 0.4 }} />
+          <motion.div 
+            initial={{ scaleX: 0, originX: 0 }} 
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.25, 0.8, 0.25, 1] }}
+            style={{ width: '48px', height: '1px', background: '#e8c97a', opacity: 0.4 }} 
+          />
           <span
             style={{
               fontFamily: "'Space Mono', monospace",
@@ -74,18 +155,18 @@ export default function Hero() {
           >
             Himalayan Travel Journal · India
           </span>
-          <div style={{ width: '48px', height: '1px', background: '#e8c97a', opacity: 0.4 }} />
+          <motion.div 
+            initial={{ scaleX: 0, originX: 0 }} 
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1, delay: 0.2, ease: [0.25, 0.8, 0.25, 1] }}
+            style={{ width: '48px', height: '1px', background: '#e8c97a', opacity: 0.4 }} 
+          />
         </motion.div>
 
         {/* 2. Headline — three staggered lines */}
         <div style={{ width: '100%', marginBottom: '32px' }}>
           {/* Line 1: "I climb." */}
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.25, 0.8, 0.25, 1], delay: 0.4 }}
-            style={{ textAlign: 'right', marginRight: '10%' }}
-          >
+          <div style={{ textAlign: 'right', marginRight: '10%' }}>
             <span
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -96,17 +177,12 @@ export default function Hero() {
                 display: 'block',
               }}
             >
-              I climb.
+              {line1.map((w, i) => <AnimatedWord key={i} word={w} delay={0.3 + i * 0.07} />)}
             </span>
-          </motion.div>
+          </div>
 
           {/* Line 2: "I film." */}
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.25, 0.8, 0.25, 1], delay: 0.55 }}
-            style={{ textAlign: 'center' }}
-          >
+          <div style={{ textAlign: 'center' }}>
             <span
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -118,17 +194,12 @@ export default function Hero() {
                 display: 'block',
               }}
             >
-              I film.
+              {line2.map((w, i) => <AnimatedWord key={i} word={w} delay={0.45 + i * 0.07} />)}
             </span>
-          </motion.div>
+          </div>
 
           {/* Line 3: "I vanish into mountains." */}
-          <motion.div
-            initial={{ opacity: 0, y: 32 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, ease: [0.25, 0.8, 0.25, 1], delay: 0.7 }}
-            style={{ textAlign: 'left', marginLeft: '8%' }}
-          >
+          <div style={{ textAlign: 'left', marginLeft: '8%' }}>
             <span
               style={{
                 fontFamily: "'Playfair Display', serif",
@@ -139,9 +210,9 @@ export default function Hero() {
                 display: 'block',
               }}
             >
-              I vanish into mountains.
+              {line3.map((w, i) => <AnimatedWord key={i} word={w} delay={0.6 + i * 0.07} />)}
             </span>
-          </motion.div>
+          </div>
         </div>
 
         {/* 3. Gold rule */}
@@ -184,6 +255,7 @@ export default function Hero() {
           style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}
         >
           <button
+            className="magnetic-btn"
             onClick={() => scrollTo('map-section')}
             style={{
               background: '#e8c97a',
@@ -205,6 +277,7 @@ export default function Hero() {
           </button>
 
           <button
+            className="magnetic-btn"
             onClick={() => scrollTo('about')}
             style={{
               background: 'transparent',
@@ -244,7 +317,7 @@ export default function Hero() {
           textAlign: 'right',
         }}
       >
-        {stats.map((s) => (
+        {stats.map((s, i) => (
           <div key={s.label} style={{ marginBottom: '16px' }}>
             <div
               style={{
@@ -254,7 +327,7 @@ export default function Hero() {
                 lineHeight: 1,
               }}
             >
-              {s.num}
+              {renderStats[i]}{s.suffix}
             </div>
             <div
               style={{
@@ -286,9 +359,14 @@ export default function Hero() {
         }}
       >
         <style>{`
-          @keyframes bounceY {
-            0%, 100% { transform: translateY(0); }
-            50%       { transform: translateY(8px); }
+          @keyframes drawLine {
+            0% { transform: scaleY(0); transform-origin: top; }
+            40%, 100% { transform: scaleY(1); transform-origin: top; }
+          }
+          @keyframes fadeChevron {
+            0%, 30% { opacity: 0; transform: translateY(-4px); }
+            45% { opacity: 1; transform: translateY(0); }
+            80%, 100% { opacity: 0; transform: translateY(0); }
           }
         `}</style>
         <span
@@ -298,19 +376,30 @@ export default function Hero() {
             color: '#3d3b38',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
+            marginBottom: '4px',
           }}
         >
           Scroll
         </span>
-        <div
-          style={{
-            width: '6px',
-            height: '6px',
-            borderRadius: '50%',
-            background: '#e8c97a',
-            animation: 'bounceY 2s ease-in-out infinite',
-          }}
-        />
+        <div style={{ position: 'relative', width: '12px', height: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <div
+            style={{
+              width: '1px',
+              height: '16px',
+              background: '#e8c97a',
+              animation: 'drawLine 2.5s ease-out infinite',
+            }}
+          />
+          <svg 
+            width="10" height="6" viewBox="0 0 10 6" fill="none" 
+            style={{ 
+              marginTop: '2px',
+              animation: 'fadeChevron 2.5s ease-out infinite' 
+            }}
+          >
+            <path d="M1 1L5 5L9 1" stroke="#e8c97a" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
       </div>
     </section>
   )

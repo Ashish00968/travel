@@ -13,9 +13,9 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('framer-motion') || id.includes('@framer')) return 'framer';
-            if (id.includes('@googlemaps') || id.includes('google-maps')) return 'maps';
-            if (id.includes('lite-youtube')) return 'yt';
+            if (id.includes('framer-motion')) return 'framer';
+            if (id.includes('@googlemaps')) return 'maps';
+            if (id.includes('lite-youtube-embed')) return 'yt';
             return 'vendor';
           }
         }

@@ -146,3 +146,799 @@ body > .gm-err-container { display: none !important; }
     overflow: hidden;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+ *  TREK PAGE — Cinematic scroll-based experience
+ * ═══════════════════════════════════════════════════════════════════ */
+
+.trek-page {
+  background: #06080c;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── SECTION A: Arrival Hero ──────────────────────────────────────── */
+.trek-hero {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.trek-hero__media {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+  transform-origin: center center;
+}
+
+.trek-hero__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.trek-hero__fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0d1117 0%, #06080c 100%);
+}
+
+.trek-hero__emoji {
+  font-size: clamp(120px, 22vw, 260px);
+  opacity: 0.2;
+  user-select: none;
+}
+
+.trek-hero__gradient--top {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 40%, transparent 60%, rgba(6,8,12,0.7) 100%);
+  pointer-events: none;
+}
+
+.trek-hero__gradient--bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 120px;
+  background: linear-gradient(to top, #06080c 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.trek-hero__info {
+  position: absolute;
+  bottom: 60px;
+  left: 32px;
+  z-index: 10;
+  max-width: 600px;
+}
+
+@media (min-width: 768px) {
+  .trek-hero__info { left: 56px; bottom: 80px; }
+}
+
+.trek-hero__region {
+  display: inline-block;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #e8c97a;
+  margin-bottom: 12px;
+}
+
+.trek-hero__title {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 7vw, 5rem);
+  font-weight: 700;
+  color: #edeae2;
+  line-height: 1.05;
+  margin-bottom: 16px;
+}
+
+.trek-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: rgba(237,234,226,0.6);
+}
+
+.trek-hero__sep {
+  width: 1px;
+  height: 14px;
+  background: rgba(255,255,255,0.2);
+}
+
+.trek-hero__scroll-hint {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(232,201,122,0.5);
+  animation: trekBounce 2.5s ease-in-out infinite;
+}
+
+@keyframes trekBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* ── SECTION B: Trek Timeline ─────────────────────────────────────── */
+.trek-timeline {
+  position: relative;
+  display: flex;
+  gap: 0;
+}
+
+/* ── Left sticky sidebar ──────────────────────────────────────────── */
+.trek-sidebar {
+  position: sticky;
+  top: 10vh;
+  width: 40%;
+  height: 80vh;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+@media (max-width: 899px) {
+  .trek-sidebar { display: none; }
+}
+
+.trek-sidebar__inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  position: relative;
+}
+
+/* Mountain SVG */
+.trek-mountain-svg {
+  width: 48px;
+  height: 32px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+/* Trail line */
+.trek-trail {
+  position: relative;
+  width: 2px;
+  flex: 1;
+  max-height: 320px;
+  margin: 0 auto 20px;
+}
+
+.trek-trail__line {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(232,201,122,0.5) 0%, rgba(232,201,122,0.15) 100%);
+  border-radius: 1px;
+}
+
+.trek-trail__dot {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #e8c97a;
+  box-shadow: 0 0 20px rgba(232,201,122,0.5), 0 0 40px rgba(232,201,122,0.2);
+  transition: top 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  z-index: 2;
+  animation: trekPulse 2s ease-in-out infinite;
+}
+
+@keyframes trekPulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(232,201,122,0.5), 0 0 40px rgba(232,201,122,0.2); }
+  50% { box-shadow: 0 0 30px rgba(232,201,122,0.7), 0 0 60px rgba(232,201,122,0.3); }
+}
+
+.trek-trail__marker {
+  position: absolute;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(232,201,122,0.2);
+  border: 1px solid rgba(232,201,122,0.3);
+  transition: all 0.3s ease;
+}
+
+.trek-trail__marker.active {
+  background: #e8c97a;
+  border-color: #e8c97a;
+  width: 8px;
+  height: 8px;
+}
+
+.trek-trail__marker.summit {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+  border: 2px solid #e8c97a;
+}
+
+.trek-trail__marker.summit.active {
+  background: #e8c97a;
+}
+
+/* Altitude display */
+.trek-altitude {
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.trek-altitude__number {
+  font-family: 'Space Mono', monospace;
+  font-size: 48px;
+  font-weight: 700;
+  color: #e8c97a;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.trek-altitude__unit {
+  font-family: 'Space Mono', monospace;
+  font-size: 18px;
+  color: rgba(232,201,122,0.5);
+  margin-left: 4px;
+}
+
+.trek-sidebar__stop-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-style: italic;
+  color: rgba(237,234,226,0.7);
+  text-align: center;
+  max-width: 200px;
+}
+
+/* ── Right scrolling content ──────────────────────────────────────── */
+.trek-content {
+  width: 60%;
+  padding: 0 40px 0 24px;
+}
+
+@media (max-width: 899px) {
+  .trek-content { width: 100%; padding: 0 20px; }
+}
+
+.trek-content__stop {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 40px 0;
+}
+
+/* ── Moment cards ─────────────────────────────────────────────────── */
+.trek-moment {
+  width: 100%;
+}
+
+/* Text moment */
+.trek-moment--text {
+  padding: 40px 0;
+}
+
+.trek-moment__label {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #e8c97a;
+  margin-bottom: 16px;
+}
+
+.trek-moment__text {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-style: italic;
+  color: rgba(237,234,226,0.9);
+  line-height: 1.5;
+  max-width: 520px;
+}
+
+/* Photo moment */
+.trek-moment--photo {
+  padding: 20px 0;
+}
+
+.trek-moment__image {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.trek-moment__placeholder {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #0d1117 0%, #1a1e28 50%, #0d1117 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.trek-moment__placeholder-emoji {
+  font-size: 48px;
+  opacity: 0.4;
+}
+
+.trek-moment__placeholder-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: rgba(232,201,122,0.4);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.trek-moment__caption {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: rgba(232,201,122,0.7);
+  margin-top: 12px;
+  line-height: 1.6;
+  max-width: 480px;
+}
+
+/* Video moment */
+.trek-moment--video {
+  padding: 20px 0;
+}
+
+.trek-moment__video-wrap {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.trek-moment__video-wrap lite-youtube {
+  border-radius: 12px;
+}
+
+/* Summit moment — FULL BLEED */
+.trek-moment--summit {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(-40vw - 24px);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+@media (max-width: 899px) {
+  .trek-moment--summit {
+    margin-left: -20px;
+  }
+}
+
+.trek-summit__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trek-summit__bg--gradient {
+  background: linear-gradient(135deg, #0a0e14 0%, #141820 40%, #0a0e14 100%);
+}
+
+.trek-summit__overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
+  z-index: 1;
+}
+
+.trek-summit__content {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.trek-summit__altitude {
+  font-family: 'Space Mono', monospace;
+  font-size: clamp(56px, 12vw, 96px);
+  font-weight: 700;
+  color: #e8c97a;
+  line-height: 1;
+  margin-bottom: 16px;
+  text-shadow: 0 0 60px rgba(232,201,122,0.3);
+}
+
+.trek-summit__name {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(40px, 9vw, 80px);
+  font-style: italic;
+  font-weight: 700;
+  color: #edeae2;
+  line-height: 1.1;
+  margin-bottom: 24px;
+}
+
+.trek-summit__moment {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  color: rgba(232,201,122,0.7);
+  max-width: 480px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+/* Stars animation */
+.summit-stars {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.summit-star {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #e8c97a;
+  opacity: 0;
+  animation: starBurst 3s ease-out var(--delay) infinite;
+}
+
+@keyframes starBurst {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0);
+  }
+  20% {
+    opacity: 0.8;
+    transform: rotate(var(--angle)) translateX(20px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateX(var(--dist)) scale(0.3);
+  }
+}
+
+/* ── Altitude Progress Indicator (fixed right) ────────────────────── */
+.trek-progress-indicator {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 899px) {
+  .trek-progress-indicator { display: none; }
+}
+
+.trek-progress-indicator__label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: rgba(232,201,122,0.4);
+}
+
+.trek-progress-indicator__track {
+  position: relative;
+  width: 2px;
+  height: 200px;
+  background: rgba(232,201,122,0.1);
+  border-radius: 1px;
+}
+
+.trek-progress-indicator__fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(to top, #e8c97a, rgba(232,201,122,0.4));
+  border-radius: 1px;
+  transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.trek-progress-indicator__current {
+  position: absolute;
+  left: 12px;
+  transform: translateY(50%);
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: #e8c97a;
+  white-space: nowrap;
+  transition: bottom 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Mobile top bar ───────────────────────────────────────────────── */
+.trek-mobile-bar {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  background: rgba(6,8,12,0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(232,201,122,0.1);
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 899px) {
+  .trek-mobile-bar { display: flex; }
+}
+
+.trek-mobile-bar__progress {
+  flex: 1;
+  height: 2px;
+  background: rgba(232,201,122,0.15);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.trek-mobile-bar__fill {
+  height: 100%;
+  background: #e8c97a;
+  border-radius: 1px;
+  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.trek-mobile-bar__altitude {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: #e8c97a;
+  white-space: nowrap;
+}
+
+.trek-mobile-bar__title {
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(237,234,226,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+
+/* ── SECTION C: Reflection Outro ──────────────────────────────────── */
+.trek-outro {
+  background: #06080c;
+  padding: 120px 24px 80px;
+}
+
+.trek-outro__inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.trek-outro__headline {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(24px, 4vw, 32px);
+  font-style: italic;
+  color: rgba(237,234,226,0.9);
+  line-height: 1.4;
+  margin-bottom: 48px;
+}
+
+.trek-outro__experience {
+  margin-bottom: 48px;
+}
+
+.trek-outro__paragraph {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  color: rgba(237,234,226,0.8);
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+
+.trek-outro__section-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: #e8c97a;
+  margin-bottom: 20px;
+}
+
+/* Videos in outro */
+.trek-outro__videos { margin-bottom: 48px; }
+
+.trek-outro__video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.trek-outro__video-card {
+  text-align: left;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(13,17,23,0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.trek-outro__video-card:hover {
+  border-color: rgba(232,201,122,0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+
+.trek-outro__video-thumb {
+  position: relative;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: #0d1117;
+}
+
+.trek-outro__video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.trek-outro__video-card:hover .trek-outro__video-thumb img {
+  transform: scale(1.05);
+}
+
+.trek-outro__video-thumb-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1117;
+}
+
+.trek-outro__video-thumb-fallback span {
+  font-size: 32px;
+  opacity: 0.4;
+}
+
+.trek-outro__video-play {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.trek-outro__video-card:hover .trek-outro__video-play {
+  opacity: 1;
+}
+
+.trek-outro__video-play svg {
+  width: 40px;
+  height: 40px;
+  padding: 10px;
+  border-radius: 50%;
+  background: rgba(232,201,122,0.9);
+}
+
+.trek-outro__video-info {
+  padding: 12px;
+}
+
+.trek-outro__video-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #edeae2;
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.trek-outro__video-views {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  color: rgba(122,117,112,0.8);
+}
+
+/* Stats strip */
+.trek-outro__stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(13,17,23,0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: 32px;
+}
+
+.trek-outro__stat {
+  flex: 1;
+  min-width: 100px;
+}
+
+.trek-outro__stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: rgba(122,117,112,0.8);
+  margin-bottom: 4px;
+}
+
+.trek-outro__stat-value {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #edeae2;
+}
+
+/* Tips */
+.trek-outro__tips {
+  padding: 24px;
+  border-radius: 12px;
+  background: rgba(13,17,23,0.6);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-left: 2px solid #4ab8a0;
+}
+
+.trek-outro__tips ul {
+  list-style: none;
+  padding: 0;
+}
+
+.trek-outro__tips li {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: rgba(237,234,226,0.8);
+  line-height: 1.6;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.trek-outro__tip-arrow {
+  color: #4ab8a0;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
