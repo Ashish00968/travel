@@ -1,4 +1,4 @@
-import { useMemo, memo, useState, useRef } from 'react'
+import { useMemo, memo, useRef } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import { HIMALAYA_REGIONS, type HimalayaRegion, type HimalayaSubRegion, type HimalayaPlace, TYPE_COLOR, TYPE_LABEL } from '../data/himalaya'
 import { useNavigate } from 'react-router-dom'

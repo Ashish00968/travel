@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { motion, useSpring, useTransform } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { motion, useSpring } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
 
 const STATS = [

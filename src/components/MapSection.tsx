@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect, useRef } from 'react'
+import { lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { useReveal } from '../hooks/useReveal'
