@@ -36,6 +36,11 @@ export default function EarthTransition({ videoUrl, placeName, onComplete }: Ear
     const n = setTimeout(() => setNameVisible(true), 500)
     /* fail-safe: if video hangs or fails to autoplay on mobile, exit after 8s */
     const failsafe = setTimeout(handleEnded, 8000)
+
+    if (videoRef.current) {
+      videoRef.current.play().catch(e => console.warn('EarthTransition autoplay blocked:', e))
+    }
+
     return () => { clearTimeout(t); clearTimeout(n); clearTimeout(failsafe) }
   }, [])
 
@@ -188,6 +193,14 @@ export default function EarthTransition({ videoUrl, placeName, onComplete }: Ear
           0%   { opacity: 0; }
           35%  { opacity: 1; }
           100% { opacity: 1; }
+        }
+        /* Hide Safari native play button overlay if it ever shows */
+        video::-webkit-media-controls {
+          display: none !important;
+        }
+        video::-webkit-media-controls-start-playback-button {
+          display: none !important;
+          -webkit-appearance: none;
         }
       `}</style>
     </div>

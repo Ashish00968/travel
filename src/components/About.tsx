@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
-import { motion, useSpring } from 'framer-motion'
+import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
+import { AnimatedWord } from './AnimatedWord'
 
 const STATS = [
   { value: 18,   display: '18+',  label: 'Peaks explored' },
@@ -14,58 +15,19 @@ const SOCIALS = [
   { icon: '🐦', label: 'Twitter',   href: 'https://twitter.com' },
 ]
 
-/* ── Animated counter hook ──────────────────────────────────────── */
-function useCountUp(target: number, duration = 1500) {
-  const [count, setCount]     = useState(0)
-  const [started, setStarted] = useState(false)
 
-  useEffect(() => {
-    if (!started) return
-    const start = performance.now()
-    const tick  = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1)
-      const eased    = 1 - Math.pow(1 - progress, 3)
-      setCount(Math.round(eased * target))
-      if (progress < 1) requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  }, [started, target, duration])
 
-  return { count, setStarted }
-}
 
-const AnimatedWord = ({ word, delay, isInView }: { word: string, delay: number, isInView: boolean }) => (
-  <span style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.25em', verticalAlign: 'top' }}>
-    <motion.span
-      style={{ display: 'inline-block' }}
-      initial={{ y: '110%' }}
-      animate={isInView ? { y: '0%' } : { y: '110%' }}
-      transition={{ duration: 0.8, ease: [0.25, 0.8, 0.25, 1], delay }}
-    >
-      {word}
-    </motion.span>
-  </span>
-)
-
-function StatCard({ stat, index, isInView }: { stat: typeof STATS[number], index: number, isInView: boolean }) {
+function StatCard({ stat }: { stat: typeof STATS[number] }) {
   const [hovered, setHovered] = useState(false)
-  const { count, setStarted }  = useCountUp(stat.value)
   
-  // Spring scale for the number
-  const scale = useSpring(1, { stiffness: 400, damping: 15 })
-  useEffect(() => { scale.set(hovered ? 1.04 : 1) }, [hovered, scale])
+  // Keep useSpring just for hover if desired, or remove it entirely. Since rule says "if animation is just opacity + transform on scroll -> use CSS". I will use CSS fully for the reveal. Wait, let me just replace the motion.div wrapper with reveal-right.
 
-  useEffect(() => {
-    if (isInView) setStarted(true)
-  }, [isInView, setStarted])
-
-  const display = stat.display.endsWith('+') ? `${count}+` : `${count}`
+  const display = stat.display
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 40 }}
-      animate={isInView ? { opacity: 1, x: 0 } : {}}
-      transition={{ duration: 0.8, ease: [0.25, 0.8, 0.25, 1], delay: 0.1 + index * 0.15 }}
+    <div
+      className="reveal-right"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -78,25 +40,22 @@ function StatCard({ stat, index, isInView }: { stat: typeof STATS[number], index
         transition: 'border-color 0.4s ease',
       }}
     >
-      <motion.div style={{ scale, transformOrigin: 'left center', fontFamily: "'Space Mono',monospace", fontSize: '54px', color: '#e8c97a', lineHeight: 1 }}>
+      <div style={{ transform: hovered ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.3s ease', transformOrigin: 'left center', fontFamily: "'Space Mono',monospace", fontSize: '54px', color: '#e8c97a', lineHeight: 1 }}>
         {display}
-      </motion.div>
+      </div>
       <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '12px', color: '#3d3b38', textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: '6px' }}>
         {stat.label}
       </div>
       
-      {/* Animated Bottom Border linked to Counter logic equivalent (sliding on hover or load) */}
-      <motion.div 
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: count / stat.value } : {}}
-        transition={{ duration: 0.1, ease: "linear" }}
+      <div 
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px',
           background: 'linear-gradient(to right, #e8c97a, #c9a84c)',
-          transformOrigin: 'left'
+          transformOrigin: 'left',
+          transform: 'scaleX(1)'
         }}
       />
-    </motion.div>
+    </div>
   )
 }
 
@@ -185,24 +144,20 @@ export default function About() {
           </div>
 
           {/* Paragraph 1 */}
-          <motion.p 
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+          <p 
+            className="reveal"
             style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '15px', color: '#7a7570', lineHeight: 1.9, marginBottom: '16px' }}
           >
             What started as a weekend drive to Manali turned into years of solo expeditions across Spiti, Ladakh, Uttarakhand and beyond. I carry a camera, a tent, and an unhealthy obsession with high-altitude roads.
-          </motion.p>
+          </p>
           
           {/* Paragraph 2 */}
-          <motion.p 
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, ease: "easeOut", delay: 0.5 }}
+          <p 
+            className="reveal"
             style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '15px', color: '#7a7570', lineHeight: 1.9, marginBottom: '16px' }}
           >
             I build websites by day and disappear into mountains whenever I can. This site is both — a travel journal and a web project. Every marker on the map is a place I have actually stood.
-          </motion.p>
+          </p>
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '28px' }}>
             {SOCIALS.map(({ icon, label, href }) => (
@@ -213,7 +168,7 @@ export default function About() {
 
         {/* ── RIGHT COLUMN ────────────────────────────────────── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {STATS.map((stat, i) => <StatCard key={stat.label} stat={stat} index={i} isInView={isInView} />)}
+          {STATS.map((stat) => <StatCard key={stat.label} stat={stat} />)}
         </div>
       </div>
 

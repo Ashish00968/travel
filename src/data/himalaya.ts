@@ -57,6 +57,15 @@ export interface HimalayaVideo {
   views: string
 }
 
+/* ── Cinematic camera preset ─────────────────────────────────────── */
+export interface CameraPreset {
+  lat:     number
+  lng:     number
+  zoom:    number
+  tilt:    number
+  heading: number
+}
+
 export interface HimalayaSubRegion {
   id:       string
   name:     string
@@ -65,6 +74,7 @@ export interface HimalayaSubRegion {
   zoom?:    number
   tilt?:    number
   heading?: number
+  camera?:  CameraPreset    // cinematic angle for this sub-region
   places:   HimalayaPlace[]
 }
 
@@ -79,6 +89,7 @@ export interface HimalayaRegion {
   zoom:                number
   tilt:                number
   heading:             number
+  camera?:             CameraPreset   // cinematic angle for region overview
   maxAlt:              string    // for stats bar
   badge?:              string    // "Paradise on Earth"
   cardDesc?:           string    // editorial intro
@@ -114,7 +125,8 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
   /* ── 1. JAMMU & KASHMIR ─────────────────────────────────────────── */
   {
     id: 'jammu-kashmir', name: 'Jammu & Kashmir', state: 'Union Territory', emoji: '🏔️',
-    lat: 33.70, lng: 74.90, zoom: 9, tilt: 55, heading: 350,
+    lat: 33.50, lng: 74.80, zoom: 9, tilt: 65, heading: 350,
+    camera: { lat: 33.20, lng: 74.80, zoom: 9, tilt: 65, heading: 350 },
     elevation: '1,400–3,528m', maxAlt: '3,528m (Zojila)',
     badge: 'Paradise on Earth',
     cardDesc: 'From the alpine meadows of Rajouri to the Dal Lake houseboats of Srinagar — J&K is where every road leads to something extraordinary.',
@@ -124,10 +136,11 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
     subregions: [
       {
         id: 'rajouri', name: 'Rajouri',
-        lat: 33.65, lng: 74.35, zoom: 10.2, tilt: 55, heading: 0,
+        lat: 33.47, lng: 74.43, zoom: 10.8, tilt: 60, heading: 0,
+        camera: { lat: 33.2200, lng: 74.4000, zoom: 10.5, tilt: 75, heading: 0 },
         places: [
           { 
-            id: 'peer-ki-gali', name: 'Peer Ki Gali', emoji: '🌿', lat: 33.89, lng: 74.07, heading: 180, elevation: '3,490m', 
+            id: 'peer-ki-gali', name: 'Peer Ki Gali', emoji: '🌿', lat: 33.6297724909923, lng: 74.51998442871115, heading: 180, elevation: '3,490m', 
             meta: 'High-altitude pass · Mughal Road', season: 'May – October',
             desc: 'A stunning high-altitude pass on the Mughal Road, draped in alpine meadows and mist. The drive across Pir Panjal ridge is one of the most scenic in the region.',
             experience: 'The Mughal Road was shrouded in low cloud as I crossed Peer Ki Gali. The alpine meadow appeared out of the mist like something from another world — vast, silent, and impossibly green.',
@@ -135,9 +148,10 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             stats: [{ label: 'Altitude', value: '3,490 m' }, { label: 'Route', value: 'Mughal Road' }],
             trekPath: [
               { lat: 33.72, lng: 74.18 },  // Shopian side start
-              { lat: 33.79, lng: 74.13 },  // Hirpora forest
-              { lat: 33.85, lng: 74.09 },  // Upper meadows
-              { lat: 33.89, lng: 74.07 },  // Peer Ki Gali pass
+              { lat: 33.70, lng: 74.24 },  // Hirpora
+              { lat: 33.67, lng: 74.38 },  // Upper switchbacks
+              { lat: 33.6316, lng: 74.5368 }, // Pass approach
+              { lat: 33.6297724909923, lng: 74.51998442871115 },  // Peer Ki Gali pass
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 1800, title: 'Mughal Road begins', moment: 'The tarmac narrows. Pine forests close in on both sides of the Mughal Road.', type: 'text' },
@@ -148,11 +162,13 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             type: 'road'
           },
-          { id: 'dera-ki-gali', name: 'Dera Ki Gali', emoji: '🏕️', lat: 33.85, lng: 74.12, heading: 140, elevation: '3,200m', desc: 'Dense pine forests and open grasslands on the Pir Panjal ridge, ideal for camping.',
+          { id: 'dera-ki-gali', name: 'Dera Ki Gali', emoji: '🏕️', lat: 33.58214546019835, lng: 74.3623380739086, heading: 140, elevation: '3,200m', desc: 'Dense pine forests and open grasslands on the Pir Panjal ridge, ideal for camping.',
             trekPath: [
-              { lat: 33.80, lng: 74.18 },  // Ridge trail start
-              { lat: 33.82, lng: 74.15 },  // Pine forest mid
-              { lat: 33.85, lng: 74.12 },  // Dera Ki Gali top
+              { lat: 33.51, lng: 74.34 },  // Thanamandi
+              { lat: 33.53, lng: 74.35 },  // Climb start
+              { lat: 33.55, lng: 74.38 },  // Forest approach
+              { lat: 33.5686, lng: 74.4054 }, // Viewpoint 
+              { lat: 33.58214546019835, lng: 74.3623380739086 },  // Dera Ki Gali top
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 2000, title: 'The ridge path', moment: 'A narrow trail disappears into pine forest. The air smells of resin and rain.', type: 'text' },
@@ -161,11 +177,12 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 2400, title: 'Back through the trees', moment: 'The descent is quiet. Birdsong returns.', type: 'text' },
             ],
             type: 'trek' },
-          { id: 'dharal', name: 'Dharal Waterfall', emoji: '🌲', lat: 33.55, lng: 74.81, heading: 270, elevation: '1,800m', desc: 'A stunning waterfall in a quiet Gujjar village in the Chenab valley, gateway to untouched alpine meadows.',
+          { id: 'darhal', name: 'Darhal Water Fall', emoji: '🌲', lat: 33.49235317402844, lng: 74.44683246130484, heading: 270, elevation: '1,800m', desc: 'A stunning waterfall in a quiet Gujjar village in the Chenab valley, gateway to untouched alpine meadows.',
             trekPath: [
-              { lat: 33.53, lng: 74.83 },  // Village trailhead
-              { lat: 33.54, lng: 74.82 },  // Chestnut forest
-              { lat: 33.55, lng: 74.81 },  // Waterfall
+              { lat: 33.48, lng: 74.42 },  // Darhal bridge
+              { lat: 33.485, lng: 74.44 }, // Village path
+              { lat: 33.4979, lng: 74.4610 }, // Forest clearing
+              { lat: 33.49235317402844, lng: 74.44683246130484 },  // Waterfall base
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 1200, title: 'Gujjar village', moment: 'Smoke rises from mud-roof homes. Children wave from a wooden bridge.', type: 'text' },
@@ -174,11 +191,11 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 1300, title: 'The return', moment: 'Golden afternoon light filters through the canopy. The village reappears.', type: 'text' },
             ],
             type: 'scenic' },
-          { id: 'bakori', name: 'Bakori', emoji: '🗺️', lat: 33.52, lng: 73.89, heading: 300, elevation: '1,400m', desc: 'Near JNV Kotranka / Budhal — largely unexplored and far off any tourist circuit.',
+          { id: 'bakori', name: 'Bakori', emoji: '🗺️', lat: 33.3798561352325, lng: 74.49660914607517, heading: 300, elevation: '1,400m', desc: 'Near JNV Kotranka / Budhal — largely unexplored and far off any tourist circuit.',
             trekPath: [
-              { lat: 33.48, lng: 73.92 },  // Budhal entry
-              { lat: 33.50, lng: 73.91 },  // Kotranka ridge
-              { lat: 33.52, lng: 73.89 },  // Bakori
+              { lat: 33.36, lng: 74.52 },  // Budhal connection
+              { lat: 33.3899, lng: 74.5132 },// Ridge overlook
+              { lat: 33.3798561352325, lng: 74.49660914607517 },  // Bakori village center
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 900, title: 'Off the map', moment: 'No signboards. No tourists. Just a dirt road winding into Budhal valley.', type: 'text' },
@@ -187,11 +204,21 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 1100, title: 'Heading back', moment: 'The road back feels shorter. The mountains watch you leave.', type: 'text' },
             ],
             type: 'road' },
+          { 
+            id: 'rajouri-home', name: 'Ghar', emoji: '🏠', lat: 33.306694, lng: 74.349544, heading: 0, elevation: '915m', 
+            desc: 'A personal sanctuary in the heart of Rajouri, where the hills meet the horizon.',
+            trekPath: [
+              { lat: 33.3088, lng: 74.3566 }, // LookAt position
+              { lat: 33.306694, lng: 74.349544 }, // Ghar position
+            ],
+            type: 'scenic' 
+          },
         ],
       },
       {
         id: 'jammu', name: 'Jammu',
         lat: 33.18, lng: 75.28, zoom: 11, tilt: 55, heading: 0,
+        camera: { lat: 33.10, lng: 75.25, zoom: 10.5, tilt: 62, heading: 10 },
         places: [
           { id: 'patnitop', name: 'Patnitop', emoji: '🏔️', lat: 33.21, lng: 75.31, heading: 200, elevation: '2,024m', desc: 'A hill station blanketed in snow in winter, offering skiing and meadow treks in summer.',
             trekPath: [
@@ -237,6 +264,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
       {
         id: 'kashmir-valley', name: 'Kashmir Valley',
         lat: 34.20, lng: 75.10, zoom: 10, tilt: 55, heading: 0,
+        camera: { lat: 34.10, lng: 74.70, zoom: 9.5, tilt: 65, heading: 330 },
         places: [
           { id: 'zojila-pass', name: 'Zojila Pass', emoji: '🏔️', lat: 34.21, lng: 75.47, heading: 90, elevation: '3,528m', desc: 'The dramatic gateway between Kashmir and Ladakh — open only in summer.',
             trekPath: [
@@ -294,6 +322,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
   {
     id: 'ladakh', name: 'Ladakh', state: 'Union Territory', emoji: '🏜️',
     lat: 33.90, lng: 77.50, zoom: 9, tilt: 60, heading: 10,
+    camera: { lat: 33.80, lng: 77.60, zoom: 9, tilt: 67.5, heading: 320 },
     elevation: '3,500–5,600m', maxAlt: '5,359m (Khardung La)',
     badge: 'Land of High Passes',
     cardDesc: 'A dramatic high-altitude desert where turquoise lakes mirror jagged peaks and whitewashed monasteries guard ancient Silk Road trade routes.',
@@ -385,6 +414,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
   {
     id: 'himachal-pradesh', name: 'Himachal Pradesh', state: 'Himachal Pradesh', emoji: '⛰️',
     lat: 32.00, lng: 77.10, zoom: 9, tilt: 55, heading: 330,
+    camera: { lat: 31.80, lng: 77.20, zoom: 9, tilt: 60, heading: 340 },
     elevation: '640–3,978m', maxAlt: '3,978m (Rohtang)',
     badge: 'Dev Bhoomi',
     cardDesc: 'Manali to Lahaul, Shimla to Kinnaur — Himachal is a state that keeps revealing itself the further you push into the mountains.',
@@ -395,6 +425,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
       {
         id: 'kullu', name: 'Kullu-Manali',
         lat: 32.28, lng: 77.19, zoom: 10.5, tilt: 55, heading: 0,
+        camera: { lat: 32.15, lng: 77.10, zoom: 12, tilt: 65, heading: 330 },
         places: [
           { 
             id: 'manali', name: 'Manali', emoji: '🏘️',
@@ -657,6 +688,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
   {
     id: 'uttarakhand', name: 'Uttarakhand', state: 'Uttarakhand', emoji: '🌿',
     lat: 30.55, lng: 79.00, zoom: 9, tilt: 55, heading: 10,
+    camera: { lat: 30.30, lng: 79.20, zoom: 9, tilt: 62, heading: 10 },
     elevation: '1,500–6,638m', maxAlt: '3,583m (Kedarnath)',
     badge: 'Dev Bhoomi',
     cardDesc: 'The abode of the gods — glacial rivers carve through dense oak forests while ancient temples and wildflower meadows dot the high Garhwal Himalayas.',

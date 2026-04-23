@@ -6,47 +6,12 @@ import 'lite-youtube-embed'
 import { HIMALAYA_REGIONS, type HimalayaVideo, type TrekStop } from '../data/himalaya'
 import { useMapStore } from '../store/mapStore'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import { useReveal } from '../hooks/useReveal'
-import { scaleIn } from '../lib/variants'
 
 const LiteYouTube = 'lite-youtube' as any
 
 /* ─────────────────────────────────────────────────────────────────────
- * HOOKS & HELPERS for Cinematic Reveals
+ * DEFAULT STOPS
  * ───────────────────────────────────────────────────────────────────── */
-
-function useCountUp(target: number, duration = 1500) {
-  const [count, setCount] = useState(0)
-  const [started, setStarted] = useState(false)
-
-  useEffect(() => {
-    if (!started) return
-    const start = performance.now()
-    const tick = (now: number) => {
-      const progress = Math.min((now - start) / duration, 1)
-      const eased = 1 - Math.pow(1 - progress, 3)
-      setCount(Math.round(eased * target))
-      if (progress < 1) requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  }, [started, target, duration])
-
-  return { count, setStarted }
-}
-
-const AnimatedWord = ({ word, delay, isInView }: { word: string, delay: number, isInView: boolean }) => (
-  <span style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.22em', verticalAlign: 'top' }}>
-    <motion.span
-      style={{ display: 'inline-block' }}
-      initial={{ y: '110%' }}
-      animate={isInView ? { y: '0%' } : { y: '110%' }}
-      transition={{ duration: 0.7, ease: [0.25, 0.8, 0.25, 1], delay }}
-    >
-      {word}
-    </motion.span>
-  </span>
-)
-
 function generateDefaultStops(place: { name: string; elevation?: string; emoji: string }): TrekStop[] {
   const altNum = parseInt((place.elevation || '2000').replace(/[^0-9]/g, ''))
   const baseAlt = Math.max(altNum - 800, 500)
@@ -58,6 +23,9 @@ function generateDefaultStops(place: { name: string; elevation?: string; emoji: 
   ]
 }
 
+/* ─────────────────────────────────────────────────────────────────────
+ * ALTITUDE GRADIENT PLACEHOLDER
+ * ───────────────────────────────────────────────────────────────────── */
 function altGradient(alt: number) {
   if (alt < 3000) return 'linear-gradient(145deg,#0a1a0a,#0d2010)'
   if (alt < 3500) return 'linear-gradient(145deg,#0a1015,#0d1520)'
@@ -65,17 +33,13 @@ function altGradient(alt: number) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────
- * CONNECTOR BETWEEN STOPS (Gold Glow Bounce)
+ * CONNECTOR BETWEEN STOPS
  * ───────────────────────────────────────────────────────────────────── */
 function StopConnector() {
   return (
     <div style={{ display:'flex', flexDirection:'column', alignItems:'center', padding:'0', zIndex:1, position:'relative' }}>
       <div style={{ width:1, height:56, background:'linear-gradient(to bottom,rgba(232,201,122,0.4),rgba(232,201,122,0.06))' }} />
-      <motion.div 
-        animate={{ y:[0,8,0] }} 
-        transition={{ duration:1.8, ease:'easeInOut', repeat:Infinity }}
-        style={{ filter: 'drop-shadow(0 0 10px rgba(232,201,122,0.4))' }}
-      >
+      <motion.div animate={{ y:[0,6,0] }} transition={{ duration:1.8, ease:'easeInOut', repeat:Infinity }}>
         <svg width="16" height="10" viewBox="0 0 16 10" fill="none">
           <path d="M2 2L8 8L14 2" stroke="#e8c97a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -90,17 +54,16 @@ function StopConnector() {
  * ───────────────────────────────────────────────────────────────────── */
 function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
   const isMobile = useMediaQuery('(max-width: 900px)')
-  const isEven = isMobile ? true : (index % 2 === 0)
-  const { ref, isInView } = useReveal({ margin: '-100px' })
+  const isEven = isMobile ? true : (index % 2 === 0) // On mobile, everything behaves like 'even' (photo then left-aligned text)
 
   const photoEl = (
     <motion.div
-      variants={scaleIn}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once:true, margin:'-80px' }}
-      style={{ position:'relative', borderRadius:20, overflow:'hidden',
+      style={{ position:'relative', borderRadius:14, overflow:'hidden',
         height: stop.type === 'summit' ? 520 : 'clamp(320px,40vw,440px)' }}
+      initial={{ opacity:0, scale:1.04 }}
+      whileInView={{ opacity:1, scale:1 }}
+      viewport={{ once:true, margin:'-80px' }}
+      transition={{ duration:1.0, ease:[0.25,0.8,0.25,1] }}
     >
       {stop.mediaUrl ? (
         <img loading="lazy" decoding="async" src={stop.mediaUrl} alt={stop.title}
@@ -117,6 +80,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
           </span>
         </div>
       )}
+      {/* Altitude badge */}
       <div style={{
         position:'absolute', top:18, ...(isEven ? { left:18 } : { right:18 }),
         background:'rgba(6,8,12,0.82)', backdropFilter:'blur(8px)',
@@ -130,125 +94,177 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
   )
 
   const textEl = (
-    <div ref={ref} style={{
+    <div style={{
       display:'flex', flexDirection:'column', justifyContent:'center',
       padding: isMobile ? '24px 0 0' : (isEven ? '0 0 0 48px' : '0 48px 0 0'),
       textAlign: isEven ? 'left' : 'right',
       alignItems: isEven ? 'flex-start' : 'flex-end',
     }}>
+      {/* Stop number */}
       <motion.div
-        initial={{ opacity:0 }} animate={isInView ? { opacity:1 } : {}}
+        initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
         transition={{ duration:0.5, delay:0.3 }}
         style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
           color:'rgba(232,201,122,0.28)', letterSpacing:'0.25em', marginBottom:14 }}>
         {String(index + 1).padStart(2, '0')}
       </motion.div>
 
-      <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
+      {/* Title */}
+      <motion.h3
+        initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+        transition={{ duration:0.6, delay:0.5 }}
+        style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
           fontWeight:700, color:'#edeae2', lineHeight:1.1, margin:'0 0 18px' }}>
-        {stop.title.split(' ').map((w, i) => <AnimatedWord key={i} word={w} delay={0.1*i} isInView={isInView} />)}
-      </h3>
+        {stop.title}
+      </motion.h3>
 
+      {/* Cinematic text — gold italic, the emotional voice */}
       {stop.cinematicText && (
-        <p style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
+        <motion.p
+          initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+          transition={{ duration:0.6, delay:0.7 }}
+          style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
             fontSize:'clamp(15px,1.4vw,19px)', color:'#e8c97a', lineHeight:1.7,
             margin:'0 0 18px', fontWeight:400 }}>
-          {stop.cinematicText.split(' ').map((w, i) => <AnimatedWord key={i} word={w} delay={0.3 + 0.05*i} isInView={isInView} />)}
-        </p>
+          "{stop.cinematicText}"
+        </motion.p>
       )}
 
+      {/* Moment — Space Mono field notes */}
       <motion.p
-        initial={{ opacity:0, y:10 }} animate={isInView ? { opacity:1, y:0 } : {}}
+        initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
         transition={{ duration:0.5, delay:0.9 }}
         style={{ fontFamily:"'Space Mono',monospace", fontSize:12,
           color:'rgba(255,255,255,0.38)', lineHeight:1.85, margin:0 }}>
         {stop.moment}
       </motion.p>
     </div>
-  )
-
-  return (
-    <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 48, alignItems:'center', padding: isMobile ? '32px 0' : '56px 0' }}>
-      {isMobile ? <>{photoEl}{textEl}</> : (isEven ? <>{photoEl}{textEl}</> : <>{textEl}{photoEl}</>)}
-    </div>
-  )
-}
-
-function TextOnlyBlock({ stop, index }: { stop: TrekStop; index: number }) {
-  const isMobile = useMediaQuery('(max-width: 900px)')
-  const isEven = isMobile ? true : (index % 2 === 0)
-  const { ref, isInView } = useReveal({ margin: '-60px' })
-  
-  const textContent = (
-    <div ref={ref} style={{ padding: isEven ? '0 48px 0 0' : '0 0 0 48px', textAlign: isEven ? 'right' : 'left', display:'flex', flexDirection:'column', alignItems: isEven ? 'flex-end' : 'flex-start' }}>
-      <motion.div initial={{ opacity:0 }} animate={isInView ? { opacity:1 } : {}}
-        transition={{ delay:0.3 }}
-        style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
-          color:'rgba(232,201,122,0.28)', letterSpacing:'0.25em', marginBottom:14 }}>
-        {String(index + 1).padStart(2, '0')}
-      </motion.div>
-      <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
-          fontWeight:700, color:'#edeae2', margin:'0 0 18px', lineHeight:1.1 }}>
-        {stop.title.split(' ').map((w,i) => <AnimatedWord key={i} word={w} delay={0.1*i} isInView={isInView} />)}
-      </h3>
-      {stop.cinematicText && (
-        <p style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
-            fontSize:'clamp(15px,1.4vw,19px)', color:'#e8c97a', lineHeight:1.7, margin:'0 0 18px' }}>
-          {stop.cinematicText.split(' ').map((w, i) => <AnimatedWord key={i} word={w} delay={0.3 + 0.05*i} isInView={isInView} />)}
-        </p>
-      )}
-      <motion.p initial={{ opacity:0, y:10 }} animate={isInView ? { opacity:1, y:0 } : {}}
-        transition={{ duration:0.5, delay:0.9 }}
-        style={{ fontFamily:"'Space Mono',monospace", fontSize:12,
-          color:'rgba(255,255,255,0.38)', lineHeight:1.85, margin:0 }}>
-        {stop.moment}
-      </motion.p>
-    </div>
-  )
-
-  const emptyAltitude = (
-    <motion.div
-      variants={scaleIn}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once:true }}
-      style={{ position:'relative', borderRadius:20, overflow:'hidden',
-        height: isMobile ? '200px' : 'clamp(200px,25vw,300px)', background:altGradient(stop.altitude),
-        display:'flex', alignItems:'center', justifyContent:'center' }}>
-      <span style={{ fontFamily:"'Space Mono',monospace", fontSize: isMobile ? 36 : 56,
-        color:'#e8c97a', opacity:0.1, fontWeight:700, letterSpacing:'-0.02em' }}>
-        {stop.altitude.toLocaleString()}
-      </span>
-      <div style={{ position:'absolute', top:18, right:isEven ? undefined : 18, left:isEven ? 18 : undefined, background:'rgba(6,8,12,0.82)',
-        border:'1px solid rgba(232,201,122,0.25)', borderRadius:6, padding:'5px 12px',
-        fontFamily:"'Space Mono',monospace", fontSize:11, color:'#e8c97a' }}>
-        ▲ {stop.altitude.toLocaleString()}m
-      </div>
-    </motion.div>
   )
 
   return (
     <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 48,
       alignItems:'center', padding: isMobile ? '32px 0' : '56px 0' }}>
-      {isMobile ? <>{emptyAltitude}{textContent}</> : (isEven ? <>{emptyAltitude}{textContent}</> : <>{textContent}{emptyAltitude}</>)}
+      {isMobile ? <>{photoEl}{textEl}</> : (isEven ? <>{photoEl}{textEl}</> : <>{textEl}{photoEl}</>)}
     </div>
   )
 }
 
 /* ─────────────────────────────────────────────────────────────────────
- * SUMMIT — full-bleed 100vh reveal, countup pulse text shadow
+ * TEXT-ONLY STOP — centered, with altitude placeholder
+ * ───────────────────────────────────────────────────────────────────── */
+function TextOnlyBlock({ stop, index }: { stop: TrekStop; index: number }) {
+  const isMobile = useMediaQuery('(max-width: 900px)')
+  const isEven = isMobile ? true : (index % 2 === 0)
+  
+  return (
+    <div style={{ display:'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 48,
+      alignItems:'center', padding: isMobile ? '32px 0' : '56px 0' }}>
+      {isEven ? (
+        <>
+          {/* dark altitude placeholder */}
+          <motion.div
+            initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+            transition={{ duration:0.8 }}
+            style={{ position:'relative', borderRadius:14, overflow:'hidden',
+              height: isMobile ? '200px' : 'clamp(200px,25vw,300px)', background:altGradient(stop.altitude),
+              display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize: isMobile ? 36 : 56,
+              color:'#e8c97a', opacity:0.1, fontWeight:700, letterSpacing:'-0.02em' }}>
+              {stop.altitude.toLocaleString()}
+            </span>
+            <div style={{ position:'absolute', top:18, left:18, background:'rgba(6,8,12,0.82)',
+              border:'1px solid rgba(232,201,122,0.25)', borderRadius:6, padding:'5px 12px',
+              fontFamily:"'Space Mono',monospace", fontSize:11, color:'#e8c97a' }}>
+              ▲ {stop.altitude.toLocaleString()}m
+            </div>
+          </motion.div>
+          <div style={{ padding: isMobile ? '16px 0 0' : '0 0 0 48px' }}>
+            <motion.div initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+              transition={{ delay:0.3 }}
+              style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
+                color:'rgba(232,201,122,0.28)', letterSpacing:'0.25em', marginBottom:14 }}>
+              {String(index + 1).padStart(2, '0')}
+            </motion.div>
+            <motion.h3 initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+              transition={{ duration:0.6, delay:0.5 }}
+              style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
+                fontWeight:700, color:'#edeae2', margin:'0 0 18px', lineHeight:1.1 }}>
+              {stop.title}
+            </motion.h3>
+            {stop.cinematicText && (
+              <motion.p initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+                transition={{ duration:0.6, delay:0.7 }}
+                style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
+                  fontSize:'clamp(15px,1.4vw,19px)', color:'#e8c97a', lineHeight:1.7, margin:'0 0 18px' }}>
+                "{stop.cinematicText}"
+              </motion.p>
+            )}
+            <motion.p initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+              transition={{ duration:0.5, delay:0.9 }}
+              style={{ fontFamily:"'Space Mono',monospace", fontSize:12,
+                color:'rgba(255,255,255,0.38)', lineHeight:1.85, margin:0 }}>
+              {stop.moment}
+            </motion.p>
+          </div>
+        </>
+      ) : (
+        <>
+          <div style={{ padding:'0 48px 0 0', textAlign:'right', display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
+            <motion.div initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+              transition={{ delay:0.3 }}
+              style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
+                color:'rgba(232,201,122,0.28)', letterSpacing:'0.25em', marginBottom:14 }}>
+              {String(index + 1).padStart(2, '0')}
+            </motion.div>
+            <motion.h3 initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+              transition={{ duration:0.6, delay:0.5 }}
+              style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
+                fontWeight:700, color:'#edeae2', margin:'0 0 18px', lineHeight:1.1 }}>
+              {stop.title}
+            </motion.h3>
+            {stop.cinematicText && (
+              <motion.p initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+                transition={{ duration:0.6, delay:0.7 }}
+                style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
+                  fontSize:'clamp(15px,1.4vw,19px)', color:'#e8c97a', lineHeight:1.7, margin:'0 0 18px' }}>
+                "{stop.cinematicText}"
+              </motion.p>
+            )}
+            <motion.p initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+              transition={{ duration:0.5, delay:0.9 }}
+              style={{ fontFamily:"'Space Mono',monospace", fontSize:12,
+                color:'rgba(255,255,255,0.38)', lineHeight:1.85, margin:0 }}>
+              {stop.moment}
+            </motion.p>
+          </div>
+          <motion.div
+            initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+            transition={{ duration:0.8 }}
+            style={{ position:'relative', borderRadius:14, overflow:'hidden',
+              height:'clamp(200px,25vw,300px)', background:altGradient(stop.altitude),
+              display:'flex', alignItems:'center', justifyContent:'center' }}>
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:56,
+              color:'#e8c97a', opacity:0.1, fontWeight:700 }}>
+              {stop.altitude.toLocaleString()}
+            </span>
+            <div style={{ position:'absolute', top:18, right:18, background:'rgba(6,8,12,0.82)',
+              border:'1px solid rgba(232,201,122,0.25)', borderRadius:6, padding:'5px 12px',
+              fontFamily:"'Space Mono',monospace", fontSize:11, color:'#e8c97a' }}>
+              ▲ {stop.altitude.toLocaleString()}m
+            </div>
+          </motion.div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+ * SUMMIT — full-bleed 100vh reveal
  * ───────────────────────────────────────────────────────────────────── */
 function SummitBlock({ stop }: { stop: TrekStop }) {
-  const { ref, isInView } = useReveal({ margin: '-10px' })
-  const { count, setStarted } = useCountUp(stop.altitude)
-  
-  useEffect(() => {
-    if (isInView) setStarted(true)
-  }, [isInView, setStarted])
-
   return (
     <motion.div
-      ref={ref}
       style={{ position:'relative', height:'100vh', borderRadius:20,
         overflow:'hidden', margin:'32px 0' }}
       initial={{ opacity:0 }}
@@ -275,19 +291,16 @@ function SummitBlock({ stop }: { stop: TrekStop }) {
 
       <div style={{ position:'absolute', top:'12%', left:0, right:0, textAlign:'center', padding:'0 40px' }}>
         <motion.div
-          initial={{ scale:0.85, opacity:0 }} animate={isInView ? { scale:1, opacity:1 } : {}}
+          initial={{ scale:0.85, opacity:0 }} whileInView={{ scale:1, opacity:1 }} viewport={{ once:true }}
           transition={{ duration:1.1, ease:[0.25,0.8,0.25,1] }}
         >
-          <motion.div style={{ fontFamily:"'Space Mono',monospace",
+          <div style={{ fontFamily:"'Space Mono',monospace",
             fontSize:'clamp(52px,9vw,112px)', color:'#e8c97a',
             fontWeight:700, lineHeight:1, letterSpacing:'-0.02em',
-          }}
-          animate={{ textShadow: ["0 0 30px rgba(232,201,122,0)", "0 0 80px rgba(232,201,122,0.5)", "0 0 30px rgba(232,201,122,0)"] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            {count.toLocaleString()}m
-          </motion.div>
-          <motion.div initial={{ opacity:0, y:16 }} animate={isInView ? { opacity:1, y:0 } : {}}
+            textShadow:'0 0 80px rgba(232,201,122,0.25)' }}>
+            {stop.altitude.toLocaleString()}m
+          </div>
+          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
             transition={{ delay:0.4 }}
             style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
               fontSize:'clamp(28px,5vw,64px)', color:'rgba(255,255,255,0.9)',
@@ -298,28 +311,6 @@ function SummitBlock({ stop }: { stop: TrekStop }) {
       </div>
       <style>{`@keyframes starPulse{0%,100%{opacity:0.08}50%{opacity:0.35}}`}</style>
     </motion.div>
-  )
-}
-
-/* ─────────────────────────────────────────────────────────────────────
- * FOOTER W/ WORD REVEAL
- * ───────────────────────────────────────────────────────────────────── */
-function EndFooter({ place }: { place: Exclude<ReturnType<typeof useMemo<{ place: any, subRegionName: any }> >['place'], null> }) {
-  const { ref, isInView } = useReveal({ margin: '-40px' })
-  const footStr = `I documented ${place.name} in ${place.season || 'the mountains'}.`.split(' ')
-  
-  return (
-    <div ref={ref} style={{ textAlign: 'center', marginTop: '120px', paddingBottom: '80px' }}>
-      <div style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(24px,4vw,36px)', color:'#e8c97a', fontStyle:'italic', fontWeight:400 }}>
-        {footStr.map((w, i) => <AnimatedWord key={i} word={w} delay={0.08 * i} isInView={isInView} />)}
-      </div>
-      <motion.div 
-        initial={{ scaleX: 0 }}
-        animate={isInView ? { scaleX: 1 } : { scaleX: 0 }}
-        transition={{ duration: 0.8, delay: 0.5, ease: [0.25, 0.8, 0.25, 1] }}
-        style={{ width: '80px', height: '2px', background: '#e8c97a', margin: '24px auto 0', transformOrigin: 'center' }} 
-      />
-    </div>
   )
 }
 
@@ -357,14 +348,21 @@ export default function PlacePage() {
   
   // Image itself stays mostly visible, just dims slightly at the very end
   const heroOpacity = useTransform(scrollY, [0, 800, 1500], [1, 1, 0.4])
+  // Hero scales very subtly for depth
+  const heroScale   = useTransform(scrollY, [0, 1200], [1, 1.1])
+  // This overlay starts TRANSPARENT and gets DARK as we scroll into the trek
   const bgDimming   = useTransform(scrollY, [0, 600, 1200], ["rgba(6,8,12,0)", "rgba(6,8,12,0.6)", "rgba(6,8,12,0.92)"])
 
+  /* ── IntersectionObserver — fires when each stop enters viewport ── */
+  /* This is the CORRECT way: the left-panel altitude always matches   */
+  /* whichever stop block is currently crossing the top 50% of screen */
   useEffect(() => {
     if (!trekRef.current) return
     const els = trekRef.current.querySelectorAll<HTMLDivElement>('[data-stop-index]')
     if (!els.length) return
     const obs = new IntersectionObserver(
       (entries) => {
+        // Pick the entry closest to the vertical center of the screen
         const visible = entries
           .filter(e => e.isIntersecting)
           .sort((a, b) => {
@@ -383,6 +381,7 @@ export default function PlacePage() {
     return () => obs.disconnect()
   }, [trekStops])
 
+  /* ── Keyboard + scroll reset ─────────────────────────────────────── */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closeModal() }
     window.addEventListener('keydown', onKey)
@@ -391,6 +390,7 @@ export default function PlacePage() {
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }) }, [])
 
+  /* ── SEO ─────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (place && region) {
       document.title = `${place.name} — ${region.name} | Peaks & Paths`
@@ -400,8 +400,14 @@ export default function PlacePage() {
         place.experience ? place.experience.split('.')[0] + '.' : place.desc.slice(0, 120))
       if (place.image) document.querySelector('meta[property="og:image"]')?.setAttribute('content', place.image)
     }
+    return () => {
+      document.title = 'Peaks & Paths — Himalayan Mountain Travel Atlas'
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Peaks & Paths — Himalayan Travel Journal')
+      document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'Solo documenting the Himalayas since 2021.')
+    }
   }, [place, region])
 
+  /* ── Back ────────────────────────────────────────────────────────── */
   const handleBack = useCallback(() => {
     const from = (window.history.state?.usr as any)?.from as 'map' | 'grid' | undefined
     if (from === 'grid') navigate('/#regions')
@@ -409,6 +415,7 @@ export default function PlacePage() {
     else navigate(-1)
   }, [navigate, regionId, openRegionPanel])
 
+  /* ── Guard ───────────────────────────────────────────────────────── */
   if (!region || !place) {
     return (
       <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center',
@@ -418,38 +425,43 @@ export default function PlacePage() {
     )
   }
 
+  // Current stop — snapped (matches photo badge exactly)
   const currentStop = trekStops[activeStopIndex] || trekStops[0]
   const trailProgress = activeStopIndex / Math.max(trekStops.length - 1, 1)
+
   const isMobile = useMediaQuery('(max-width: 900px)')
 
-  return (
-    <motion.main
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.8, ease: "easeInOut" }}
-      style={{ background:'#06080c', minHeight:'100vh', position:'relative' }}
-    >
 
+
+  /* ═══════════════════════════════════════════════════════════════════
+   * RENDER
+   * ═══════════════════════════════════════════════════════════════════ */
+  return (
+    <div style={{ background:'#06080c', minHeight:'100vh', position:'relative' }}>
+
+      {/* ══════════════════════════════════════════════════════════════
+       * FIXED BACKGROUND IMAGE — stays dim behind entire page
+       * ══════════════════════════════════════════════════════════════ */}
       {place.image && (
         <motion.div
-          initial={{ scale: 1.15 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 2, ease: [0.25, 0.8, 0.25, 1] }}
           style={{
             position:'fixed', inset:0, zIndex:0,
             opacity: heroOpacity,
+            scale: heroScale,
           }}
         >
           <img src={place.image} fetchPriority="high" decoding="async" alt=""
             style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+          {/* DYNAMIC dimming: starts clear (0), gets dark as you scroll down */}
           <motion.div style={{ position:'absolute', inset:0, background: bgDimming }} />
         </motion.div>
       )}
 
+      {/* Everything above the fixed bg */}
       <div style={{ position:'relative', zIndex:1 }}>
 
-        <button onClick={handleBack} className="magnetic-btn" style={{
+        {/* ── Fixed back button ─────────────────────────────────── */}
+        <button onClick={handleBack} style={{
           position:'fixed', top: isMobile ? 16 : 24, left: isMobile ? 16 : 24, zIndex:50,
           display:'flex', alignItems:'center', gap:8,
           padding:'10px 18px', borderRadius:12,
@@ -465,9 +477,13 @@ export default function PlacePage() {
           <span style={{ color:'#e8c97a' }}>←</span> Back to map
         </button>
 
+        {/* ════════════════════════════════════════════════════════════
+         * HERO — 100vh, transparent so fixed bg shows through
+         * ════════════════════════════════════════════════════════════ */}
         <section style={{ height:'100vh', position:'relative', display:'flex',
           alignItems:'flex-end', padding: isMobile ? '0 6% 12%' : '0 clamp(24px,6vw,80px) 10%' }}>
 
+          {/* Bottom gradient: darkens just enough to read text */}
           <div style={{ position:'absolute', inset:0, pointerEvents:'none',
             background:'linear-gradient(to bottom, rgba(6,8,12,0.05) 0%, rgba(6,8,12,0.1) 40%, rgba(6,8,12,0.75) 80%, rgba(6,8,12,0.95) 100%)' }} />
 
@@ -480,7 +496,7 @@ export default function PlacePage() {
               <h1 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(52px,8vw,96px)',
                 color:'#edeae2', margin:'0 0 22px', fontWeight:700, lineHeight:0.95,
                 textShadow:'0 2px 50px rgba(0,0,0,0.6)' }}>
-                {place.name.split(' ').map((w, i) => <AnimatedWord key={i} word={w} delay={0.2+0.05*i} isInView={true} />)}
+                {place.name}
               </h1>
               <div style={{ display:'flex', alignItems:'center', gap:20,
                 fontFamily:"'Space Mono',monospace", fontSize:12, color:'rgba(255,255,255,0.4)' }}>
@@ -500,10 +516,16 @@ export default function PlacePage() {
           </div>
         </section>
 
+        {/* ════════════════════════════════════════════════════════════
+         * TREK TIMELINE
+         * ════════════════════════════════════════════════════════════ */}
         <section ref={trekRef} style={{ position:'relative' }}>
+
+          {/* Dark overlay so content stays readable over dim bg */}
           <div style={{ position:'absolute', inset:0, background:'rgba(6,8,12,0.78)',
             backdropFilter:'blur(0px)', pointerEvents:'none' }} />
 
+          {/* ── Sticky Left Panel ─────────────────────────────────── */}
           <div style={{
             position:'sticky', top:0, height:'100vh', width:200,
             float:'left', display: isMobile ? 'none' : 'flex', alignItems:'center', justifyContent:'center',
@@ -518,14 +540,18 @@ export default function PlacePage() {
                 {maxAlt.toLocaleString()}m
               </div>
 
+              {/* Trail bar */}
               <div style={{ position:'relative', width:2, height:180 }}>
+                {/* Remaining */}
                 <div style={{ position:'absolute', top:0, left:0, right:0,
                   height:`${(1 - trailProgress) * 100}%`,
                   background:'rgba(255,255,255,0.07)', transition:'height 0.5s ease' }} />
+                {/* Completed — fills from bottom */}
                 <div style={{ position:'absolute', bottom:0, left:0, right:0,
                   height:`${trailProgress * 100}%`,
                   background:'linear-gradient(to top,#e8c97a,rgba(232,201,122,0.4))',
                   transition:'height 0.5s ease' }} />
+                {/* Glowing dot */}
                 <motion.div style={{
                   position:'absolute', left:'50%',
                   top:`${(1 - trailProgress) * 100}%`,
@@ -534,6 +560,7 @@ export default function PlacePage() {
                   background:'#e8c97a',
                   boxShadow:'0 0 14px rgba(232,201,122,0.7)',
                 }} />
+                {/* Stop tick marks */}
                 {trekStops.map((_, i) => (
                   <div key={i} style={{
                     position:'absolute', left:'50%',
@@ -554,19 +581,17 @@ export default function PlacePage() {
                 {minAlt.toLocaleString()}m
               </div>
 
+              {/* Altitude display — MATCHES current stop's altitude exactly */}
               <div style={{ textAlign:'center', marginTop:6 }}>
                 <AnimatePresence mode="wait">
                   <motion.div key={currentStop.altitude}
                     initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
                     exit={{ opacity:0, y:-8 }} transition={{ duration:0.4 }}>
-                    <motion.div style={{ fontFamily:"'Space Mono',monospace",
+                    <div style={{ fontFamily:"'Space Mono',monospace",
                       fontSize:'clamp(28px,3vw,44px)', color:'#e8c97a',
-                      fontWeight:700, lineHeight:1, letterSpacing:'-0.01em' }}
-                      animate={{ textShadow: ["0 0 0px rgba(232,201,122,0)", "0 0 16px rgba(232,201,122,0.4)", "0 0 0px rgba(232,201,122,0)"] }}
-                      transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-                    >
+                      fontWeight:700, lineHeight:1, letterSpacing:'-0.01em' }}>
                       {currentStop.altitude.toLocaleString()}
-                    </motion.div>
+                    </div>
                     <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9,
                       color:'rgba(232,201,122,0.35)', letterSpacing:'0.12em',
                       marginTop:4, textTransform:'uppercase' }}>
@@ -576,6 +601,7 @@ export default function PlacePage() {
                 </AnimatePresence>
               </div>
 
+              {/* Current stop title + cinematic text */}
               <AnimatePresence mode="wait">
                 <motion.div key={currentStop.id} style={{ textAlign:'center' }}
                   initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }}
@@ -597,6 +623,7 @@ export default function PlacePage() {
             </div>
           </div>
 
+          {/* ── Editorial Stops ─────────────────────────────────────── */}
           <div style={{ marginLeft: isMobile ? 0 : 200, padding: isMobile ? '32px 24px 80px' : '60px 56px 80px', position:'relative', zIndex:1 }}>
             {trekStops.map((stop, index) => (
               <div key={stop.id} data-stop-index={index}>
@@ -610,26 +637,17 @@ export default function PlacePage() {
               </div>
             ))}
 
-            <EndFooter place={place} />
-
-            {/* Videos with Stagger Variant */}
+            {/* Videos */}
             {place.videos && place.videos.length > 0 && (
-              <motion.div 
-                initial="hidden" 
-                whileInView="visible" 
-                viewport={{ once:true, margin: '-20px' }}
-                variants={{ visible: { transition: { staggerChildren: 0.2 } } }}
-                style={{ marginTop:140, paddingTop:60, borderTop:'1px solid rgba(255,255,255,0.05)' }}
-              >
+              <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+                transition={{ duration:0.6 }} style={{ marginTop:140, paddingTop:60, borderTop:'1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, letterSpacing:'0.2em',
                   textTransform:'uppercase', color:'rgba(232,201,122,0.35)', marginBottom:24 }}>
                   Watch the journey
                 </div>
                 <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))', gap:20 }}>
                   {place.videos.map((video, i) => (
-                    <motion.button key={i} 
-                      variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                      onClick={() => setActiveVideo(video)}
+                    <button key={i} onClick={() => setActiveVideo(video)}
                       style={{ background:'rgba(10,12,18,0.9)', border:'1px solid rgba(255,255,255,0.05)',
                         borderRadius:12, overflow:'hidden', cursor:'pointer', textAlign:'left', padding:0,
                         transition:'all 0.3s ease' }}
@@ -658,7 +676,7 @@ export default function PlacePage() {
                         <div style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
                           color:'rgba(232,201,122,0.38)' }}>{video.views}</div>
                       </div>
-                    </motion.button>
+                    </button>
                   ))}
                 </div>
               </motion.div>
@@ -666,8 +684,9 @@ export default function PlacePage() {
           </div>
 
         </section>
-      </div>
+      </div>{/* /z-index wrapper */}
 
+      {/* ── Video Modal ──────────────────────────────────────────────── */}
       <AnimatePresence>
         {activeVideo && (
           <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
@@ -681,7 +700,7 @@ export default function PlacePage() {
               transition={{ duration:0.3, ease:[0.22,1,0.36,1] }}
               style={{ position:'relative', width:'100%', maxWidth:900 }}
               onClick={e => e.stopPropagation()}>
-              <button className="magnetic-btn" onClick={closeModal} style={{ position:'absolute', top:-44, right:0,
+              <button onClick={closeModal} style={{ position:'absolute', top:-44, right:0,
                 background:'none', border:'none', color:'#5a5550',
                 fontSize:13, fontFamily:"'DM Sans',sans-serif", cursor:'pointer',
                 display:'flex', alignItems:'center', gap:8 }}>
@@ -690,8 +709,10 @@ export default function PlacePage() {
               </button>
               <div style={{ position:'relative', width:'100%', borderRadius:16, overflow:'hidden',
                 boxShadow:'0 24px 80px rgba(0,0,0,0.7)', paddingBottom:'56.25%' }}>
-                <LiteYouTube videoid={activeVideo.youtubeId} playlabel={activeVideo.title}
-                  style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
+                <Suspense fallback={<div style={{ position:'absolute', inset:0, background:'#000' }} />}>
+                  <LazyLiteYouTube videoid={activeVideo.youtubeId} playlabel={activeVideo.title} params="autoplay=1"
+                    style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
+                </Suspense>
               </div>
               <p style={{ marginTop:14, textAlign:'center', fontFamily:"'Space Mono',monospace",
                 fontSize:11, color:'rgba(255,255,255,0.25)' }}>{activeVideo.title}</p>
@@ -699,6 +720,6 @@ export default function PlacePage() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.main>
+    </div>
   )
 }

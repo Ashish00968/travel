@@ -18,6 +18,11 @@ export default function HomePage() {
         "A solo traveller's cinematic atlas of the Indian Himalayas. Real routes, real stories, real mountains.",
       )
     }
+    
+    import('../lib/cssReveal').then(({ applyCSSReveal }) => {
+      const observer = applyCSSReveal()
+      return () => observer.disconnect()
+    })
   }, [])
 
   return (
@@ -29,9 +34,9 @@ export default function HomePage() {
     >
       <Navbar />
       <Hero />
-      <About />
       <MapSection />
       <ExpeditionGrid />
+      <About />
       <Footer />
     </motion.main>
   )

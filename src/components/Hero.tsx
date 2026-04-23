@@ -1,405 +1,423 @@
-import { motion } from 'framer-motion'
-import { useState, useEffect } from 'react'
-
-
-const stats = [
-  { numTarget: 18, suffix: '+', label: 'PEAKS' },
-  { numTarget: 6, suffix: '', label: 'REGIONS' },
-  { numTarget: 4900, suffix: 'm', label: 'MAX ALT' },
-]
-
-function useCounter(target: number, duration: number, delay: number) {
-  const [count, setCount] = useState(0)
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      let start = 0
-      const step = target / (duration / 16)
-      const interval = setInterval(() => {
-        start += step
-        if (start >= target) { setCount(target); clearInterval(interval) }
-        else setCount(Math.floor(start))
-      }, 16)
-      return () => clearInterval(interval)
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [target, duration, delay])
-  return count
-}
-
-const AnimatedWord = ({ word, delay }: { word: string, delay: number }) => (
-  <span style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.25em', verticalAlign: 'top' }}>
-    <motion.span
-      style={{ display: 'inline-block' }}
-      initial={{ y: '110%' }}
-      animate={{ y: '0%' }}
-      transition={{ duration: 0.8, ease: [0.25, 0.8, 0.25, 1], delay }}
-    >
-      {word}
-    </motion.span>
-  </span>
-)
+import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion'
+import { useRef } from 'react'
 
 export default function Hero() {
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
+  const containerRef = useRef<HTMLElement>(null)
+
+  // Track scroll within the 400vh container
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end end"]
+  })
+
+  // STEP 1: Travel (0 to 0.15)
+  const travelOpacity = useTransform(scrollYProgress, [0.02, 0.15], [0, 1])
+  const travelY = useTransform(scrollYProgress, [0.02, 0.15], [30, 0])
+
+  // STEP 2: Hike (0.15 to 0.3)
+  const hikeOpacity = useTransform(scrollYProgress, [0.15, 0.3], [0, 1])
+  const hikeY = useTransform(scrollYProgress, [0.15, 0.3], [30, 0])
+
+  // STEP 3: Film (0.3 to 0.5)
+  const filmOpacity = useTransform(scrollYProgress, [0.3, 0.5], [0, 1])
+  const filmY = useTransform(scrollYProgress, [0.3, 0.5], [40, 0])
+  const filmScale = useTransform(scrollYProgress, [0.3, 0.5], [0.85, 1])
+  const filmGlowRaw = useTransform(scrollYProgress, [0.3, 0.5], [0, 60])
+  const filmShadow = useMotionTemplate`drop-shadow(0 0 ${filmGlowRaw}px rgba(232, 201, 122, 0.5))`
+
+  // STEP 4: Staggered Build-up
+  const disappearOpacity = useTransform(scrollYProgress, [0.35, 0.38], [0, 1])
+  const disappearY = useTransform(scrollYProgress, [0.35, 0.38], [10, 0])
+
+  const intoOpacity = useTransform(scrollYProgress, [0.38, 0.41], [0, 1])
+  const intoY = useTransform(scrollYProgress, [0.38, 0.41], [10, 0])
+
+  const theOpacity = useTransform(scrollYProgress, [0.41, 0.44], [0, 1])
+  const theY = useTransform(scrollYProgress, [0.41, 0.44], [10, 0])
+
+  // STEP 5: Himalayas
+
+  // Extras: Buttons, Eyebrow (0.75 to 0.85)
+  const extrasOpacity = useTransform(scrollYProgress, [0.75, 0.85], [0, 1])
+
+  // OUTRO: Fade text out, zoom background in
+  const contentOpacityOutro = useTransform(scrollYProgress, [0.9, 1.0], [1, 0])
+  const contentYOutro = useTransform(scrollYProgress, [0.9, 1.0], [0, -60])
+
+  // Background and Fog Outro
+  const bgScale = useTransform(scrollYProgress, [0.85, 1.0], [1, 1.15])
+  const fogOpacitySlow = useTransform(scrollYProgress, [0.8, 1.0], [0.1, 0.4])
+  const fogOpacityFast = useTransform(scrollYProgress, [0.8, 1.0], [0.5, 1.0])
+
+  // Initial scroll hint fades out once interaction starts (0 to 0.05)
+
+  // Click handler
+  const scrollToMap = () => {
+    document.getElementById('map-section')?.scrollIntoView({ behavior: 'smooth' })
   }
-
-  const s1 = useCounter(stats[0].numTarget, 1500, 1200)
-  const s2 = useCounter(stats[1].numTarget, 1500, 1200)
-  const s3 = useCounter(stats[2].numTarget, 1500, 1200)
-  const renderStats = [s1, s2, s3]
-
-  const line1 = "I climb.".split(' ')
-  const line2 = "I film.".split(' ')
-  const line3 = "I vanish into mountains.".split(' ')
 
   return (
     <section
+      ref={containerRef}
       style={{
         position: 'relative',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '100vh',
-        overflow: 'hidden',
-        padding: '0 clamp(24px,5vw,48px)',
-        background: '#06080c',
+        height: 'clamp(300vh, 400vh, 400vh)',
+        background: '#040609',
       }}
     >
-      {/* ── Background Layer: Mountain Wallpaper ───────────────── */}
-      <motion.img 
-        src="/images/hero-wallpaper.jpg" 
-        alt="Himalayan Mountains"
-        initial={{ scale: 1.08 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 2.5, ease: [0.25, 0.8, 0.25, 1] }}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
-          opacity: 0.7,
-          filter: 'brightness(1.0) contrast(1.1)',
-          pointerEvents: 'none',
-        }}
-      />
-      
-      {/* ── Background Layer: Dark Gradient Overlay ────────────── */}
-      <div 
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(180deg, rgba(6,8,12,0.3) 0%, rgba(6,8,12,0.7) 60%, #06080c 100%)',
-          zIndex: 1,
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* ── Background Layer: Grid Pattern ─────────────────────── */}
       <div
         style={{
-          position: 'absolute',
-          inset: 0,
-          pointerEvents: 'none',
-          backgroundImage:
-            'linear-gradient(rgba(232,201,122,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(232,201,122,0.04) 1px, transparent 1px)',
-          backgroundSize: '64px 64px',
-          WebkitMaskImage:
-            'radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)',
-          maskImage:
-            'radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%)',
-          zIndex: 2,
-        }}
-      />
-      
-      {/* Content */}
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 10,
+          position: 'sticky',
+          top: 0,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          maxWidth: '900px',
-          width: '100%',
-        }}
-      >
-        {/* 1. Eyebrow */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '16px',
-            marginBottom: '48px',
-          }}
-        >
-          <motion.div 
-            initial={{ scaleX: 0, originX: 0 }} 
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1, delay: 0.2, ease: [0.25, 0.8, 0.25, 1] }}
-            style={{ width: '48px', height: '1px', background: '#e8c97a', opacity: 0.4 }} 
-          />
-          <span
-            style={{
-              fontFamily: "'Space Mono', monospace",
-              fontSize: '10px',
-              letterSpacing: '0.3em',
-              color: '#e8c97a',
-              textTransform: 'uppercase',
-            }}
-          >
-            Himalayan Travel Journal · India
-          </span>
-          <motion.div 
-            initial={{ scaleX: 0, originX: 0 }} 
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1, delay: 0.2, ease: [0.25, 0.8, 0.25, 1] }}
-            style={{ width: '48px', height: '1px', background: '#e8c97a', opacity: 0.4 }} 
-          />
-        </motion.div>
-
-        {/* 2. Headline — three staggered lines */}
-        <div style={{ width: '100%', marginBottom: '32px' }}>
-          {/* Line 1: "I climb." */}
-          <div style={{ textAlign: 'right', marginRight: '10%' }}>
-            <span
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(40px,8vw,80px)',
-                fontWeight: 700,
-                color: '#edeae2',
-                lineHeight: 1.05,
-                display: 'block',
-              }}
-            >
-              {line1.map((w, i) => <AnimatedWord key={i} word={w} delay={0.3 + i * 0.07} />)}
-            </span>
-          </div>
-
-          {/* Line 2: "I film." */}
-          <div style={{ textAlign: 'center' }}>
-            <span
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(52px,10vw,104px)',
-                fontWeight: 700,
-                fontStyle: 'italic',
-                color: '#e8c97a',
-                lineHeight: 1.05,
-                display: 'block',
-              }}
-            >
-              {line2.map((w, i) => <AnimatedWord key={i} word={w} delay={0.45 + i * 0.07} />)}
-            </span>
-          </div>
-
-          {/* Line 3: "I vanish into mountains." */}
-          <div style={{ textAlign: 'left', marginLeft: '8%' }}>
-            <span
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(28px,6vw,64px)',
-                fontWeight: 700,
-                color: '#edeae2',
-                lineHeight: 1.1,
-                display: 'block',
-              }}
-            >
-              {line3.map((w, i) => <AnimatedWord key={i} word={w} delay={0.6 + i * 0.07} />)}
-            </span>
-          </div>
-        </div>
-
-        {/* 3. Gold rule */}
-        <motion.div
-          initial={{ opacity: 0, scaleX: 0 }}
-          animate={{ opacity: 0.3, scaleX: 1 }}
-          transition={{ duration: 0.7, delay: 0.9 }}
-          style={{
-            width: '80px',
-            height: '1px',
-            background: '#e8c97a',
-            margin: '20px auto',
-          }}
-        />
-
-        {/* 4. Subtext */}
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.0 }}
-          style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: '17px',
-            color: '#7a7570',
-            maxWidth: '480px',
-            textAlign: 'center',
-            lineHeight: 1.9,
-            margin: '0 0 40px 0',
-          }}
-        >
-          Solo documenting the Himalayas since 2021. Cold deserts, sacred peaks,
-          high-altitude passes. Every route is a story. This is mine.
-        </motion.p>
-
-        {/* 5. Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.15 }}
-          style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}
-        >
-          <button
-            className="magnetic-btn"
-            onClick={() => scrollTo('map-section')}
-            style={{
-              background: '#e8c97a',
-              color: '#06080c',
-              fontFamily: "'Space Mono', monospace",
-              fontSize: '12px',
-              letterSpacing: '0.08em',
-              padding: '14px 32px',
-              borderRadius: '4px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 700,
-              transition: 'opacity 0.2s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            Explore the Map ↓
-          </button>
-
-          <button
-            className="magnetic-btn"
-            onClick={() => scrollTo('about')}
-            style={{
-              background: 'transparent',
-              border: '1px solid rgba(232,201,122,0.5)',
-              color: '#e8c97a',
-              fontFamily: "'Space Mono', monospace",
-              fontSize: '12px',
-              letterSpacing: '0.08em',
-              padding: '14px 32px',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              transition: 'border-color 0.2s, background 0.2s',
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(232,201,122,0.08)'
-              e.currentTarget.style.borderColor = 'rgba(232,201,122,0.9)'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.borderColor = 'rgba(232,201,122,0.5)'
-            }}
-          >
-            My Story
-          </button>
-        </motion.div>
-      </div>
-
-      {/* Stats — absolute bottom-right */}
-      <motion.div
-        initial={{ opacity: 0, x: 24 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.9, delay: 1.3 }}
-        style={{
-          position: 'absolute',
-          bottom: '64px',
-          right: '48px',
-          textAlign: 'right',
-        }}
-      >
-        {stats.map((s, i) => (
-          <div key={s.label} style={{ marginBottom: '16px' }}>
-            <div
-              style={{
-                fontFamily: "'Space Mono', monospace",
-                fontSize: '36px',
-                color: '#e8c97a',
-                lineHeight: 1,
-              }}
-            >
-              {renderStats[i]}{s.suffix}
-            </div>
-            <div
-              style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '10px',
-                color: '#3d3b38',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em',
-                marginTop: '4px',
-              }}
-            >
-              {s.label}
-            </div>
-          </div>
-        ))}
-      </motion.div>
-
-      {/* Scroll indicator — absolute bottom-center */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '32px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '8px',
+          justifyContent: 'center',
+          height: '100vh',
+          overflow: 'hidden',
+          padding: '0 clamp(24px,5vw,64px)',
         }}
       >
         <style>{`
-          @keyframes drawLine {
-            0% { transform: scaleY(0); transform-origin: top; }
-            40%, 100% { transform: scaleY(1); transform-origin: top; }
+          @keyframes fogFloat {
+            0% { transform: translateX(-10%) scale(1); opacity: 0.2; }
+            50% { transform: translateX(5%) scale(1.1); opacity: 0.4; }
+            100% { transform: translateX(-10%) scale(1); opacity: 0.2; }
           }
-          @keyframes fadeChevron {
-            0%, 30% { opacity: 0; transform: translateY(-4px); }
-            45% { opacity: 1; transform: translateY(0); }
-            80%, 100% { opacity: 0; transform: translateY(0); }
+          @keyframes filmGrain {
+            0%, 100% { transform: translate(0,0) }
+            10% { transform: translate(-1%,-1%) }
+            20% { transform: translate(1%,1%) }
+            30% { transform: translate(-2%,-2%) }
+            40% { transform: translate(1%,-1%) }
+            50% { transform: translate(-1%,1%) }
+            60% { transform: translate(2%,-2%) }
+            70% { transform: translate(-1%,2%) }
+            80% { transform: translate(-2%,-1%) }
+            90% { transform: translate(1%,-2%) }
+          }
+          .fog-layer {
+            position: absolute;
+            inset: -20%;
+            background: radial-gradient(ellipse at 50% 80%, rgba(200,220,255,0.08) 0%, transparent 60%),
+                        radial-gradient(ellipse at 20% 60%, rgba(200,220,255,0.05) 0%, transparent 50%);
+            animation: fogFloat 25s ease-in-out infinite;
+            pointer-events: none;
+            zIndex: 2;
+          }
+          .grain-overlay {
+            position: absolute;
+            inset: -50%;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            animation: filmGrain 8s steps(6) infinite;
+            pointer-events: none;
+            zIndex: 5;
+            will-change: transform;
           }
         `}</style>
-        <span
+
+        {/* ── Background Layer ───────────────── */}
+        <motion.div
           style={{
-            fontFamily: "'Space Mono', monospace",
-            fontSize: '9px',
-            color: '#3d3b38',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            marginBottom: '4px',
+            position: 'absolute',
+            inset: 0,
+            scale: bgScale,
+            transformOrigin: 'center 40%',
+            pointerEvents: 'none',
           }}
         >
-          Scroll
-        </span>
-        <div style={{ position: 'relative', width: '12px', height: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div
+          <img
+            src="/images/hero-wallpaper.jpg"
+            alt="Himalayan Mountains"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             style={{
-              width: '1px',
-              height: '16px',
-              background: '#e8c97a',
-              animation: 'drawLine 2.5s ease-out infinite',
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: 0.9,
+              filter: 'brightness(1.0) contrast(1.1) saturate(0.85)',
             }}
           />
-          <svg 
-            width="10" height="6" viewBox="0 0 10 6" fill="none" 
-            style={{ 
-              marginTop: '2px',
-              animation: 'fadeChevron 2.5s ease-out infinite' 
+        </motion.div>
+
+        {/* Gradient Overlay */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            background: 'linear-gradient(135deg, rgba(4,6,9,0.7) 0%, rgba(4,6,9,0.2) 50%, rgba(4,6,9,0.85) 100%)',
+            zIndex: 1,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* Fog & Grain Layers */}
+        <motion.div className="fog-layer" style={{ opacity: fogOpacitySlow }} />
+        <motion.div className="fog-layer" style={{ animationDelay: '-12s', animationDirection: 'reverse', filter: 'blur(10px)', opacity: fogOpacityFast }} />
+        <div className="grain-overlay" />
+
+        {/* Bottom Center Himalayas & Tagline */}
+        <motion.div
+          style={{
+            position: 'absolute',
+            bottom: 'clamp(50px, 10vh, 100px)',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            zIndex: 15,
+            textAlign: 'center',
+          }}
+        >
+          {/* Disappear */}
+          <motion.div
+            style={{
+              opacity: disappearOpacity,
+              y: disappearY,
+              marginBottom: '4px',
             }}
           >
-            <path d="M1 1L5 5L9 1" stroke="#e8c97a" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </div>
+            <span
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 'clamp(20px, 3.5vw, 28px)',
+                fontWeight: 500,
+                color: '#ffffff',
+                textShadow: '0 4px 20px rgba(0,0,0,0.8)',
+              }}
+            >
+              Disappear
+            </span>
+          </motion.div>
+
+          {/* INTO */}
+          <motion.div
+            style={{
+              opacity: intoOpacity,
+              y: intoY,
+              marginBottom: '4px',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 'clamp(14px, 2.5vw, 18px)',
+                fontWeight: 500,
+                letterSpacing: '0.1em',
+                color: 'rgba(255,255,255,0.8)',
+                textShadow: '0 4px 20px rgba(0,0,0,0.8)',
+              }}
+            >
+              INTO
+            </span>
+          </motion.div>
+
+          {/* The */}
+          <motion.div
+            style={{
+              opacity: theOpacity,
+              y: theY,
+              marginBottom: '2px', // Reduce pause to connect 'The' and 'Himalayas'
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontStyle: 'italic',
+                fontSize: 'clamp(28px, 5vw, 36px)',
+                fontWeight: 500,
+                color: '#e8c97a', // Golden
+                textShadow: '0 4px 20px rgba(232, 201, 122, 0.4)',
+              }}
+            >
+              The
+            </span>
+          </motion.div>
+
+          {/* Himalayas */}
+          <motion.div>
+            <span
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 'clamp(50px, 10vw, 84px)',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                color: '#e8c97a',
+                lineHeight: 1.1,
+              }}
+            >
+              Himalayas
+            </span>
+          </motion.div>
+        </motion.div>
+
+        {/* ── Dynamic Content ──────────────────────────────────── */}
+        <motion.div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'flex-start',
+            maxWidth: '1100px',
+            width: '100%',
+            margin: '0 auto',
+            opacity: contentOpacityOutro,
+            y: contentYOutro,
+          }}
+        >
+          {/* 1. Eyebrow */}
+          <motion.div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              marginBottom: '4vh',
+              opacity: extrasOpacity,
+            }}
+          >
+            <div style={{ width: '32px', height: '1px', background: '#e8c97a', opacity: 0.7 }} />
+            <span
+              style={{
+                fontFamily: "'Space Mono', monospace",
+                fontSize: '11px',
+                letterSpacing: '0.4em',
+                color: '#e8c97a',
+                textTransform: 'uppercase',
+              }}
+            >
+              Himalayan Travel Journal
+            </span>
+          </motion.div>
+
+          {/* 2. Headline */}
+          <div style={{ width: '100%', marginBottom: '0px' }}>
+            {/* Travel */}
+            <motion.div
+              style={{
+                textAlign: 'left',
+                marginBottom: 'clamp(-10px, -2vw, -20px)',
+                opacity: travelOpacity,
+                y: travelY,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 'clamp(64px, 13vw, 160px)',
+                  fontWeight: 600,
+                  color: '#ffffff',
+                  lineHeight: 1,
+                  display: 'block',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Travel
+              </span>
+            </motion.div>
+
+            {/* Hike */}
+            <motion.div
+              style={{
+                textAlign: 'left',
+                marginBottom: 'clamp(-10px, -2vw, -20px)',
+                opacity: hikeOpacity,
+                y: hikeY,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 'clamp(64px, 13vw, 160px)',
+                  fontWeight: 600,
+                  color: '#ffffff',
+                  lineHeight: 1,
+                  display: 'block',
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                Hike
+              </span>
+            </motion.div>
+
+            {/* Film */}
+            <motion.div
+              style={{
+                textAlign: 'left',
+                position: 'relative',
+                opacity: filmOpacity,
+                y: filmY,
+                scale: filmScale,
+                rotate: -15,
+                transformOrigin: 'left center',
+                marginRight: '20px',
+                filter: filmShadow,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 'clamp(72px, 15vw, 180px)',
+                  fontWeight: 700,
+                  fontStyle: 'italic',
+                  color: '#e8c97a',
+                  lineHeight: 1.1,
+                  display: 'inline-block',
+                }}
+              >
+                Film
+              </span>
+            </motion.div>
+
+          </div>
+
+          {/* 5. Buttons */}
+          <motion.div
+            style={{
+              display: 'flex',
+              gap: '20px',
+              marginTop: 'clamp(40px, 6vh, 60px)',
+              alignItems: 'center',
+              opacity: extrasOpacity,
+            }}
+          >
+            <button
+              className="magnetic-btn"
+              onClick={scrollToMap}
+              style={{
+                background: '#e8c97a',
+                color: '#06080c',
+                fontFamily: "'Space Mono', monospace",
+                fontSize: '12px',
+                letterSpacing: '0.12em',
+                padding: '16px 36px',
+                borderRadius: '2px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 700,
+                transition: 'all 0.3s ease',
+                textTransform: 'uppercase',
+                boxShadow: '0 4px 20px rgba(232, 201, 122, 0.15)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.opacity = '0.9';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 30px rgba(232, 201, 122, 0.3)';
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.opacity = '1';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(232, 201, 122, 0.15)';
+              }}
+            >
+              Explore Map
+            </button>
+          </motion.div>
+        </motion.div>
       </div>
     </section>
   )

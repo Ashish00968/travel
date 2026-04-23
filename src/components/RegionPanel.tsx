@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { useMapStore } from '../store/mapStore'
 import { HIMALAYA_REGIONS, type HimalayaSubRegion, type HimalayaPlace } from '../data/himalaya'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -22,10 +23,11 @@ const TYPE_DOT: Record<string, string> = {
  *  Close / reset → panel disappears
  * ═══════════════════════════════════════════════════════════════════ */
 export default function RegionPanel() {
-  const panelOpen      = useMapStore((s) => s.panelOpen)
-  const activeRegionId = useMapStore((s) => s.activeRegionId)
-  const closePanel     = useMapStore((s) => s.closePanel)
-  const isMobile       = useMediaQuery('(max-width: 900px)')
+  const panelOpen        = useMapStore((s) => s.panelOpen)
+  const activeRegionId   = useMapStore((s) => s.activeRegionId)
+  const closePanel       = useMapStore((s) => s.closePanel)
+  const openSubRegion    = useMapStore((s) => s.openSubRegion)
+  const isMobile         = useMediaQuery('(max-width: 900px)')
 
   /* Local drill-down: which sub-region is expanded */
   const [activeSub, setActiveSub] = useState<string | null>(null)
@@ -54,7 +56,7 @@ export default function RegionPanel() {
           transition={{ duration: 0.22, ease: [0.25, 0.8, 0.25, 1] }}
           style={{
             position: 'absolute',
-            top: isMobile ? 'auto' : '66px',
+            top: isMobile ? 'auto' : '16px',
             bottom: isMobile ? '0px' : 'auto',
             right: isMobile ? '0px' : '20px',
             width: isMobile ? '100%' : '290px',
@@ -153,7 +155,10 @@ export default function RegionPanel() {
                       key={sub.id}
                       sub={sub}
                       isLast={i === region.subregions.length - 1}
-                      onClick={() => setActiveSub(sub.id)}
+                      onClick={() => {
+                        setActiveSub(sub.id)
+                        openSubRegion(sub.id)  // triggers map fly-to via store
+                      }}
                     />
                   ))}
                 </motion.div>
@@ -254,12 +259,12 @@ function SubRegionRow({ sub, onClick, isLast }: { sub: HimalayaSubRegion; onClic
 /* ── Place row (level 2) ────────────────────────────────────────── */
 function PlaceRow({ place, regionId, isLast }: { place: HimalayaPlace; regionId: string; isLast?: boolean }) {
   const [hovered, setHovered]  = useState(false)
-  const openPlace              = useMapStore((s) => s.openPlace)
+  const navigate = useNavigate()
 
   return (
     <motion.div
       variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
-      onClick={() => openPlace(regionId, place.id)}
+      onClick={() => navigate(`/place/${regionId}/${place.id}`)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{

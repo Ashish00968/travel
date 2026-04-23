@@ -26,7 +26,7 @@ export default function Footer() {
   )
 
   return (
-    <footer ref={ref} style={{
+    <footer className="reveal" ref={ref} style={{
       position: 'relative',
       background: '#040508',
       borderTop: '1px solid rgba(255,255,255,0.05)',

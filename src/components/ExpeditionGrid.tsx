@@ -1,10 +1,16 @@
 import { useMemo, memo, useRef } from 'react'
-import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { HIMALAYA_REGIONS, type HimalayaRegion, type HimalayaSubRegion, type HimalayaPlace, TYPE_COLOR, TYPE_LABEL } from '../data/himalaya'
 import { useNavigate } from 'react-router-dom'
 import { useGridStore } from '../store/gridStore'
 import { useReveal } from '../hooks/useReveal'
-import { scaleIn } from '../lib/variants'
+import OptimizedImage from './OptimizedImage'
+import { AnimatedWord } from './AnimatedWord'
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.8, 0.25, 1] as [number, number, number, number] } }
+}
 
 const CARD_BG: Record<string, string> = {
   'jammu-kashmir':    '#04100f',
@@ -21,18 +27,6 @@ const IMG_GRADIENTS: Record<string, string> = {
 }
 const DEFAULT_BG = '#0d1117'
 
-const AnimatedHeadingWord = ({ word, delay, isInView }: { word: string, delay: number, isInView: boolean }) => (
-  <span style={{ display: 'inline-block', overflow: 'hidden', marginRight: '0.25em', verticalAlign: 'top' }}>
-    <motion.span
-      style={{ display: 'inline-block' }}
-      initial={{ y: '110%' }}
-      animate={isInView ? { y: '0%' } : { y: '110%' }}
-      transition={{ duration: 0.7, ease: [0.25, 0.8, 0.25, 1], delay }}
-    >
-      {word}
-    </motion.span>
-  </span>
-)
 
 export default function ExpeditionGrid() {
   const { viewLevel, activeRegId, activeSubRegId, setGridState } = useGridStore()
@@ -80,7 +74,7 @@ export default function ExpeditionGrid() {
               {viewLevel === 'states' ? 'Stories from the Mountains' : `Exploring ${activeRegion?.name}`}
             </div>
             <h2 style={{ fontFamily: "'Playfair Display',serif", fontSize: 'clamp(36px,5vw,52px)', color: '#edeae2', margin: 0, fontWeight: 700 }}>
-              {viewLevel === 'states' && headingWords.map((w,i) => <AnimatedHeadingWord key={i} word={w} delay={0.09*i} isInView={headerInView} />)}
+              {viewLevel === 'states' && headingWords.map((w,i) => <AnimatedWord key={i} word={w} delay={0.09*i} isInView={headerInView} />)}
               {viewLevel === 'subregions' && activeRegion?.name}
               {viewLevel === 'places' && activeSubReg?.name}
             </h2>
@@ -164,9 +158,8 @@ export default function ExpeditionGrid() {
               <motion.div
                 key="states"
                 initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, margin: '-60px' }}
-                variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+                animate="visible"
+                variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
                 className="exp-grid"
               >
@@ -243,13 +236,9 @@ const StateCard = memo(function StateCard({ region, onClick }: { region: Himalay
     cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`
   }
 
-  // Parallax setup
-  const { scrollYProgress } = useScroll({ target: cardRef, offset: ["start end", "end start"] })
-  const imageY = useTransform(scrollYProgress, [0, 1], ["-10%", "10%"])
-
   return (
     <motion.div
-      variants={scaleIn}
+      variants={cardVariants}
       ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -262,12 +251,11 @@ const StateCard = memo(function StateCard({ region, onClick }: { region: Himalay
       }}
     >
       <div style={{ height: '220px', background: IMG_GRADIENTS[region.id], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '64px', position: 'relative', overflow: 'hidden' }}>
-        <motion.img 
+        <OptimizedImage 
           src={`/images/${region.id}/thumbnail.jpg`} 
           alt={region.name} 
           className="cinematic-card-img"
-          style={{ y: imageY, position: 'absolute', inset: 0, width: '100%', height: '120%', objectFit: 'cover', opacity: 0.6, zIndex: 1 }}
-          onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0'; (e.target as HTMLImageElement).style.display = 'none'; }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '120%', objectFit: 'cover', opacity: 0.6, zIndex: 1 }}
         />
         {region.badge && <div className="badge-inner" style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '9px', padding: '4px 10px', background: 'rgba(0,0,0,0.6)', color: '#e8c97a', borderRadius: '4px', border: '1px solid rgba(232,201,122,0.3)', fontFamily: "'Space Mono',monospace", zIndex: 3, transition: 'all 0.3s ease' }}>{region.badge}</div>}
       </div>
@@ -290,7 +278,7 @@ const SubRegionCard = memo(function SubRegionCard({ sub, regionId, onClick }: { 
 
   return (
     <motion.div
-      variants={scaleIn}
+      variants={cardVariants}
       onClick={onClick}
       className="cinematic-card"
       style={{
@@ -315,8 +303,8 @@ const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: Himalaya
 
   return (
     <motion.div
-      variants={scaleIn}
-      onClick={() => navigate(`/place/${regionId}/${place.id}`)}
+      variants={cardVariants}
+      onClick={() => navigate(`/place/${regionId}/${place.id}`, { state: { from: 'grid' } })}
       className="cinematic-card"
       style={{
         background: bg, borderRadius: '12px', overflow: 'hidden', cursor: 'pointer',
@@ -325,7 +313,7 @@ const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: Himalaya
     >
       <div style={{ height: '140px', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '42px', position: 'relative', overflow: 'hidden' }}>
         {place.image ? (
-          <img 
+          <OptimizedImage 
             src={place.image} 
             alt={place.name} 
             className="cinematic-card-img"

@@ -383,6 +383,7 @@ export default function MapContainer() {
           tilt:    INIT.tilt,
           heading: INIT.heading,
           mapTypeId: 'satellite',
+          backgroundColor: '#06080c',
           // AdvancedMarkerElement strictly requires a mapId.
           mapId: import.meta.env.VITE_MAPS_MAP_ID || 'DEMO_MAP_ID',
           gestureHandling: 'none',
@@ -659,7 +660,7 @@ export default function MapContainer() {
             }
 
             // Phase 4: navigate to place page
-            navigate(navTarget)
+            navigate(navTarget, { state: { from: 'map' } })
           }
         }
 
@@ -1093,7 +1094,7 @@ export default function MapContainer() {
       )}
 
       {/* Vignette */}
-      <div style={{ position:'absolute', inset:0, pointerEvents:'none', boxShadow:'inset 0 0 140px rgba(3,5,8,.85)', zIndex:3 }} />
+      <div style={{ position:'absolute', inset:0, pointerEvents:'none', background: 'radial-gradient(ellipse at center, transparent 40%, rgba(6,8,12,0.8) 85%, #06080c 100%)', zIndex:3 }} />
 
       {/* ── Fullscreen button (bottom-right corner) ─────────── */}
       <button
