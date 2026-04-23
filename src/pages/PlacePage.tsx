@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import 'lite-youtube-embed/src/lite-yt-embed.css'
 import 'lite-youtube-embed'
@@ -7,7 +7,7 @@ import { HIMALAYA_REGIONS, type HimalayaVideo, type TrekStop } from '../data/him
 import { useMapStore } from '../store/mapStore'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
-const LiteYouTube = 'lite-youtube' as any
+const LazyLiteYouTube = 'lite-youtube' as any
 
 /* ─────────────────────────────────────────────────────────────────────
  * DEFAULT STOPS
