@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState, useEffect, useCallback, useMemo, useRef, Suspense, lazy } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import 'lite-youtube-embed/src/lite-yt-embed.css'
 import 'lite-youtube-embed'
@@ -7,7 +7,7 @@ import { HIMALAYA_REGIONS, type HimalayaVideo, type TrekStop } from '../data/him
 import { useMapStore } from '../store/mapStore'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
-const LazyLiteYouTube = 'lite-youtube' as any
+const LiteYouTube = 'lite-youtube' as any
 
 /* ─────────────────────────────────────────────────────────────────────
  * DEFAULT STOPS
@@ -709,10 +709,8 @@ export default function PlacePage() {
               </button>
               <div style={{ position:'relative', width:'100%', borderRadius:16, overflow:'hidden',
                 boxShadow:'0 24px 80px rgba(0,0,0,0.7)', paddingBottom:'56.25%' }}>
-                <Suspense fallback={<div style={{ position:'absolute', inset:0, background:'#000' }} />}>
-                  <LazyLiteYouTube videoid={activeVideo.youtubeId} playlabel={activeVideo.title} params="autoplay=1"
-                    style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
-                </Suspense>
+                <LiteYouTube videoid={activeVideo.youtubeId} playlabel={activeVideo.title} params="autoplay=1"
+                  style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
               </div>
               <p style={{ marginTop:14, textAlign:'center', fontFamily:"'Space Mono',monospace",
                 fontSize:11, color:'rgba(255,255,255,0.25)' }}>{activeVideo.title}</p>
