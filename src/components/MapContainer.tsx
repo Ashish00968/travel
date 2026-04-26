@@ -581,7 +581,7 @@ export default function MapContainer() {
             glowLine.setPath(newPath)
             dashedLine.setPath(newPath)
             currentIdx++
-          }, 100)
+          }, 50)
         })
 
         /* ── Core Place Click Logic ────────────────────────────── */
@@ -967,7 +967,6 @@ export default function MapContainer() {
           videoUrl={earthTransition.videoUrl}
           placeName={earthTransition.placeName}
           onComplete={() => {
-            setEarthTransition(null)
             navigate(earthTransition.navigateTo, { state: { from: 'map' } })
           }}
         />

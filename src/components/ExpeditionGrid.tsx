@@ -27,6 +27,13 @@ const IMG_GRADIENTS: Record<string, string> = {
 }
 const DEFAULT_BG = '#0d1117'
 
+const REGION_THUMBNAILS: Record<string, string> = {
+  'jammu-kashmir': 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/jkMain.png',
+  'himachal-pradesh': 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/HimachalMain.png',
+  'ladakh': 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/LadakhMain.png',
+  'uttarakhand': 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/UttrakhandMain.png',
+}
+
 
 export default function ExpeditionGrid() {
   const { viewLevel, activeRegId, activeSubRegId, setGridState } = useGridStore()
@@ -252,7 +259,7 @@ const StateCard = memo(function StateCard({ region, onClick }: { region: Himalay
     >
       <div style={{ height: '220px', background: IMG_GRADIENTS[region.id], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '64px', position: 'relative', overflow: 'hidden' }}>
         <OptimizedImage 
-          src={`/images/${region.id}/thumbnail.jpg`} 
+          src={REGION_THUMBNAILS[region.id] || `${import.meta.env.BASE_URL}images/${region.id}/thumbnail.jpg`} 
           alt={region.name} 
           className="cinematic-card-img"
           style={{ position: 'absolute', inset: 0, width: '100%', height: '120%', objectFit: 'cover', opacity: 0.6, zIndex: 1 }}

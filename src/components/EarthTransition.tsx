@@ -28,20 +28,40 @@ export default function EarthTransition({ videoUrl, placeName, onComplete }: Ear
   const [nameVisible, setNameVisible]   = useState(false)
   /* white-flash exit */
   const [flashing, setFlashing]         = useState(false)
+  /* video playback state */
+  const [playing, setPlaying]           = useState(false)
 
   /* ── Mount: fade in & fail-safe ──────────────────────────────── */
   useEffect(() => {
     /* tiny delay so browser can paint before animating */
     const t = setTimeout(() => setVisible(true), 30)
     const n = setTimeout(() => setNameVisible(true), 500)
-    /* fail-safe: if video hangs or fails to autoplay on mobile, exit after 8s */
-    const failsafe = setTimeout(handleEnded, 8000)
+    /* fail-safe: if video hangs or fails to autoplay on mobile, exit after 10s */
+    const failsafe = setTimeout(handleEnded, 10000)
 
-    if (videoRef.current) {
-      videoRef.current.play().catch(e => console.warn('EarthTransition autoplay blocked:', e))
+    const attemptPlay = () => {
+      if (videoRef.current) {
+        videoRef.current.play()
+          .then(() => {
+            console.log('EarthTransition: Playback started')
+            clearInterval(playCheck)
+          })
+          .catch(e => {
+            // Keep trying if blocked or still loading
+            console.warn('EarthTransition: Playback attempt failed:', e)
+          })
+      }
     }
 
-    return () => { clearTimeout(t); clearTimeout(n); clearTimeout(failsafe) }
+    const playCheck = setInterval(attemptPlay, 500)
+    attemptPlay()
+
+    return () => {
+      clearTimeout(t)
+      clearTimeout(n)
+      clearTimeout(failsafe)
+      clearInterval(playCheck)
+    }
   }, [])
 
   /* ── Progress bar via rAF ────────────────────────────────────── */
@@ -83,9 +103,21 @@ export default function EarthTransition({ videoUrl, placeName, onComplete }: Ear
         autoPlay
         muted
         playsInline
+        preload="auto"
+        controls={false}
+        controlsList="nodownload nofullscreen noremoteplayback"
         onEnded={handleEnded}
         onError={handleEnded}
-        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        onPlay={() => setPlaying(true)}
+        style={{ 
+          width: '100%', 
+          height: '100%', 
+          objectFit: 'cover', 
+          display: 'block',
+          opacity: playing ? 1 : 0,
+          transition: 'opacity 300ms ease',
+          pointerEvents: 'none'
+        }}
       />
 
       {/* ── Top progress bar ───────────────────────────────────── */}

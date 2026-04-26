@@ -62,7 +62,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
         height: stop.type === 'summit' ? 520 : 'clamp(320px,40vw,440px)' }}
       initial={{ opacity:0, scale:1.04 }}
       whileInView={{ opacity:1, scale:1 }}
-      viewport={{ once:true, margin:'-80px' }}
+      viewport={{ once:false, margin:'-80px' }}
       transition={{ duration:1.0, ease:[0.25,0.8,0.25,1] }}
     >
       {stop.mediaUrl ? (
@@ -102,7 +102,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
     }}>
       {/* Stop number */}
       <motion.div
-        initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+        initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:false }}
         transition={{ duration:0.5, delay:0.3 }}
         style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
           color:'rgba(232,201,122,0.28)', letterSpacing:'0.25em', marginBottom:14 }}>
@@ -111,7 +111,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
 
       {/* Title */}
       <motion.h3
-        initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+        initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
         transition={{ duration:0.6, delay:0.5 }}
         style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
           fontWeight:700, color:'#edeae2', lineHeight:1.1, margin:'0 0 18px' }}>
@@ -121,7 +121,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
       {/* Cinematic text — gold italic, the emotional voice */}
       {stop.cinematicText && (
         <motion.p
-          initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+          initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
           transition={{ duration:0.6, delay:0.7 }}
           style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
             fontSize:'clamp(15px,1.4vw,19px)', color:'#e8c97a', lineHeight:1.7,
@@ -132,7 +132,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
 
       {/* Moment — Space Mono field notes */}
       <motion.p
-        initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+        initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
         transition={{ duration:0.5, delay:0.9 }}
         style={{ fontFamily:"'Space Mono',monospace", fontSize:12,
           color:'rgba(255,255,255,0.38)', lineHeight:1.85, margin:0 }}>
@@ -163,7 +163,7 @@ function TextOnlyBlock({ stop, index }: { stop: TrekStop; index: number }) {
         <>
           {/* dark altitude placeholder */}
           <motion.div
-            initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+            initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:false }}
             transition={{ duration:0.8 }}
             style={{ position:'relative', borderRadius:14, overflow:'hidden',
               height: isMobile ? '200px' : 'clamp(200px,25vw,300px)', background:altGradient(stop.altitude),
@@ -179,27 +179,27 @@ function TextOnlyBlock({ stop, index }: { stop: TrekStop; index: number }) {
             </div>
           </motion.div>
           <div style={{ padding: isMobile ? '16px 0 0' : '0 0 0 48px' }}>
-            <motion.div initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+            <motion.div initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:false }}
               transition={{ delay:0.3 }}
               style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
                 color:'rgba(232,201,122,0.28)', letterSpacing:'0.25em', marginBottom:14 }}>
               {String(index + 1).padStart(2, '0')}
             </motion.div>
-            <motion.h3 initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+            <motion.h3 initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
               transition={{ duration:0.6, delay:0.5 }}
               style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
                 fontWeight:700, color:'#edeae2', margin:'0 0 18px', lineHeight:1.1 }}>
               {stop.title}
             </motion.h3>
             {stop.cinematicText && (
-              <motion.p initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+              <motion.p initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
                 transition={{ duration:0.6, delay:0.7 }}
                 style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
                   fontSize:'clamp(15px,1.4vw,19px)', color:'#e8c97a', lineHeight:1.7, margin:'0 0 18px' }}>
                 "{stop.cinematicText}"
               </motion.p>
             )}
-            <motion.p initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+            <motion.p initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
               transition={{ duration:0.5, delay:0.9 }}
               style={{ fontFamily:"'Space Mono',monospace", fontSize:12,
                 color:'rgba(255,255,255,0.38)', lineHeight:1.85, margin:0 }}>
@@ -210,27 +210,27 @@ function TextOnlyBlock({ stop, index }: { stop: TrekStop; index: number }) {
       ) : (
         <>
           <div style={{ padding:'0 48px 0 0', textAlign:'right', display:'flex', flexDirection:'column', alignItems:'flex-end' }}>
-            <motion.div initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+            <motion.div initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:false }}
               transition={{ delay:0.3 }}
               style={{ fontFamily:"'Space Mono',monospace", fontSize:10,
                 color:'rgba(232,201,122,0.28)', letterSpacing:'0.25em', marginBottom:14 }}>
               {String(index + 1).padStart(2, '0')}
             </motion.div>
-            <motion.h3 initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+            <motion.h3 initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
               transition={{ duration:0.6, delay:0.5 }}
               style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(20px,2.5vw,30px)',
                 fontWeight:700, color:'#edeae2', margin:'0 0 18px', lineHeight:1.1 }}>
               {stop.title}
             </motion.h3>
             {stop.cinematicText && (
-              <motion.p initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+              <motion.p initial={{ opacity:0, y:14 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
                 transition={{ duration:0.6, delay:0.7 }}
                 style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
                   fontSize:'clamp(15px,1.4vw,19px)', color:'#e8c97a', lineHeight:1.7, margin:'0 0 18px' }}>
                 "{stop.cinematicText}"
               </motion.p>
             )}
-            <motion.p initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+            <motion.p initial={{ opacity:0, y:10 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
               transition={{ duration:0.5, delay:0.9 }}
               style={{ fontFamily:"'Space Mono',monospace", fontSize:12,
                 color:'rgba(255,255,255,0.38)', lineHeight:1.85, margin:0 }}>
@@ -238,7 +238,7 @@ function TextOnlyBlock({ stop, index }: { stop: TrekStop; index: number }) {
             </motion.p>
           </div>
           <motion.div
-            initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:true }}
+            initial={{ opacity:0 }} whileInView={{ opacity:1 }} viewport={{ once:false }}
             transition={{ duration:0.8 }}
             style={{ position:'relative', borderRadius:14, overflow:'hidden',
               height:'clamp(200px,25vw,300px)', background:altGradient(stop.altitude),
@@ -291,7 +291,7 @@ function SummitBlock({ stop }: { stop: TrekStop }) {
 
       <div style={{ position:'absolute', top:'12%', left:0, right:0, textAlign:'center', padding:'0 40px' }}>
         <motion.div
-          initial={{ scale:0.85, opacity:0 }} whileInView={{ scale:1, opacity:1 }} viewport={{ once:true }}
+          initial={{ scale:0.85, opacity:0 }} whileInView={{ scale:1, opacity:1 }} viewport={{ once:false }}
           transition={{ duration:1.1, ease:[0.25,0.8,0.25,1] }}
         >
           <div style={{ fontFamily:"'Space Mono',monospace",
@@ -300,7 +300,7 @@ function SummitBlock({ stop }: { stop: TrekStop }) {
             textShadow:'0 0 80px rgba(232,201,122,0.25)' }}>
             {stop.altitude.toLocaleString()}m
           </div>
-          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+          <motion.div initial={{ opacity:0, y:16 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
             transition={{ delay:0.4 }}
             style={{ fontFamily:"'Playfair Display',serif", fontStyle:'italic',
               fontSize:'clamp(28px,5vw,64px)', color:'rgba(255,255,255,0.9)',
@@ -521,9 +521,9 @@ export default function PlacePage() {
          * ════════════════════════════════════════════════════════════ */}
         <section ref={trekRef} style={{ position:'relative' }}>
 
-          {/* Dark overlay so content stays readable over dim bg */}
-          <div style={{ position:'absolute', inset:0, background:'rgba(6,8,12,0.78)',
-            backdropFilter:'blur(0px)', pointerEvents:'none' }} />
+          {/* Gradient overlay so content stays readable while blending perfectly with Hero gradient (0.95) */}
+          <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(6,8,12,0.95) 0%, rgba(6,8,12,0.78) 15vh, rgba(6,8,12,0.78) 100%)',
+            pointerEvents:'none' }} />
 
           {/* ── Sticky Left Panel ─────────────────────────────────── */}
           <div style={{
@@ -639,7 +639,7 @@ export default function PlacePage() {
 
             {/* Videos */}
             {place.videos && place.videos.length > 0 && (
-              <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}
+              <motion.div initial={{ opacity:0, y:20 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:false }}
                 transition={{ duration:0.6 }} style={{ marginTop:140, paddingTop:60, borderTop:'1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ fontFamily:"'Space Mono',monospace", fontSize:9, letterSpacing:'0.2em',
                   textTransform:'uppercase', color:'rgba(232,201,122,0.35)', marginBottom:24 }}>

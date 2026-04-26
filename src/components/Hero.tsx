@@ -128,7 +128,7 @@ export default function Hero() {
           }}
         >
           <img
-            src="/images/hero-wallpaper.jpg"
+            src="https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/wallpaper.jpg"
             alt="Himalayan Mountains"
             loading="eager"
             fetchPriority="high"
