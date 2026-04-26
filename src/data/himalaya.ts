@@ -2,19 +2,31 @@
  *  himalaya.ts — Hierarchical data for the 4-region Himalayan atlas
  * ═══════════════════════════════════════════════════════════════════ */
 
+import { buildCloudinaryUrl } from '../lib/cloudinary'
+
 export type PlaceType = 'road' | 'trek' | 'spiritual' | 'scenic' | 'adventure' | 'lake'
 
-export interface TrekStop {
-  id:              string
-  scrollDepth:     number        // 0 to 100 (percentage of page scroll)
-  altitude:        number        // meters
-  title:           string        // e.g. "The trailhead", "First ridgeline"
-  moment:          string        // field-notes captions — Space Mono, documentary tone
-  cinematicText?:  string        // emotional narration — Playfair italic, gold
-  type:            'text' | 'photo' | 'video' | 'summit'
-  mediaUrl?:       string        // photo URL or YouTube video ID
-  coordinates?:    { lat: number; lng: number }
+/* ── Discriminated union on TrekStop.type ──────────────────────────
+ *  'photo' and 'video' stops REQUIRE a mediaUrl; 'text' and 'summit'
+ *  never carry one (mediaUrl is absent from those branches entirely).
+ *  This lets TypeScript narrow mediaUrl to `string` (never undefined)
+ *  inside photo/video branches without a non-null assertion.
+ * ─────────────────────────────────────────────────────────────────── */
+type TrekStopBase = {
+  id:             string
+  scrollDepth:    number        // 0–100 — percentage of page scroll
+  altitude:       number        // metres
+  title:          string
+  moment:         string        // Space Mono field-notes captions
+  cinematicText?: string        // Playfair italic emotional narration
+  coordinates?:   { lat: number; lng: number }
 }
+
+export type TrekStop =
+  | (TrekStopBase & { type: 'text';    mediaUrl?: never })
+  | (TrekStopBase & { type: 'summit';  mediaUrl?: string })  // summit MAY have a hero image
+  | (TrekStopBase & { type: 'photo';   mediaUrl: string })   // photo MUST have an image URL
+  | (TrekStopBase & { type: 'video';   mediaUrl: string })   // video MUST have a YouTube ID
 
 export interface HimalayaPlace {
   id:          string
@@ -429,7 +441,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
         places: [
           { 
             id: 'manali', name: 'Manali', emoji: '🏘️',
-            image: import.meta.env.BASE_URL + '/img/himachal-pradesh/kullu/manali.jpg'.slice(1),
+            image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'manali', 'manali'),
             lat: 32.24, lng: 77.19, heading: 330, elevation: '2,050m',
             meta: 'Adventure base · Kullu Valley', season: 'Year-round',
             desc: 'The adventure capital of Himachal — starting gun for Spiti, Lahaul and Ladakh expeditions.',
@@ -445,7 +457,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             type: 'road'
           },
-          { id: 'solang-valley', name: 'Solang Valley', emoji: '🎿', image: import.meta.env.BASE_URL + '/img/himachal-pradesh/kullu/solang.jpg'.slice(1), lat: 32.33, lng: 77.15, heading: 350, elevation: '2,480m', desc: 'World-class skiing in winter, paragliding in summer.',
+          { id: 'solang-valley', name: 'Solang Valley', emoji: '🎿', image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'solang-valley', 'solang'), lat: 32.33, lng: 77.15, heading: 350, elevation: '2,480m', desc: 'World-class skiing in winter, paragliding in summer.',
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 2050, title: 'Leaving Manali', moment: 'The road climbs north. Deodar forest flanks both sides.', type: 'text' },
               { id: 'gondola', scrollDepth: 35, altitude: 2300, title: 'The gondola base', moment: 'A cable car station at the valley mouth. Snow peaks fill every window.', type: 'photo', mediaUrl: '' },
@@ -453,7 +465,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 2200, title: 'The return', moment: 'Paragliders drift overhead. The valley catches the last golden light.', type: 'text' },
             ],
             type: 'adventure' },
-          { id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️', image: import.meta.env.BASE_URL + '/img/himachal-pradesh/kullu/Rohtang.jpg'.slice(1), lat: 32.37, lng: 77.24, heading: 280, elevation: '3,978m', desc: 'The great divide between green Kullu Valley and the cold desert of Lahaul.',
+          { id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️', image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'rohtang-pass', 'Rohtang'), lat: 32.37, lng: 77.24, heading: 280, elevation: '3,978m', desc: 'The great divide between green Kullu Valley and the cold desert of Lahaul.',
             trekPath: [
               { lat: 32.2504, lng: 77.2417 },  // Manali side base
               { lat: 32.3018, lng: 77.2402 },  // Mid climb / Marhi
@@ -467,7 +479,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 3400, title: 'Into Lahaul', moment: 'The cold desert begins. Colour drains from the landscape. A new country.', type: 'text' },
             ],
             type: 'road' },
-          { id: 'sethan', name: 'Sethan', emoji: '❄️', image: import.meta.env.BASE_URL + '/img/himachal-pradesh/kullu/sethan.jpg'.slice(1), lat: 32.19, lng: 77.24, heading: 310, elevation: '2,750m',
+          { id: 'sethan', name: 'Sethan', emoji: '❄️', image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'sethan', 'sethan'), lat: 32.19, lng: 77.24, heading: 310, elevation: '2,750m',
             trekPath: [
               // Real GPS track from KML — 13 waypoints (Sethan village trail)
               { lat: 32.2396739, lng: 77.2253057 },
@@ -755,3 +767,16 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
 export function countPlaces(region: HimalayaRegion): number {
   return region.subregions.reduce((n, sr) => n + sr.places.length, 0)
 }
+
+/* ── Flat O(1) place lookup ────────────────────────────────────────
+ *  Derived once at module load from HIMALAYA_REGIONS so any component
+ *  can do PLACE_INDEX[placeId] instead of walking the 3-level tree.
+ *  Keyed by place.id which is unique across the entire dataset.
+ * ─────────────────────────────────────────────────────────────────── */
+export const PLACE_INDEX: Record<string, HimalayaPlace> = Object.fromEntries(
+  HIMALAYA_REGIONS.flatMap((region) =>
+    region.subregions.flatMap((sub) =>
+      sub.places.map((place) => [place.id, place])
+    )
+  )
+)

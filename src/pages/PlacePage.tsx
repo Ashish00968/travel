@@ -4,10 +4,13 @@ import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import 'lite-youtube-embed/src/lite-yt-embed.css'
 import 'lite-youtube-embed'
 import { HIMALAYA_REGIONS, type HimalayaVideo, type TrekStop } from '../data/himalaya'
+import { blurPlaceholderFromUrl } from '../lib/cloudinary'
 import { useMapStore } from '../store/mapStore'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
-const LiteYouTube = 'lite-youtube' as any
+// lite-youtube-embed registers a custom element; cast to unknown then to a
+// valid JSX string tag so we avoid `any` while keeping full type safety.
+const LiteYouTube = 'lite-youtube' as unknown as keyof JSX.IntrinsicElements
 
 /* ─────────────────────────────────────────────────────────────────────
  * DEFAULT STOPS
@@ -56,6 +59,10 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
   const isMobile = useMediaQuery('(max-width: 900px)')
   const isEven = isMobile ? true : (index % 2 === 0) // On mobile, everything behaves like 'even' (photo then left-aligned text)
 
+  // For photo stops mediaUrl is guaranteed string by the discriminated union.
+  // StopBlock is only rendered for type==='photo', so this cast is safe.
+  const mediaUrl = (stop as Extract<TrekStop, { type: 'photo' }>).mediaUrl
+
   const photoEl = (
     <motion.div
       style={{ position:'relative', borderRadius:14, overflow:'hidden',
@@ -65,10 +72,18 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
       viewport={{ once:false, margin:'-80px' }}
       transition={{ duration:1.0, ease:[0.25,0.8,0.25,1] }}
     >
-      {stop.mediaUrl ? (
-        <img loading="lazy" decoding="async" src={stop.mediaUrl} alt={stop.title}
-          style={{ width:'100%', height:'100%', objectFit:'cover', display:'block',
-            transition:'transform 0.7s ease' }}
+      {mediaUrl ? (
+        <img
+          loading="lazy"
+          decoding="async"
+          src={mediaUrl}
+          alt={stop.title}
+          style={{
+            width:'100%', height:'100%', objectFit:'cover', display:'block',
+            transition:'transform 0.7s ease',
+            backgroundImage: `url("${blurPlaceholderFromUrl(mediaUrl)}")`,
+            backgroundSize: 'cover',
+          }}
           onMouseEnter={e => { (e.target as HTMLImageElement).style.transform = 'scale(1.04)' }}
           onMouseLeave={e => { (e.target as HTMLImageElement).style.transform = 'scale(1)' }} />
       ) : (
@@ -263,6 +278,8 @@ function TextOnlyBlock({ stop, index }: { stop: TrekStop; index: number }) {
  * SUMMIT — full-bleed 100vh reveal
  * ───────────────────────────────────────────────────────────────────── */
 function SummitBlock({ stop }: { stop: TrekStop }) {
+  // summit mediaUrl is optional in the discriminated union
+  const summitMedia = stop.type === 'summit' ? stop.mediaUrl : undefined
   return (
     <motion.div
       style={{ position:'relative', height:'100vh', borderRadius:20,
@@ -272,8 +289,17 @@ function SummitBlock({ stop }: { stop: TrekStop }) {
       viewport={{ once:true, margin:'-100px' }}
       transition={{ duration:1.2 }}
     >
-      {stop.mediaUrl
-        ? <img loading="lazy" decoding="async" src={stop.mediaUrl} alt={stop.title} style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover' }} />
+      {summitMedia
+        ? <img
+            loading="lazy"
+            decoding="async"
+            src={summitMedia}
+            alt={stop.title}
+            style={{
+              position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover',
+              backgroundImage: `url("${blurPlaceholderFromUrl(summitMedia)}")`,
+              backgroundSize: 'cover',
+            }} />
         : <div style={{ position:'absolute', inset:0, background:'linear-gradient(145deg,#08080f,#141428)' }} />
       }
       <div style={{ position:'absolute', inset:0,
@@ -343,6 +369,37 @@ export default function PlacePage() {
   const minAlt = useMemo(() => Math.min(...trekStops.map(s => s.altitude)), [trekStops])
   const maxAlt = useMemo(() => Math.max(...trekStops.map(s => s.altitude)), [trekStops])
 
+  /* ── O(1) scroll-band lookup (Task 3) ───────────────────────────────
+   *  Pre-bucket stops by 10 % scrollDepth bands (0–9, 10–19 … 90–99).
+   *  The IntersectionObserver callback indexes directly into this map
+   *  instead of scanning the full array on every scroll event.
+   *
+   *  Band key = Math.floor(stop.scrollDepth / 10) → integer 0–10.
+   *  Each band stores the *index* of the most relevant stop so the
+   *  sidebar altitude/title snaps to the correct stop immediately.
+   * ─────────────────────────────────────────────────────────────────── */
+  const stopBands = useMemo<Map<number, number>>(() => {
+    const bands = new Map<number, number>()
+    trekStops.forEach((stop, idx) => {
+      const band = Math.min(Math.floor(stop.scrollDepth / 10), 10)
+      // Keep the last stop in each band — it represents the furthest point
+      // reached within that 10% window, giving the most accurate altitude.
+      bands.set(band, idx)
+    })
+    return bands
+  }, [trekStops])
+
+  /** Resolve active stop index from a 0–100 scrollDepth value in O(1). */
+  const resolveStopIndex = useCallback((depth: number): number => {
+    const band = Math.min(Math.floor(depth / 10), 10)
+    // Walk backwards from this band to find the nearest populated band.
+    for (let b = band; b >= 0; b--) {
+      const idx = stopBands.get(b)
+      if (idx !== undefined) return idx
+    }
+    return 0
+  }, [stopBands])
+
   /* ── Scroll ──────────────────────────────────────────────────────── */
   const { scrollY } = useScroll()
   
@@ -362,7 +419,7 @@ export default function PlacePage() {
     if (!els.length) return
     const obs = new IntersectionObserver(
       (entries) => {
-        // Pick the entry closest to the vertical center of the screen
+        // Pick the DOM entry whose centre is closest to the viewport midpoint.
         const visible = entries
           .filter(e => e.isIntersecting)
           .sort((a, b) => {
@@ -371,15 +428,18 @@ export default function PlacePage() {
             return da - db
           })
         if (visible.length > 0) {
-          const idx = Number((visible[0].target as HTMLElement).dataset.stopIndex ?? 0)
-          setActiveStopIndex(idx)
+          // data-stop-index is the element index; use it directly for the
+          // sidebar tick mark, then do an O(1) band lookup for the altitude.
+          const rawIdx = Number((visible[0].target as HTMLElement).dataset.stopIndex ?? 0)
+          const scrollDepth = trekStops[rawIdx]?.scrollDepth ?? 0
+          setActiveStopIndex(resolveStopIndex(scrollDepth))
         }
       },
       { threshold: 0.25, rootMargin: '-10% 0px -10% 0px' }
     )
     els.forEach(el => obs.observe(el))
     return () => obs.disconnect()
-  }, [trekStops])
+  }, [trekStops, resolveStopIndex])
 
   /* ── Keyboard + scroll reset ─────────────────────────────────────── */
   useEffect(() => {
@@ -409,7 +469,9 @@ export default function PlacePage() {
 
   /* ── Back ────────────────────────────────────────────────────────── */
   const handleBack = useCallback(() => {
-    const from = (window.history.state?.usr as any)?.from as 'map' | 'grid' | undefined
+    // react-router stores location.state under history.state.usr
+    const usr = window.history.state?.usr as Record<string, unknown> | undefined
+    const from = usr?.from as 'map' | 'grid' | undefined
     if (from === 'grid') navigate('/#regions')
     else if (from === 'map') { navigate('/'); if (regionId) openRegionPanel(regionId) }
     else navigate(-1)
