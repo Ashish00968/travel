@@ -264,7 +264,7 @@ function PlaceRow({ place, regionId, isLast }: { place: HimalayaPlace; regionId:
   return (
     <motion.div
       variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
-      onClick={() => navigate(`/place/${regionId}/${place.id}`)}
+      onClick={() => navigate(`/place/${regionId}/${place.id}`, { state: { from: 'map' } })}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{

@@ -1,16 +1,14 @@
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion'
 import 'lite-youtube-embed/src/lite-yt-embed.css'
 import 'lite-youtube-embed'
 import { HIMALAYA_REGIONS, type HimalayaVideo, type TrekStop } from '../data/himalaya'
 import { blurPlaceholderFromUrl } from '../lib/cloudinary'
-import { useMapStore } from '../store/mapStore'
+
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
-// lite-youtube-embed registers a custom element; cast to unknown then to a
-// valid JSX string tag so we avoid `any` while keeping full type safety.
-const LiteYouTube = 'lite-youtube' as unknown as keyof JSX.IntrinsicElements
+const LiteYouTube = 'lite-youtube' as any
 
 /* ─────────────────────────────────────────────────────────────────────
  * DEFAULT STOPS
@@ -346,7 +344,9 @@ function SummitBlock({ stop }: { stop: TrekStop }) {
 export default function PlacePage() {
   const { regionId, placeId } = useParams<{ regionId: string; placeId: string }>()
   const navigate = useNavigate()
-  const openRegionPanel = useMapStore((s) => s.openRegionPanel)
+  const location = useLocation()
+  const navFrom = (location.state as { from?: 'map' | 'grid' } | null)?.from
+
 
   const trekRef = useRef<HTMLElement>(null)
 
@@ -469,13 +469,17 @@ export default function PlacePage() {
 
   /* ── Back ────────────────────────────────────────────────────────── */
   const handleBack = useCallback(() => {
-    // react-router stores location.state under history.state.usr
-    const usr = window.history.state?.usr as Record<string, unknown> | undefined
-    const from = usr?.from as 'map' | 'grid' | undefined
-    if (from === 'grid') navigate('/#regions')
-    else if (from === 'map') { navigate('/'); if (regionId) openRegionPanel(regionId) }
-    else navigate(-1)
-  }, [navigate, regionId, openRegionPanel])
+    if (navFrom) {
+      // Prevent the browser from animating scroll restoration on the
+      // current page before the route transition completes.
+      window.history.scrollRestoration = 'manual'
+      window.scrollTo(0, 0)
+      navigate(-1)
+    } else {
+      // Direct URL access — no previous history entry, fall back to home
+      navigate('/')
+    }
+  }, [navigate, navFrom])
 
   /* ── Guard ───────────────────────────────────────────────────────── */
   if (!region || !place) {
@@ -536,7 +540,7 @@ export default function PlacePage() {
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(232,201,122,0.35)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
         >
-          <span style={{ color:'#e8c97a' }}>←</span> Back to map
+          <span style={{ color:'#e8c97a' }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : 'Back to map'}
         </button>
 
         {/* ════════════════════════════════════════════════════════════

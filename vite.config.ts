@@ -10,9 +10,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
+          // React core — must stay together for hook reconciler
           if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router-dom')) return 'react-core'
+          // Framer Motion — large animation runtime, lazy-loaded with components
           if (id.includes('node_modules/framer-motion')) return 'framer'
-          if (id.includes('node_modules/@googlemaps')) return 'maps'
+          // Mapbox GL JS — very large (~1.6MB), only loaded when MapContainer mounts
+          if (id.includes('node_modules/mapbox-gl')) return 'mapbox'
+          // Zustand — tiny state management, group with app utilities
           if (id.includes('node_modules/zustand')) return 'zustand'
         }
       },

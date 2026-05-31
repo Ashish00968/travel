@@ -69,7 +69,11 @@ export default function Navbar() {
           transform: scaleX(1);
           transform-origin: left;
         }
-        @media(max-width:640px){.navbar-links{display:none!important;}}
+        @media(max-width:640px){
+          .navbar-links{display:none!important;}
+          .nav-cta{padding: 6px 12px !important;}
+          .nav-cta span{display: none;}
+        }
       `}</style>
       
       {/* Scroll progress bar */}
@@ -139,6 +143,12 @@ export default function Navbar() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 + i * 0.05, duration: 0.6 }}
                 href={href}
+                onClick={(e) => {
+                  if (href.startsWith('#')) {
+                    e.preventDefault();
+                    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
                 className="nav-link"
                 data-active={isActive ? "true" : "false"}
                 style={{ color: isActive ? '#e8c97a' : '#7a7570' }}
@@ -154,23 +164,26 @@ export default function Navbar() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
-          href="https://youtube.com/@ashish_0968"
+          href="https://youtube.com"
           target="_blank"
           rel="noopener noreferrer"
+          className="nav-cta"
           style={{
-            fontFamily: "'Space Mono', monospace",
-            fontSize: '11px',
-            fontWeight: 700,
-            color: '#06080c',
-            background: '#e8c97a',
-            padding: '8px 18px',
-            borderRadius: '4px',
-            textDecoration: 'none',
-            letterSpacing: '0.04em',
+            display: 'flex', alignItems: 'center', gap: '8px',
+            background: 'rgba(232,201,122,0.1)',
+            border: '1px solid rgba(232,201,122,0.3)',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            fontFamily: "'DM Sans', sans-serif", fontSize: '13px',
+            color: '#e8c97a', textDecoration: 'none',
+            transition: 'all 0.3s',
             whiteSpace: 'nowrap',
           }}
         >
-          ▶ YouTube
+          <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor">
+            <path d="M13.7 1.5C13.5 0.9 13.1 0.5 12.5 0.3C11.4 0 7 0 7 0C7 0 2.6 0 1.5 0.3C0.9 0.5 0.5 0.9 0.3 1.5C0 2.6 0 5 0 5C0 5 0 7.4 0.3 8.5C0.5 9.1 0.9 9.5 1.5 9.7C2.6 10 7 10 7 10C7 10 11.4 10 12.5 9.7C13.1 9.5 13.5 9.1 13.7 8.5C14 7.4 14 5 14 5C14 5 14 2.6 13.7 1.5ZM5.5 7.1V2.9L9.2 5L5.5 7.1Z" />
+          </svg>
+          <span>Watch Film</span>
         </motion.a>
       </motion.header>
     </>

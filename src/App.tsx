@@ -24,7 +24,7 @@ export default function App() {
   return (
     <>
       {/* Global custom cursor overlaid on everything */}
-      {!('ontouchstart' in window) && (
+      {typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches && (
         <Suspense fallback={null}>
           <LazyCursor />
         </Suspense>

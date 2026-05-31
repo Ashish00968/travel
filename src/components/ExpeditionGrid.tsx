@@ -167,7 +167,6 @@ export default function ExpeditionGrid() {
                 initial="hidden"
                 animate="visible"
                 variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.1 } } }}
-                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
                 className="exp-grid"
               >
                 {HIMALAYA_REGIONS.map((region) => (
@@ -183,7 +182,6 @@ export default function ExpeditionGrid() {
                 animate="visible"
                 variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
                 exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
-                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
                 className="exp-grid"
               >
                 {activeRegion.subregions.map((sub) => (
@@ -199,7 +197,6 @@ export default function ExpeditionGrid() {
                 animate="visible"
                 variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
                 exit={{ opacity: 0, x: -20, transition: { duration: 0.2 } }}
-                style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
                 className="exp-grid"
               >
                 {activeSubReg.places.map((place) => (
@@ -212,7 +209,9 @@ export default function ExpeditionGrid() {
       </div>
 
       <style>{`
-        @media (max-width: 680px) { .exp-grid { grid-template-columns: 1fr !important; } }
+        .exp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+        @media (max-width: 1024px) { .exp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 640px) { .exp-grid { grid-template-columns: 1fr; gap: 16px; } }
       `}</style>
     </section>
   )
@@ -262,7 +261,7 @@ const StateCard = memo(function StateCard({ region, onClick }: { region: Himalay
           src={REGION_THUMBNAILS[region.id] || `${import.meta.env.BASE_URL}images/${region.id}/thumbnail.jpg`} 
           alt={region.name} 
           className="cinematic-card-img"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '120%', objectFit: 'cover', opacity: 0.6, zIndex: 1 }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.6, zIndex: 1 }}
         />
         {region.badge && <div className="badge-inner" style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '9px', padding: '4px 10px', background: 'rgba(0,0,0,0.6)', color: '#e8c97a', borderRadius: '4px', border: '1px solid rgba(232,201,122,0.3)', fontFamily: "'Space Mono',monospace", zIndex: 3, transition: 'all 0.3s ease' }}>{region.badge}</div>}
       </div>

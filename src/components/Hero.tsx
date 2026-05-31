@@ -300,7 +300,7 @@ export default function Hero() {
             <motion.div
               style={{
                 textAlign: 'left',
-                marginBottom: 'clamp(-10px, -2vw, -20px)',
+                marginBottom: '0px',
                 opacity: travelOpacity,
                 y: travelY,
               }}
@@ -308,7 +308,7 @@ export default function Hero() {
               <span
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: 'clamp(64px, 13vw, 160px)',
+                  fontSize: 'clamp(3rem, 12vw, 8rem)',
                   fontWeight: 600,
                   color: '#ffffff',
                   lineHeight: 1,
@@ -324,7 +324,7 @@ export default function Hero() {
             <motion.div
               style={{
                 textAlign: 'left',
-                marginBottom: 'clamp(-10px, -2vw, -20px)',
+                marginBottom: '0px',
                 opacity: hikeOpacity,
                 y: hikeY,
               }}
@@ -332,7 +332,7 @@ export default function Hero() {
               <span
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: 'clamp(64px, 13vw, 160px)',
+                  fontSize: 'clamp(3rem, 12vw, 8rem)',
                   fontWeight: 600,
                   color: '#ffffff',
                   lineHeight: 1,
@@ -361,7 +361,7 @@ export default function Hero() {
               <span
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: 'clamp(72px, 15vw, 180px)',
+                  fontSize: 'clamp(3.5rem, 14vw, 10rem)',
                   fontWeight: 700,
                   fontStyle: 'italic',
                   color: '#e8c97a',
@@ -386,7 +386,6 @@ export default function Hero() {
             }}
           >
             <button
-              className="magnetic-btn"
               onClick={scrollToMap}
               style={{
                 background: '#e8c97a',

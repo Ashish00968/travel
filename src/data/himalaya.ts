@@ -45,14 +45,6 @@ export interface HimalayaPlace {
   stats?:      HimalayaStat[]
   videos?:     HimalayaVideo[]
   trekStops?:  TrekStop[]
-  // To create Earth Studio transition videos:
-  // 1. Open earth.google.com/studio
-  // 2. Search for the place (e.g. "Patalsu Peak, Manali")
-  // 3. Create a keyframe animation flying toward the peak
-  // 4. Export as MP4 (720p is fine for web)
-  // 5. Host on Cloudinary or your CDN
-  // 6. Paste the URL here — the transition system activates automatically
-  videoTransitionUrl?: string  // URL to Earth Studio exported MP4; empty = use animateCamera fly-to
   trekPath?: Array<{ lat: number; lng: number }>  // Route polyline drawn on map after fly-to
   type:        PlaceType
 }
@@ -144,7 +136,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
     cardDesc: 'From the alpine meadows of Rajouri to the Dal Lake houseboats of Srinagar — J&K is where every road leads to something extraordinary.',
     tags: ['kashmir', 'rajouri', 'passes', 'meadows'],
     travelTypes: ['road', 'scenic', 'spiritual'],
-    showSubRegionsFirst: true,
+    showSubRegionsFirst: false,
     subregions: [
       {
         id: 'rajouri', name: 'Rajouri',
@@ -344,7 +336,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
       {
         id: 'leh-beyond', name: 'Leh & Beyond',
         places: [
-          { id: 'leh', name: 'Leh', emoji: '🏯', lat: 34.15, lng: 77.58, heading: 280, elevation: '3,524m', desc: 'The legendary capital of Ladakh — ancient monasteries, prayer flags and the widest skies you have ever seen.',
+          { id: 'leh', name: 'Leh', emoji: '☸️', lat: 34.15, lng: 77.58, heading: 280, elevation: '3,524m', desc: 'The legendary capital of Ladakh — ancient monasteries, prayer flags and the widest skies you have ever seen.',
             trekPath: [
               { lat: 34.14, lng: 77.57 },  // Old town bazaar
               { lat: 34.15, lng: 77.58 },  // Leh Palace
@@ -352,12 +344,12 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 3500, title: 'Leh town', moment: 'Prayer flags snap in the wind above whitewashed walls. The palace watches over everything.', type: 'text' },
-              { id: 'palace', scrollDepth: 30, altitude: 3524, title: 'Leh Palace', moment: 'Nine stories of mud-brick and timber. The Stok range fills the windows.', type: 'photo', mediaUrl: '' },
-              { id: 'summit', scrollDepth: 65, altitude: 3600, title: 'Shanti Stupa', moment: 'A white dome on a hill. The entire Indus valley unfolds below like a map.', type: 'summit' },
+              { id: 'palace', scrollDepth: 30, altitude: 3524, title: 'Leh Palace', moment: 'Nine stories of mud-brick and timber. The Stok range fills the windows.', type: 'photo', mediaUrl: '/images/generated/leh-palace.png' },
+              { id: 'summit', scrollDepth: 65, altitude: 3600, title: 'Shanti Stupa', moment: 'A white dome on a hill. The entire Indus valley unfolds below like a map.', type: 'summit', mediaUrl: '/images/generated/shanti-stupa.png' },
               { id: 'descent', scrollDepth: 95, altitude: 3500, title: 'Back to the bazaar', moment: 'The old town hums. Chai steam rises from a roadside stall.', type: 'text' },
             ],
             type: 'spiritual' },
-          { id: 'gurudwara-pathar-sahib', name: 'Gurudwara Pathar Sahib', emoji: '🛕', lat: 34.12, lng: 77.26, heading: 320, elevation: '3,500m', desc: 'A sacred Sikh shrine 25km from Leh, embedded into the mountain itself.',
+          { id: 'gurudwara-pathar-sahib', name: 'Gurudwara Pathar Sahib', emoji: '☬', lat: 34.12, lng: 77.26, heading: 320, elevation: '3,500m', desc: 'A sacred Sikh shrine 25km from Leh, embedded into the mountain itself.',
             trekPath: [
               { lat: 34.14, lng: 77.40 },  // Leh–Srinagar highway
               { lat: 34.13, lng: 77.33 },  // Magnetic hill approach
@@ -365,7 +357,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 3400, title: 'The approach', moment: 'The Leh–Srinagar highway cuts between magnetic hills. The shrine is in the rock itself.', type: 'text' },
-              { id: 'shrine', scrollDepth: 50, altitude: 3500, title: 'Inside the mountain', moment: 'Cool air, oil lamps, and the sound of kirtan echoing off stone walls.', type: 'photo', mediaUrl: '' },
+              { id: 'shrine', scrollDepth: 50, altitude: 3500, title: 'Inside the mountain', moment: 'Cool air, oil lamps, and the sound of kirtan echoing off stone walls.', type: 'photo', mediaUrl: '/images/generated/gurudwara.png' },
               { id: 'summit', scrollDepth: 80, altitude: 3500, title: 'Pathar Sahib', moment: 'The boulder with the impression. Faith pressed into stone.', type: 'summit' },
               { id: 'descent', scrollDepth: 95, altitude: 3400, title: 'Back on the highway', moment: 'The shrine disappears behind a bend. The magnetic hill pulls at the wheels.', type: 'text' },
             ],
@@ -428,11 +420,11 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
     lat: 32.00, lng: 77.10, zoom: 9, tilt: 55, heading: 330,
     camera: { lat: 31.80, lng: 77.20, zoom: 9, tilt: 60, heading: 340 },
     elevation: '640–3,978m', maxAlt: '3,978m (Rohtang)',
-    badge: 'Dev Bhoomi',
+    badge: 'Abode of Snow',
     cardDesc: 'Manali to Lahaul, Shimla to Kinnaur — Himachal is a state that keeps revealing itself the further you push into the mountains.',
     tags: ['manali', 'kullu', 'lahaul', 'kinnaur'],
     travelTypes: ['road', 'trek', 'adventure'],
-    showSubRegionsFirst: true,
+    showSubRegionsFirst: false,
     subregions: [
       {
         id: 'kullu', name: 'Kullu-Manali',
@@ -520,7 +512,6 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             experience: 'The final push to the Patalsu summit ridge was into a bitter wind, but the moment the clouds parted and I saw both Rohtang and the Dhauladhar range at once — completely worth it.',
             tips: ['Start by 5 AM to summit before afternoon clouds roll in.', 'Acclimatise for a day in Manali before attempting.', 'No technical gear required — good boots and layers are enough.'],
             stats: [{ label: 'Altitude', value: '4,220 m' }, { label: 'Trek', value: '12 km round trip' }, { label: 'Base', value: 'Solang Valley' }],
-            videoTransitionUrl: 'https://res.cloudinary.com/dehriwm1o/video/upload/q_auto:eco,f_auto,w_1280/v1776588285/Patalsu_jl6jxg.mp4',
             trekPath: [
               // Real GPS track from KML — 36 waypoints (Solang Valley → Patalsu Summit)
               { lat: 32.3207084, lng: 77.153156  },

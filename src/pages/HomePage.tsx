@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import Navbar from '../components/Navbar'
 import Hero from '../components/Hero'
@@ -8,6 +9,21 @@ import ExpeditionGrid from '../components/ExpeditionGrid'
 import Footer from '../components/Footer'
 
 export default function HomePage() {
+  const location = useLocation()
+  const returnFrom = (location.state as { from?: 'map' | 'grid' } | null)?.from
+
+  /* ── Scroll to correct section when returning from a place page ─── */
+  useEffect(() => {
+    if (returnFrom === 'map') {
+      // Instant jump — no animation, no flash
+      document.getElementById('map-section')?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
+    } else if (returnFrom === 'grid') {
+      document.getElementById('regions')?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
+    }
+    // Re-enable scroll restoration for future navigations
+    window.history.scrollRestoration = 'auto'
+  }, [returnFrom])
+
   /* ── Page-level SEO ────────────────────────────────────────────── */
   useEffect(() => {
     document.title = 'Peaks & Paths — My Himalayan Travel Journal'

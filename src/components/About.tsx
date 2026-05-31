@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
+import { useCountUp } from '../hooks/useCountUp'
 import { AnimatedWord } from './AnimatedWord'
 
+// ── Count-up ranges ─────────────────────────────────────────────
+// "2021" starts from 2015 so the range is short and snappy.
 const STATS = [
-  { value: 18,   display: '18+',  label: 'Peaks explored' },
-  { value: 6,    display: '6',    label: 'Himalayan regions' },
-  { value: 2021, display: '2021', label: 'Journey began' },
+  { from: 0,    to: 18,   display: '18+', label: 'Peaks explored' },
+  { from: 0,    to: 6,    display: '6',   label: 'Himalayan regions' },
+  { from: 2015, to: 2021, display: '2021',label: 'Journey began' },
 ]
 
 const SOCIALS = [
@@ -15,19 +18,37 @@ const SOCIALS = [
   { icon: '🐦', label: 'Twitter',   href: 'https://twitter.com' },
 ]
 
+// ── Stagger container + card variants ───────────────────────────
+const statsContainerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.15 },
+  },
+}
 
+const cardVariants = {
+  hidden:  { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
+  },
+}
 
-
+// ── StatCard: Framer Motion entrance + rAF count-up ─────────────
 function StatCard({ stat }: { stat: typeof STATS[number] }) {
   const [hovered, setHovered] = useState(false)
-  
-  // Keep useSpring just for hover if desired, or remove it entirely. Since rule says "if animation is just opacity + transform on scroll -> use CSS". I will use CSS fully for the reveal. Wait, let me just replace the motion.div wrapper with reveal-right.
 
-  const display = stat.display
+  // The ref is attached to the card element — count starts when ≥50% is visible.
+  const { count, ref } = useCountUp(stat.from, stat.to, 1500)
+
+  // For "18+" we append the suffix after counting
+  const hasSuffix = stat.display.endsWith('+')
 
   return (
-    <div
-      className="reveal-right"
+    <motion.div
+      ref={ref as React.RefObject<HTMLDivElement>}
+      variants={cardVariants}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -40,22 +61,48 @@ function StatCard({ stat }: { stat: typeof STATS[number] }) {
         transition: 'border-color 0.4s ease',
       }}
     >
-      <div style={{ transform: hovered ? 'scale(1.04)' : 'scale(1)', transition: 'transform 0.3s ease', transformOrigin: 'left center', fontFamily: "'Space Mono',monospace", fontSize: '54px', color: '#e8c97a', lineHeight: 1 }}>
-        {display}
+      {/* Animated number */}
+      <div
+        style={{
+          transform: hovered ? 'scale(1.04)' : 'scale(1)',
+          transition: 'transform 0.3s ease',
+          transformOrigin: 'left center',
+          fontFamily: "'Space Mono',monospace",
+          fontSize: '54px',
+          color: '#e8c97a',
+          lineHeight: 1,
+          // Prevent layout shift while digits change width
+          fontVariantNumeric: 'tabular-nums',
+          letterSpacing: '-0.02em',
+        }}
+      >
+        {count}{hasSuffix ? '+' : ''}
       </div>
-      <div style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '12px', color: '#3d3b38', textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: '6px' }}>
+
+      {/* Label */}
+      <div
+        style={{
+          fontFamily: "'DM Sans',sans-serif",
+          fontSize: '12px',
+          color: '#3d3b38',
+          textTransform: 'uppercase',
+          letterSpacing: '0.15em',
+          marginTop: '6px',
+        }}
+      >
         {stat.label}
       </div>
-      
-      <div 
+
+      {/* Bottom accent bar */}
+      <div
         style={{
           position: 'absolute', bottom: 0, left: 0, right: 0, height: '2px',
           background: 'linear-gradient(to right, #e8c97a, #c9a84c)',
           transformOrigin: 'left',
-          transform: 'scaleX(1)'
+          transform: 'scaleX(1)',
         }}
       />
-    </div>
+    </motion.div>
   )
 }
 
@@ -82,7 +129,7 @@ function SocialPill({ icon, label, href }: { icon: string; label: string; href: 
     >
       <motion.span
         animate={{ rotate: hovered ? 5 : 0 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
         style={{ display: 'inline-block' }}
       >
         {icon}
@@ -123,7 +170,7 @@ export default function About() {
             <motion.span
               initial={{ scale: 0.7, opacity: 0 }}
               animate={isInView ? { scale: 1, opacity: 0.04 } : {}}
-              transition={{ duration: 1.2, ease: "easeOut" }}
+              transition={{ duration: 1.2, ease: 'easeOut' }}
               aria-hidden="true"
               style={{
                 position: 'absolute', top: '-40px', left: '-20px',
@@ -132,7 +179,7 @@ export default function About() {
                 pointerEvents: 'none', userSelect: 'none',
               }}
             >
-              "
+              &ldquo;
             </motion.span>
             <p style={{
               fontFamily: "'Playfair Display',serif", fontStyle: 'italic',
@@ -144,15 +191,15 @@ export default function About() {
           </div>
 
           {/* Paragraph 1 */}
-          <p 
+          <p
             className="reveal"
             style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '15px', color: '#7a7570', lineHeight: 1.9, marginBottom: '16px' }}
           >
             What started as a weekend drive to Manali turned into years of solo expeditions across Spiti, Ladakh, Uttarakhand and beyond. I carry a camera, a tent, and an unhealthy obsession with high-altitude roads.
           </p>
-          
+
           {/* Paragraph 2 */}
-          <p 
+          <p
             className="reveal"
             style={{ fontFamily: "'DM Sans',sans-serif", fontSize: '15px', color: '#7a7570', lineHeight: 1.9, marginBottom: '16px' }}
           >
@@ -166,10 +213,18 @@ export default function About() {
           </div>
         </div>
 
-        {/* ── RIGHT COLUMN ────────────────────────────────────── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {STATS.map((stat) => <StatCard key={stat.label} stat={stat} />)}
-        </div>
+        {/* ── RIGHT COLUMN: staggered stat cards ──────────────── */}
+        <motion.div
+          variants={statsContainerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.25 }}
+          style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+        >
+          {STATS.map((stat) => (
+            <StatCard key={stat.label} stat={stat} />
+          ))}
+        </motion.div>
       </div>
 
       <style>{`

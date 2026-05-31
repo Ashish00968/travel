@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader'
+// @ts-ignore
+import mapboxgl from 'mapbox-gl'
+import 'mapbox-gl/dist/mapbox-gl.css'
 import { useMapStore } from '../store/mapStore'
 import { useMediaQuery } from '../hooks/useMediaQuery'
-import EarthTransition from './EarthTransition'
 import RegionPanel from './RegionPanel'
 import {
   HIMALAYA_REGIONS,
@@ -14,163 +15,43 @@ import {
   TYPE_LABEL,
   countPlaces,
 } from '../data/himalaya'
+import {
+  flyToCamera,
+  buildStateMarkerEl,
+  buildSubRegionMarkerEl,
+  buildPlaceMarkerEl,
+  buildSummitMarkerEl,
+  calcTrekDistance
+} from './mapUtils'
 
-/* ─── Initial map view ──────────────────────────────────────────── */
-const INIT = { lat: 33.5, lng: 77.0, zoom: 6, tilt: 55, heading: 345 }
+/* ── Initial map view — looking NORTH at the full Himalayan arc ── */
+const INIT = { lat: 31.0, lng: 77.0, zoom: 5.2, pitch: 65, bearing: 0 }
 
-let _configured = false
-
-/* ─── Watermark / dialog suppression ───────────────────────────── */
-function suppressWarnings(root: HTMLElement) {
-  if (!document.getElementById('_gm_s')) {
-    const s = document.createElement('style')
-    s.id = '_gm_s'
-    s.textContent = `
-      .gm-style-moc,.gm-style-moc+div{display:none!important;}
-      .gm-err-container,.gm-err-content{display:none!important;}
-      .gm-style-cc{opacity:0!important;pointer-events:none!important;}
-      .gm-style a[href*="maps.google"]{opacity:0!important;pointer-events:none!important;}
-    `
-    document.head.appendChild(s)
-  }
-  const obs = new MutationObserver(() => {
-    document.querySelectorAll('button').forEach(b => {
-      if (b.textContent?.trim() === 'OK') b.click()
-    })
-    ;[document.body, root].forEach(r => {
-      r.querySelectorAll('div,span').forEach(el => {
-        if ((el as HTMLElement).children.length === 0 &&
-            el.textContent?.trim() === 'For development purposes only')
-          (el as HTMLElement).style.setProperty('display', 'none', 'important')
-      })
-    })
-  })
-  obs.observe(document.body, { childList: true, subtree: true, characterData: true })
+/* ── Per-region cinematic south-offset camera (looks northward at peaks) ─
+ *  lat/lng = camera position (placed SOUTH of region for northward look)
+ *  bearing ≈ 0 → 10  (facing roughly north so snow peaks fill background)
+ *  pitch 65-72       (tilted so terrain drops away, peaks rise dramatically)
+ * ─────────────────────────────────────────────────────────────────────── */
+const REGION_CAMERAS: Record<string, { lat: number; lng: number; zoom: number; pitch: number; bearing: number }> = {
+  'jammu-kashmir':    { lat: 32.30, lng: 74.80, zoom: 8.0, pitch: 75, bearing: 10   },
+  'ladakh':           { lat: 32.80, lng: 77.50, zoom: 7.8, pitch: 75, bearing: 355 },
+  'himachal-pradesh': { lat: 30.90, lng: 77.10, zoom: 8.2, pitch: 75, bearing: 5   },
+  'uttarakhand':      { lat: 29.40, lng: 79.00, zoom: 8.0, pitch: 75, bearing: 5   },
 }
 
-/* ═══════════════════════════════════════════════════════════════════
- *  animateCamera — smooth rAF-based camera interpolation
- * ═══════════════════════════════════════════════════════════════════ */
-function animateCamera(
-  map: google.maps.Map,
-  to: { lat: number; lng: number; zoom: number; tilt: number; heading: number },
-  durationMs: number
-): Promise<void> {
-  return new Promise((resolve) => {
-    const start = performance.now()
-    const from = {
-      lat:     map.getCenter()?.lat() ?? to.lat,
-      lng:     map.getCenter()?.lng() ?? to.lng,
-      zoom:    map.getZoom()    ?? 7,
-      tilt:    map.getTilt()    ?? 0,
-      heading: map.getHeading() ?? 0,
-    }
-
-    function easeInOut(t: number) {
-      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
-    }
-
-    function frame(now: number) {
-      const elapsed = now - start
-      const t = Math.min(elapsed / durationMs, 1)
-      const e = easeInOut(t)
-
-      map.moveCamera({
-        center: {
-          lat: from.lat + (to.lat - from.lat) * e,
-          lng: from.lng + (to.lng - from.lng) * e,
-        },
-        zoom:    from.zoom    + (to.zoom    - from.zoom)    * e,
-        tilt:    from.tilt    + (to.tilt    - from.tilt)    * e,
-        heading: from.heading + (to.heading - from.heading) * e,
-      })
-
-      if (t < 1) {
-        requestAnimationFrame(frame)
-      } else {
-        resolve()
-      }
-    }
-
-    requestAnimationFrame(frame)
-  })
+/* Per-subregion south-offset cameras */
+const SUBREGION_CAMERAS: Record<string, { lat: number; lng: number; zoom: number; pitch: number; bearing: number }> = {
+  'rajouri':          { lat: 33.00, lng: 74.43, zoom: 10.0, pitch: 70, bearing: 5   },
+  'jammu':            { lat: 32.80, lng: 75.28, zoom: 10.0, pitch: 68, bearing: 5   },
+  'kashmir-valley':   { lat: 33.60, lng: 74.90, zoom: 10.0, pitch: 68, bearing: 5   },
+  'leh-beyond':       { lat: 33.50, lng: 77.58, zoom: 9.5,  pitch: 68, bearing: 355 },
+  'kullu':            { lat: 31.80, lng: 77.15, zoom: 10.2, pitch: 70, bearing: 5   },
+  'mandi':            { lat: 31.30, lng: 76.93, zoom: 10.5, pitch: 68, bearing: 5   },
+  'kinnaur':          { lat: 31.10, lng: 78.35, zoom: 10.5, pitch: 68, bearing: 15  },
+  'spiti':            { lat: 31.40, lng: 78.00, zoom: 9.5,  pitch: 68, bearing: 5   },
+  'garhwal':          { lat: 30.20, lng: 79.10, zoom: 10.0, pitch: 68, bearing: 5   },
 }
 
-/* ═══════════════════════════════════════════════════════════════════
- *  haversineDistance — great-circle distance between two lat/lng points
- * ═══════════════════════════════════════════════════════════════════ */
-function haversineDistance(p1: { lat: number; lng: number }, p2: { lat: number; lng: number }): number {
-  const R = 6371000
-  const dLat = (p2.lat - p1.lat) * Math.PI / 180
-  const dLon = (p2.lng - p1.lng) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
-
-function calcTrekDistance(path: Array<{ lat: number; lng: number }>): number {
-  let total = 0
-  for (let i = 0; i < path.length - 1; i++) total += haversineDistance(path[i], path[i + 1])
-  return total / 1000  // km
-}
-
-
-
-/** Level 0 — large gold triangle + emoji (state markers only) */
-function buildStateMarkerEl(region: HimalayaRegion, idx: number): HTMLElement {
-  const el = document.createElement('div')
-  el.style.cssText =
-    'cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:opacity .4s ease,transform .4s ease;'
-  el.innerHTML = `
-    <style>@keyframes sf${idx}{0%,100%{transform:translateY(0);filter:drop-shadow(0 8px 24px rgba(232,201,122,.7));}50%{transform:translateY(-8px);filter:drop-shadow(0 18px 36px rgba(232,201,122,1));}}</style>
-    <div style="animation:sf${idx} ${2.2 + idx * 0.4}s ease-in-out infinite;display:flex;flex-direction:column;align-items:center;">
-      <span style="font-size:26px;line-height:1;margin-bottom:-4px;filter:drop-shadow(0 2px 8px rgba(0,0,0,1));">${region.emoji}</span>
-      <svg width="42" height="54" viewBox="0 0 42 54" fill="none">
-        <path d="M21 3L2 44H40L21 3Z" fill="#e8c97a" stroke="#06080c" stroke-width="1.8" stroke-linejoin="round"/>
-        <path d="M12 44L21 24L30 44Z" fill="#c9a84c"/>
-        <path d="M15 18L9 34H23L15 18Z" fill="#f5e4a8" opacity="0.5"/>
-        <circle cx="21" cy="50" r="3.5" fill="#e8c97a" stroke="#06080c" stroke-width="1.2"/>
-        <line x1="21" y1="44" x2="21" y2="46.5" stroke="#06080c" stroke-width="1.2"/>
-      </svg>
-      <div style="margin-top:6px;padding:4px 10px;background:rgba(6,8,12,.94);border:1px solid rgba(232,201,122,.5);border-radius:4px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#e8c97a;white-space:nowrap;backdrop-filter:blur(12px);">${region.name}</div>
-    </div>`
-  return el
-}
-
-/** Level 1 — medium clean pin, NO emoji (sub-region hub markers for HP) */
-function buildSubRegionMarkerEl(sr: HimalayaSubRegion): HTMLElement {
-  const el = document.createElement('div')
-  el.style.cssText =
-    'cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:opacity .35s ease,transform .35s ease;'
-  el.innerHTML = `
-    <svg width="32" height="42" viewBox="0 0 32 42" fill="none">
-      <path d="M16 2C9.37 2 4 7.37 4 14C4 24.5 16 40 16 40C16 40 28 24.5 28 14C28 7.37 22.63 2 16 2Z"
-            fill="rgba(232,201,122,0.12)" stroke="#e8c97a" stroke-width="1.6"/>
-      <circle cx="16" cy="14" r="5" fill="rgba(232,201,122,0.35)" stroke="#e8c97a" stroke-width="1"/>
-    </svg>
-    <div style="margin-top:4px;padding:3px 9px;background:rgba(6,8,12,.94);border:1px solid rgba(232,201,122,.4);border-radius:3px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#e8c97a;white-space:nowrap;backdrop-filter:blur(10px);">${sr.name}</div>`
-  return el
-}
-
-/** Level 2 — small dot pin, NO emoji (place markers) */
-function buildPlaceMarkerEl(place: HimalayaPlace): HTMLElement {
-  const color = TYPE_COLOR[place.type] ?? '#e8c97a'
-  const el = document.createElement('div')
-  el.style.cssText =
-    'cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;gap:2px;'
-  el.innerHTML = `
-    <div style="padding:2px 7px;background:rgba(6,8,12,.9);border:1px solid ${color}50;border-radius:2px;font-family:'Space Mono',monospace;font-size:7px;letter-spacing:.1em;text-transform:uppercase;color:${color};white-space:nowrap;max-width:110px;overflow:hidden;text-overflow:ellipsis;">${place.name}</div>
-    <svg width="14" height="18" viewBox="0 0 14 18" fill="none">
-      <line x1="7" y1="0" x2="7" y2="8" stroke="${color}" stroke-width="1.2" opacity=".6"/>
-      <circle cx="7" cy="13" r="4.5" fill="${color}" stroke="#06080c" stroke-width="1"/>
-    </svg>`
-  return el
-}
-
-
-/* ═══════════════════════════════════════════════════════════════════
- *  FlyingOverlay — fullscreen cinematic overlay during fly-to
- * ═══════════════════════════════════════════════════════════════════ */
 interface FlyingState { name: string; emoji: string; image?: string }
 
 function FlyingOverlay({ flying }: { flying: FlyingState | null }) {
@@ -198,7 +79,6 @@ function FlyingOverlay({ flying }: { flying: FlyingState | null }) {
         }
       `}</style>
 
-      {/* Icon: custom image (circular) or emoji */}
       {flying.image ? (
         <div style={{
           width: '100px', height: '100px', borderRadius: '50%',
@@ -220,7 +100,6 @@ function FlyingOverlay({ flying }: { flying: FlyingState | null }) {
         }}>{flying.emoji}</span>
       )}
 
-      {/* Place name */}
       <div style={{
         fontFamily: "'Playfair Display', serif",
         fontStyle: 'italic',
@@ -232,7 +111,6 @@ function FlyingOverlay({ flying }: { flying: FlyingState | null }) {
         letterSpacing: '0.02em',
       }}>{flying.name}</div>
 
-      {/* "Flying to" label */}
       <div style={{
         fontFamily: "'Space Mono', monospace",
         fontSize: '11px',
@@ -243,7 +121,6 @@ function FlyingOverlay({ flying }: { flying: FlyingState | null }) {
         opacity: 0.8,
       }}>Flying to&hellip;</div>
 
-      {/* Gold progress bar */}
       <div style={{
         marginTop: '20px',
         width: '240px',
@@ -263,74 +140,54 @@ function FlyingOverlay({ flying }: { flying: FlyingState | null }) {
   )
 }
 
-/* ═══════════════════════════════════════════════════════════════════
- *  MapContainer — 3-level hierarchy
- *  Level 0 : 4 state markers
- *  Level 1 : sub-region markers (HP) OR place markers (others)
- *  Level 2 : place markers (HP only, after sub-region selected)
- * ═══════════════════════════════════════════════════════════════════ */
 export default function MapContainer() {
   const navigate = useNavigate()
-  const mapRef = useRef<HTMLDivElement>(null)
-  const mapObj = useRef<any>(null)
-  const AMERef = useRef<any>(null)
+  const mapContainerRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<mapboxgl.Map | null>(null)
 
-  /* Marker element / GM object refs */
-  const stateElsRef     = useRef<Record<string, HTMLElement>>({})
-  const stateGmRef      = useRef<Record<string, any>>({})
-  const subRegionGmRef  = useRef<any[]>([])   // Level-1 HP hub markers
-  const placeGmRef      = useRef<any[]>([])   // Level-2 place markers
+  const stateMarkersRef = useRef<Record<string, mapboxgl.Marker>>({})
+  const subRegionMarkersRef = useRef<mapboxgl.Marker[]>([])
+  const placeMarkersRef = useRef<mapboxgl.Marker[]>([])
+  const trekMarkersRef = useRef<mapboxgl.Marker[]>([])
 
-  /* Trek polyline refs — cleaned up on nav/reset */
-  const trekPolylineRef  = useRef<any>(null)
-  const trekGlowRef      = useRef<any>(null)
-  const summitCircleRef  = useRef<any>(null)
-  const summitPulseTimer = useRef<any>(null)
-
-  /* Stable function refs (assigned inside init useEffect) */
-  const doSelectStateRef     = useRef<(id: string, skipAnimation?: boolean) => Promise<void>>(async () => {})
+  const doSelectStateRef = useRef<(id: string, skipAnimation?: boolean) => Promise<void>>(async () => {})
   const doSelectSubRegionRef = useRef<(id: string, skipAnimation?: boolean) => Promise<void>>(async () => {})
-  const doBackToRegionRef    = useRef<() => void>(() => {})
-  const doResetRef           = useRef<() => void>(() => {})
+  const doBackToRegionRef = useRef<() => void>(() => {})
+  const doResetRef = useRef<() => void>(() => {})
+  const doSelectPlaceRef = useRef<(id: string) => void>(() => {})
 
-  /* React state for UI rendering */
-  const [loading,    setLoading]    = useState(true)
-  const [error,      setError]      = useState<string | null>(null)
-  const [mapActive,  setMapActive]  = useState(false)
-  const [flyingTo,   setFlyingTo]   = useState<FlyingState | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [mapActive, setMapActive] = useState(false)
+  const [flyingTo, setFlyingTo] = useState<FlyingState | null>(null)
+  // 'hidden' → no overlay | 'dimming' → fading in (pre-flight) | 'clearing' → fading out (post-flight)
+  const [flightDimOverlay, setFlightDimOverlay] = useState<'hidden' | 'dimming' | 'clearing'>('hidden')
+  // Cancels the hidden-transition timer if a new region is clicked before it completes
+  const flightDimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Drives which layer of markers is visible: 'regions' = all region pins shown,
+  // 'subregions' = region pins hidden, subregion/place pins shown
+  const [markerVisibilityState, setMarkerVisibilityState] = useState<'regions' | 'subregions'>('regions')
 
-  /* Earth Studio video transition state */
-  const [earthTransition, setEarthTransition] = useState<{
-    videoUrl: string
-    placeName: string
-    navigateTo: string
-  } | null>(null)
-
-  /* Trail stats overlay state */
   const [trekStats, setTrekStats] = useState<{
     name: string
     distanceKm: string
     points: number
   } | null>(null)
 
-  const activeRegionId      = useMapStore((s) => s.activeRegionId)
-  const activeSubRegionId   = useMapStore((s) => s.activeSubRegionId)
-  const setSubRegion        = useMapStore((s) => s.setSubRegion)
-  const openRegionPanel     = useMapStore((s) => s.openRegionPanel)
-  const closePanel          = useMapStore((s) => s.closePanel)
-  const storePlaceId        = useMapStore((s) => s.activePlaceId)
-  const panelOpen           = useMapStore((s) => s.panelOpen)
+  // Live altitude HUD for Patalsu trek animation
+  const [liveTrekAlt, setLiveTrekAlt] = useState<number | null>(null)
+
+  const activeRegionId = useMapStore((s) => s.activeRegionId)
+  const activeSubRegionId = useMapStore((s) => s.activeSubRegionId)
+  const setSubRegion = useMapStore((s) => s.setSubRegion)
+  const openRegionPanel = useMapStore((s) => s.openRegionPanel)
+  const closePanel = useMapStore((s) => s.closePanel)
+  const storePlaceId = useMapStore((s) => s.activePlaceId)
+  const panelOpen = useMapStore((s) => s.panelOpen)
   
-  const isMobile            = useMediaQuery('(max-width: 900px)')
-
-  const doSelectPlaceRef = useRef<(id: string) => void>(() => {})
-
+  const isMobile = useMediaQuery('(max-width: 900px)')
   const prevPanelOpen = useRef(panelOpen)
 
-  /* Track if a cinematic animation is running — pauses auto-rotation */
-  const isAnimatingRef = useRef(false)
-
-  /* Listen to panel closing to reset the map */
   useEffect(() => {
     if (prevPanelOpen.current && !panelOpen && doResetRef.current) {
       doResetRef.current()
@@ -338,559 +195,628 @@ export default function MapContainer() {
     prevPanelOpen.current = panelOpen
   }, [panelOpen])
 
-  /* Listen to activePlaceId from the sidebar clicks */
   useEffect(() => {
     if (storePlaceId && doSelectPlaceRef.current) {
       doSelectPlaceRef.current(storePlaceId)
     }
   }, [storePlaceId])
 
-  /* Dynamically adjust map padding to ensure markers aren't covered by bottom sheet */
   useEffect(() => {
-    if (mapObj.current) {
-      // The user requested to hide the RegionPanel entirely on mobile,
-      // so we no longer need the 45% bottom padding offset.
-      if (!isMobile && panelOpen) {
-        mapObj.current.setOptions({ padding: { top: 0, bottom: 0, left: 0, right: 0 } })
-      } else {
-        mapObj.current.setOptions({ padding: { top: 0, bottom: 0, left: 0, right: 0 } })
+    if (!mapContainerRef.current) return
+    const token = import.meta.env.VITE_MAPBOX_TOKEN
+    if (!token) {
+      setError('Mapbox token is missing in .env')
+      setLoading(false)
+      return
+    }
+    mapboxgl.accessToken = token
+
+    const map = new mapboxgl.Map({
+      container: mapContainerRef.current,
+      style: 'mapbox://styles/mapbox/satellite-v9',
+      center: [INIT.lng, INIT.lat],
+      zoom: INIT.zoom,
+      pitch: INIT.pitch,
+      bearing: INIT.bearing,
+      projection: 'globe',
+      interactive: false // Initial state, user must click to interact
+    })
+
+    mapRef.current = map
+
+    map.on('style.load', () => {
+      // Hide all default Mapbox labels, borders, and streets for a clean cinematic look
+      const layers = map.getStyle().layers;
+      if (layers) {
+        layers.forEach((layer) => {
+          if (layer.type === 'symbol' || layer.type === 'line' || layer.id.includes('road') || layer.id.includes('label')) {
+            map.setLayoutProperty(layer.id, 'visibility', 'none');
+          }
+        });
       }
-    }
-  }, [isMobile, panelOpen])
 
-  /* ── Init (runs once) ────────────────────────────────────────── */
-  useEffect(() => {
-    if (!mapRef.current) return
-    if (!_configured) {
-      setOptions({ key: import.meta.env.VITE_MAPS_API_KEY, v: 'weekly', libraries: ['marker'] })
-      _configured = true
-    }
+      map.setFog({
+        'range': [0.5, 10],
+        'color': '#06080c',
+        'high-color': '#245cdf',
+        'space-color': '#000000',
+        'star-intensity': 0.8
+      })
 
-    ;(async () => {
-      try {
-        const { Map }                   = await importLibrary('maps')   as any
-        const { AdvancedMarkerElement } = await importLibrary('marker') as any
-        AMERef.current = AdvancedMarkerElement
+      map.addSource('mapbox-dem', {
+        'type': 'raster-dem',
+        'url': 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        'tileSize': 512,
+        'maxzoom': 14
+      })
+      map.setTerrain({ 'source': 'mapbox-dem', 'exaggeration': 1.5 })
+      setLoading(false)
 
-        // NOTE: No mapId is set here intentionally.
-        // mapId enables vector rendering which CANNOT display satellite tiles —
-        // it only renders cloud-styled road maps. Raster mode (no mapId) gives us
-        // real satellite imagery. AdvancedMarkerElement still works on raster maps,
-        // it just logs a non-fatal console warning (which we suppress below).
-        const map = new Map(mapRef.current!, {
-          center: { lat: INIT.lat, lng: INIT.lng },
-          zoom:    INIT.zoom,
-          tilt:    INIT.tilt,
-          heading: INIT.heading,
-          mapTypeId: 'satellite',
-          backgroundColor: '#06080c',
-          // AdvancedMarkerElement strictly requires a mapId.
-          mapId: import.meta.env.VITE_MAPS_MAP_ID || 'DEMO_MAP_ID',
-          gestureHandling: 'none',
-          zoomControl:       false,
-          mapTypeControl:    false,
-          streetViewControl: false,
-          fullscreenControl: false,
-          rotateControl:     false,
-          keyboardShortcuts: false,
+      const clearSubRegionMarkers = () => {
+        subRegionMarkersRef.current.forEach(m => m.remove())
+        subRegionMarkersRef.current = []
+      }
+
+      const clearPlaceMarkers = () => {
+        placeMarkersRef.current.forEach(m => m.remove())
+        placeMarkersRef.current = []
+        clearTrekPath()
+      }
+
+      // Hide ALL region-level markers (including the one just selected).
+      // The CSS transition on each element (set in buildStateMarkerEl) handles the 300ms fade.
+      const dimStates = () => {
+        Object.values(stateMarkersRef.current).forEach(m => {
+          const el = m.getElement()
+          el.style.opacity = '0'
+          el.style.transform = 'scale(0.75)'
+          el.style.pointerEvents = 'none'
         })
+      }
 
-        // Re-assert after first idle to catch any async override
-        const idleListener = map.addListener('idle', () => {
-          idleListener.remove()
-          map.setMapTypeId('satellite')
-          map.setTilt(INIT.tilt)
-          map.setHeading(INIT.heading)
+      const restoreStates = () => {
+        Object.values(stateMarkersRef.current).forEach(m => {
+          const el = m.getElement()
+          el.style.opacity = '1'
+          el.style.transform = 'scale(1)'
+          el.style.pointerEvents = 'auto'
         })
+      }
 
-        mapObj.current = map
-        setLoading(false)
-        suppressWarnings(mapRef.current!)
-
-        const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
-
-        /* ── Auto-rotation ───────────────────────────────────── */
-        let autoRotate: number | null = null
-        let isUserInteracting = false
-
-        const startRotation = () => {
-          if (autoRotate) return
-          autoRotate = window.setInterval(() => {
-            if (!isUserInteracting && !isAnimatingRef.current) {
-              map.setHeading(((map.getHeading() ?? 0) + 0.4) % 360)
-            }
-          }, 60)
+      const clearTrekPath = () => {
+        // Remove gradient segments
+        for (let i = 0; i < 36; i++) {
+          if (map.getLayer(`trek-seg-glow-${i}`)) map.removeLayer(`trek-seg-glow-${i}`)
+          if (map.getLayer(`trek-seg-${i}`)) map.removeLayer(`trek-seg-${i}`)
+          if (map.getSource(`trek-seg-${i}`)) map.removeSource(`trek-seg-${i}`)
         }
-
-        const stopRotation = () => {
-          if (autoRotate) { clearInterval(autoRotate); autoRotate = null }
+        if (map.getSource('trek-path')) {
+          if (map.getLayer('trek-glow')) map.removeLayer('trek-glow')
+          if (map.getLayer('trek-line')) map.removeLayer('trek-line')
+          map.removeSource('trek-path')
         }
+        trekMarkersRef.current.forEach(m => m.remove())
+        trekMarkersRef.current = []
+        setTrekStats(null)
+        setLiveTrekAlt(null)
+      }
 
-        map.addListener('mousedown',   () => { isUserInteracting = true;  stopRotation() })
-        map.addListener('touchstart',  () => { isUserInteracting = true;  stopRotation() })
-        map.addListener('mouseup',     () => {
-          isUserInteracting = false
-          setTimeout(() => { if (!isUserInteracting) startRotation() }, 3000)
-        })
-        map.addListener('touchend',    () => {
-          isUserInteracting = false
-          setTimeout(() => { if (!isUserInteracting) startRotation() }, 3000)
-        })
+      // Patalsu-specific key waypoints: index → { label, alt }
+      const PATALSU_WAYPOINTS: Record<number, { label: string; alt: number }> = {
+        0:  { label: 'Solang Valley', alt: 2468 },
+        8:  { label: 'Trail Start', alt: 2650 },
+        14: { label: 'Forest Zone', alt: 2820 },
+        20: { label: 'Treeline', alt: 3500 },
+        27: { label: 'Ridge', alt: 3800 },
+        33: { label: 'Summit Push', alt: 4100 },
+        35: { label: '⛰️ SUMMIT 4261m', alt: 4261 },
+      }
 
-        setTimeout(startRotation, 2000)
+      // Interpolate altitude between known waypoints
+      const interpolateAlt = (idx: number, total: number): number => {
+        const altStart = 2468
+        const altEnd   = 4261
+        return Math.round(altStart + (altEnd - altStart) * (idx / (total - 1)))
+      }
 
-        /* ── Helpers ──────────────────────────────────────────── */
-        const clearSubRegionMarkers = () => {
-          subRegionGmRef.current.forEach(m => { m.map = null })
-          subRegionGmRef.current = []
+      // Map progress 0→1 to a colour: forest-green → amber → summit-gold
+      const trekColor = (t: number): string => {
+        if (t < 0.45) {
+          // green (#4ab8a0) → amber (#e8a030)
+          const r = Math.round(0x4a + (0xe8 - 0x4a) * (t / 0.45))
+          const g = Math.round(0xb8 + (0xa0 - 0xb8) * (t / 0.45))
+          const b = Math.round(0xa0 + (0x30 - 0xa0) * (t / 0.45))
+          return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
+        } else {
+          // amber (#e8a030) → gold (#e8c97a)
+          const t2 = (t - 0.45) / 0.55
+          const r = 0xe8
+          const g = Math.round(0xa0 + (0xc9 - 0xa0) * t2)
+          const b = Math.round(0x30 + (0x7a - 0x30) * t2)
+          return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
         }
-        const clearPlaceMarkers = () => {
-          placeGmRef.current.forEach(m => { m.map = null })
-          placeGmRef.current = []
-          // Also remove any active trek path
-          clearTrekPath()
-        }
-        const dimStates = (exceptId: string | null) => {
-          Object.entries(stateElsRef.current).forEach(([_id, el]) => {
-            el.style.opacity       = exceptId ? '0' : '1'
-            el.style.transform     = exceptId ? 'scale(0.75)' : 'scale(1)'
-            el.style.pointerEvents = exceptId ? 'none' : 'auto'
+      }
+
+      // Build a small named waypoint label marker
+      const buildWaypointMarkerEl = (label: string, _alt: number, color: string): HTMLElement => {
+        const el = document.createElement('div')
+        const isSummit = label.includes('SUMMIT')
+        el.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;pointer-events:none;">
+            <div style="
+              padding:${isSummit ? '5px 12px' : '3px 9px'};
+              background:rgba(6,8,12,0.92);
+              border:1px solid ${color}80;
+              border-radius:4px;
+              font-family:'Space Mono',monospace;
+              font-size:${isSummit ? '9px' : '7.5px'};
+              color:${color};
+              white-space:nowrap;
+              letter-spacing:0.12em;
+              text-transform:uppercase;
+              backdrop-filter:blur(10px);
+              box-shadow:0 0 ${isSummit ? '16px' : '8px'} ${color}40;
+              animation:wayptFade 0.4s ease;
+            ">${label}</div>
+            <svg width="2" height="${isSummit ? 16 : 10}" viewBox="0 0 2 16" fill="none">
+              <line x1="1" y1="0" x2="1" y2="16" stroke="${color}" stroke-width="1.5" opacity="0.6"/>
+            </svg>
+            <div style="width:${isSummit ? '10px' : '6px'};height:${isSummit ? '10px' : '6px'};border-radius:50%;background:${color};box-shadow:0 0 ${isSummit ? '14px' : '8px'} ${color};"></div>
+          </div>
+          <style>@keyframes wayptFade{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}</style>
+        `
+        return el
+      }
+
+      // Build animated particle dot that travels along the trail
+      const buildTrekParticleEl = (): HTMLElement => {
+        const el = document.createElement('div')
+        el.innerHTML = `
+          <div style="position:relative;width:18px;height:18px;">
+            <div style="position:absolute;inset:0;border-radius:50%;background:rgba(232,201,122,0.25);animation:trekPulse 1s ease-in-out infinite;"></div>
+            <div style="position:absolute;top:5px;left:5px;width:8px;height:8px;border-radius:50%;background:#e8c97a;box-shadow:0 0 12px rgba(232,201,122,1);"></div>
+          </div>
+          <style>@keyframes trekPulse{0%,100%{transform:scale(1);opacity:0.7}50%{transform:scale(2.2);opacity:0.15}}</style>
+        `
+        return el
+      }
+
+      const drawTrekPath = async (path: Array<{ lat: number; lng: number }>, placeName: string, isCinematic = false) => {
+        if (!path || path.length < 2) return
+        clearTrekPath()
+
+        const distKm = calcTrekDistance(path)
+        const coordinates = path.map(p => [p.lng, p.lat])
+        const total = coordinates.length
+
+        // ── Cinematic multi-stage fly for Patalsu ──────────────────
+        if (isCinematic) {
+          // Stage 1: Approach from Manali — wide valley view
+          await flyToCamera(map, {
+            lat: 32.305, lng: 77.155, zoom: 11, pitch: 45, bearing: 20, duration: 1600
           })
-          Object.values(stateGmRef.current).forEach(gm => {
-            gm.map = exceptId ? null : map
+          // Stage 2: Rise up the valley looking toward the peak
+          await flyToCamera(map, {
+            lat: 32.330, lng: 77.162, zoom: 12.5, pitch: 68, bearing: 15, duration: 1800
           })
-        }
-        const restoreStates = () => {
-          Object.values(stateElsRef.current).forEach(el => {
-            el.style.opacity = '1'; el.style.transform = 'scale(1)'; el.style.pointerEvents = 'auto'
+          // Stage 3: Swoop low over the ridgeline
+          await flyToCamera(map, {
+            lat: 32.348, lng: 77.175, zoom: 13, pitch: 75, bearing: 350, duration: 1600
           })
-          Object.values(stateGmRef.current).forEach(gm => {
-            gm.map = map
+          // Stage 4: Summit reveal — zoom in tight, looking up
+          await flyToCamera(map, {
+            lat: 32.3547, lng: 77.1939, zoom: 13.5, pitch: 72, bearing: 200, duration: 1800
           })
-        }
-
-        /* ── Clear trek path polyline + summit circle ──────────── */
-        const clearTrekPath = () => {
-          if (trekPolylineRef.current)  { trekPolylineRef.current.setMap(null);  trekPolylineRef.current = null }
-          if (trekGlowRef.current)      { trekGlowRef.current.setMap(null);      trekGlowRef.current = null }
-          if (summitCircleRef.current)  { summitCircleRef.current.setMap(null);  summitCircleRef.current = null }
-          if (summitPulseTimer.current) { clearInterval(summitPulseTimer.current); summitPulseTimer.current = null }
-          setTrekStats(null)
-        }
-
-        /* ── Draw animated trek route polyline ─────────────────── */
-        const drawTrekPath = (
-          path: Array<{ lat: number; lng: number }>,
-          placeName: string,
-        ): Promise<void> => new Promise((resolve) => {
-          if (!path || path.length < 2) { resolve(); return }
-          clearTrekPath()
-
-          const distKm = calcTrekDistance(path)
-
-          // Fit camera to show the FULL route before drawing starts
+        } else {
+          // Standard fly for other treks
           const midLat = (path[0].lat + path[path.length - 1].lat) / 2
           const midLng = (path[0].lng + path[path.length - 1].lng) / 2
-          map.panTo({ lat: midLat, lng: midLng })
-          map.setZoom(12)
-          map.setTilt(55)
+          await flyToCamera(map, { lat: midLat, lng: midLng, zoom: 12, pitch: 55, bearing: 0, duration: 1500 })
+        }
 
-          // Create both polyline layers with just the first point initially
-          const startPath = [path[0]]
+        // Pull camera back to see full trail
+        await flyToCamera(map, {
+          lat: 32.336, lng: 77.172, zoom: 12.2, pitch: 62, bearing: 355, duration: 1200
+        })
 
-          // Layer 1: glow
-          const glowLine = new (window as any).google.maps.Polyline({
-            path: startPath,
-            geodesic: true,
-            strokeColor: '#e8c97a',
-            strokeOpacity: 0.22,
-            strokeWeight: 10,
-            map,
-            zIndex: 5,
+        // ── Add per-segment gradient sources (pre-create all, draw empty) ─
+        for (let i = 0; i < total - 1; i++) {
+          const segGeo: GeoJSON.Feature<GeoJSON.LineString> = {
+            type: 'Feature', properties: {},
+            geometry: { type: 'LineString', coordinates: [] }
+          }
+          map.addSource(`trek-seg-${i}`, { type: 'geojson', data: segGeo })
+          const color = trekColor(i / (total - 1))
+          map.addLayer({
+            id: `trek-seg-glow-${i}`,
+            type: 'line', source: `trek-seg-${i}`,
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': color, 'line-width': 12, 'line-opacity': 0.18 }
           })
-          trekGlowRef.current = glowLine
-
-          // Layer 2: dashed gold line
-          const dashedLine = new (window as any).google.maps.Polyline({
-            path: startPath,
-            geodesic: true,
-            strokeColor: '#e8c97a',
-            strokeOpacity: 1,
-            strokeWeight: 2.5,
-            icons: [{
-              icon: {
-                path: 'M 0,-1 0,1',
-                strokeOpacity: 1,
-                scale: 3,
-              },
-              offset: '0',
-              repeat: '12px',
-            }],
-            map,
-            zIndex: 6,
+          map.addLayer({
+            id: `trek-seg-${i}`,
+            type: 'line', source: `trek-seg-${i}`,
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': color, 'line-width': 2.8, 'line-opacity': 0.95 }
           })
-          trekPolylineRef.current = dashedLine
+        }
 
-          // Animate: reveal one point every 300ms
-          let currentIdx = 1
+        // Add animated particle marker (starts at trailhead)
+        const particleEl = buildTrekParticleEl()
+        const particleMarker = new mapboxgl.Marker({ element: particleEl, anchor: 'center' })
+          .setLngLat([coordinates[0][0], coordinates[0][1]])
+          .addTo(map)
+        trekMarkersRef.current.push(particleMarker)
+
+        // ── Animate the trail drawing segment by segment ───────────
+        let currentIdx = 0
+        const drawnWaypoints = new Set<number>()
+
+        return new Promise<void>(resolve => {
           const interval = setInterval(() => {
-            if (currentIdx >= path.length) {
+            if (currentIdx >= total - 1) {
               clearInterval(interval)
+              particleMarker.remove()
 
-              // All points drawn — add pulsing summit circle
+              // Summit pulsing marker
               const summit = path[path.length - 1]
-              const circle = new (window as any).google.maps.Circle({
-                center: summit,
-                radius: 200,
-                fillColor: '#e8c97a',
-                fillOpacity: 0.18,
-                strokeColor: '#e8c97a',
-                strokeWeight: 1.5,
-                strokeOpacity: 0.9,
-                map,
-                zIndex: 7,
-              })
-              summitCircleRef.current = circle
+              const sm = new mapboxgl.Marker({ element: buildSummitMarkerEl(), anchor: 'center' })
+                .setLngLat([summit.lng, summit.lat])
+                .addTo(map)
+              trekMarkersRef.current.push(sm)
 
-              // Pulse radius 200 → 400 → 200
-              let expanding = true
-              summitPulseTimer.current = setInterval(() => {
-                const cur = circle.getRadius()
-                if (expanding) {
-                  circle.setRadius(Math.min(cur + 12, 400))
-                  if (cur >= 395) expanding = false
-                } else {
-                  circle.setRadius(Math.max(cur - 12, 200))
-                  if (cur <= 205) expanding = true
-                }
-              }, 40)
+              setTrekStats({ name: placeName, distanceKm: distKm.toFixed(1), points: total })
+              setLiveTrekAlt(null)
 
-              // Show trail stats overlay
-              setTrekStats({
-                name: placeName,
-                distanceKm: distKm.toFixed(1),
-                points: path.length,
-              })
-
-              // Hold so user can admire the drawn path, then resolve
-              setTimeout(resolve, 700)
+              // ── Post-summit orbit: slowly circle the peak ─────────
+              const summitLng = summit.lng
+              const summitLat = summit.lat
+              let bearing = 200
+              const orbitInterval = setInterval(() => {
+                bearing = (bearing + 1.2) % 360
+                map.easeTo({ bearing, center: [summitLng, summitLat], zoom: 13.5, pitch: 68, duration: 80, easing: t => t })
+              }, 80)
+              setTimeout(() => {
+                clearInterval(orbitInterval)
+                setTimeout(resolve, 200)
+              }, 6000)
               return
             }
 
-            const newPath = path.slice(0, currentIdx + 1)
-            glowLine.setPath(newPath)
-            dashedLine.setPath(newPath)
+            // Draw current segment
+            const segGeo: GeoJSON.Feature<GeoJSON.LineString> = {
+              type: 'Feature', properties: {},
+              geometry: { type: 'LineString', coordinates: [coordinates[currentIdx], coordinates[currentIdx + 1]] }
+            }
+            const src = map.getSource(`trek-seg-${currentIdx}`) as mapboxgl.GeoJSONSource
+            if (src) src.setData(segGeo)
+
+            // Move particle to current leading edge
+            particleMarker.setLngLat([coordinates[currentIdx + 1][0], coordinates[currentIdx + 1][1]])
+
+            // Update live altitude HUD
+            const alt = interpolateAlt(currentIdx + 1, total)
+            setLiveTrekAlt(alt)
+
+            // Spawn named waypoint markers at key stops
+            if (PATALSU_WAYPOINTS[currentIdx] && !drawnWaypoints.has(currentIdx)) {
+              drawnWaypoints.add(currentIdx)
+              const wp = PATALSU_WAYPOINTS[currentIdx]
+              const color = trekColor(currentIdx / (total - 1))
+              const wpEl = buildWaypointMarkerEl(wp.label, wp.alt, color)
+              const wpMarker = new mapboxgl.Marker({ element: wpEl, anchor: 'bottom' })
+                .setLngLat([coordinates[currentIdx][0], coordinates[currentIdx][1]])
+                .addTo(map)
+              trekMarkersRef.current.push(wpMarker)
+            }
+
             currentIdx++
-          }, 50)
+          }, 80)
+        })
+      }
+
+      const handlePlaceClick = async (place: HimalayaPlace, region: HimalayaRegion) => {
+        const targetHeading = place.heading ?? 5
+        const navTarget = `/place/${region.id}/${place.id}`
+
+        setFlyingTo({ name: place.name, emoji: place.emoji, image: place.image })
+
+        await flyToCamera(map, {
+          lat: (region.lat + place.lat) / 2,
+          lng: (region.lng + place.lng) / 2,
+          zoom: Math.max(map.getZoom() - 1, 6),
+          pitch: 45,
+          bearing: map.getBearing(),
+          duration: 600
         })
 
-        /* ── Core Place Click Logic ────────────────────────────── */
-        const handlePlaceClick = async (place: HimalayaPlace, region: HimalayaRegion) => {
-          isAnimatingRef.current = true
-          stopRotation()
+        await flyToCamera(map, {
+          lat: place.lat - 0.05,
+          lng: place.lng,
+          zoom: 12.5,
+          pitch: 75,
+          bearing: targetHeading,
+          duration: 1200
+        })
 
-          const targetHeading   = place.heading ?? 300
-          const videoUrl        = (place as any).videoTransitionUrl as string | undefined
-          const navTarget       = `/place/${region.id}/${place.id}`
+        setFlyingTo(null)
 
-          if (videoUrl) {
-            /* ── Video transition path ──────────────────────────── */
-            setFlyingTo({ name: place.name, emoji: place.emoji, image: place.image })
+        if (place.trekPath && place.trekPath.length > 1) {
+          const isCinematic = place.id === 'patalsu-peak'
+          await drawTrekPath(place.trekPath, place.name, isCinematic)
+        }
 
-            // Phase 1: pull back
-            await animateCamera(map, {
-              lat:     (region.lat + place.lat) / 2,
-              lng:     (region.lng + place.lng) / 2,
-              zoom:    Math.max((map.getZoom() ?? 10) - 1, 6),
-              tilt:    30,
-              heading: map.getHeading() ?? 0,
-            }, 600)
+        navigate(navTarget, { state: { from: 'map' } })
+      }
 
-            // Phase 2: fly to place
-            await animateCamera(map, {
-              lat:     place.lat,
-              lng:     place.lng,
-              zoom:    11,
-              tilt:    50,
-              heading: targetHeading,
-            }, 900)
-
-            setFlyingTo(null)
-            isAnimatingRef.current = false
-
-            // Phase 3: draw trek path (AWAITED — user sees the full route)
-            if (place.id === 'patalsu-peak' && place.trekPath && place.trekPath.length > 1) {
-              await drawTrekPath(place.trekPath, place.name)
-            }
-
-            // Phase 4: hand off to Earth Studio video transition
-            setEarthTransition({
-              videoUrl,
-              placeName: place.name,
-              navigateTo: navTarget,
-            })
-          } else {
-            /* ── Standard animateCamera flow ────────────────────── */
-            setFlyingTo({ name: place.name, emoji: place.emoji, image: place.image })
-
-            // Phase 1: pull back
-            await animateCamera(map, {
-              lat:     (region.lat + place.lat) / 2,
-              lng:     (region.lng + place.lng) / 2,
-              zoom:    Math.max((map.getZoom() ?? 10) - 1, 6),
-              tilt:    30,
-              heading: map.getHeading() ?? 0,
-            }, 600)
-
-            // Phase 2: fly toward place from above
-            await animateCamera(map, {
-              lat:     place.lat,
-              lng:     place.lng,
-              zoom:    11,
-              tilt:    50,
-              heading: targetHeading,
-            }, 900)
+      const spawnPlaceMarkers = (subRegion: HimalayaSubRegion, region: HimalayaRegion) => {
+        subRegion.places.forEach((place, i) => {
+          setTimeout(() => {
+            const el = buildPlaceMarkerEl(place)
+            const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+              .setLngLat([place.lng, place.lat])
+              .addTo(map)
             
-            setFlyingTo(null)
-            isAnimatingRef.current = false
+            el.addEventListener('click', (e) => {
+              e.stopPropagation()
+              handlePlaceClick(place, region)
+            })
+            
+            placeMarkersRef.current.push(marker)
+          }, 150 + i * 100)
+        })
+      }
 
-            // Phase 3: draw trek path
-            if (place.id === 'patalsu-peak' && place.trekPath && place.trekPath.length > 1) {
-              await drawTrekPath(place.trekPath, place.name)
-            }
+      doSelectStateRef.current = async (regionId: string, skipAnimation = false) => {
+        const region = HIMALAYA_REGIONS.find(r => r.id === regionId)
+        if (!region) return
 
-            // Phase 4: navigate to place page
-            navigate(navTarget, { state: { from: 'map' } })
-          }
+        setSubRegion(null)
+        clearSubRegionMarkers()
+        clearPlaceMarkers()
+
+        // Hide ALL region markers immediately (CSS transition on each element handles the fade)
+        dimStates()
+        setMarkerVisibilityState('subregions')
+
+        openRegionPanel(regionId)
+
+        // Use south-offset north-facing camera so snowy Himalayas fill the background
+        const cam = REGION_CAMERAS[regionId] ?? {
+          lat: region.lat - 0.8, lng: region.lng,
+          zoom: region.zoom, pitch: 68, bearing: 5
         }
 
-        /* ── Spawn place markers for a given sub-region ────────── */
-        const spawnPlaceMarkers = (
-          subRegion: HimalayaSubRegion,
-          region: HimalayaRegion,
-        ) => {
-          subRegion.places.forEach((place, i) => {
-            setTimeout(() => {
-              const se = buildPlaceMarkerEl(place)
-              const sm = new AdvancedMarkerElement({
-                position: { lat: place.lat, lng: place.lng },
-                map, content: se, title: place.name, zIndex: 8,
-              })
+        if (!skipAnimation) {
+          // ── 1. Start dim overlay (fades in over 400ms via CSS transition) ────
+          if (flightDimTimerRef.current) clearTimeout(flightDimTimerRef.current)
+          setFlightDimOverlay('dimming')
 
-              sm.addListener('click', () => handlePlaceClick(place, region))
-              placeGmRef.current.push(sm)
-            }, 150 + i * 100)
+          // ── 2. Show FlyingOverlay text for the region ─────────────────────────
+          setFlyingTo({ name: region.name, emoji: region.emoji })
+
+          // ── 3. Two-stage cinematic fly (each awaits map.once('moveend')) ──────
+          await flyToCamera(map, {
+            lat: cam.lat - 0.6, lng: cam.lng,
+            zoom: cam.zoom - 1.2, pitch: 45, bearing: cam.bearing,
+            duration: 900
           })
-        }
+          await flyToCamera(map, {
+            lat: cam.lat, lng: cam.lng,
+            zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing,
+            duration: 1400
+          })
 
-        /* ── Level 0 → 1: Select a state ──────────────────────── */
-        doSelectStateRef.current = async (regionId: string, skipAnimation = false) => {
-          const region = HIMALAYA_REGIONS.find(r => r.id === regionId)
-          if (!region) return
+          // ── 4. Flight done — clear the FlyingOverlay and start dim fade-out ──
+          setFlyingTo(null)
+          setFlightDimOverlay('clearing')
+          // After CSS transition completes (400ms), fully remove the overlay
+          flightDimTimerRef.current = setTimeout(() => setFlightDimOverlay('hidden'), 420)
 
-          setSubRegion(null)
-          clearSubRegionMarkers()
-          clearPlaceMarkers()
-          dimStates(regionId)
-
-          if (!skipAnimation) {
-            isAnimatingRef.current = true
-            stopRotation()
-            await animateCamera(map, {
-              lat:     region.lat,
-              lng:     region.lng,
-              zoom:    region.zoom,
-              tilt:    60,
-              heading: 320,
-            }, 1800)
-            isAnimatingRef.current = false
-            startRotation()
-          } else {
-            map.setCenter({ lat: region.lat, lng: region.lng })
-            map.setZoom(region.zoom)
-            map.setTilt(region.tilt)
-            map.setHeading(region.heading)
-            await sleep(100)
-          }
-
-          openRegionPanel(regionId)
-
+          // ── 5. Spawn place / subregion markers (staggered, post-flight) ──────
           if (region.showSubRegionsFirst) {
-            // HP: show sub-region hub markers
             region.subregions.forEach((sr, i) => {
               if (!sr.lat || !sr.lng) return
               setTimeout(() => {
-                const se = buildSubRegionMarkerEl(sr)
-                const sm = new AdvancedMarkerElement({
-                  position: { lat: sr.lat!, lng: sr.lng! },
-                  map, content: se, title: sr.name, zIndex: 9,
+                const el = buildSubRegionMarkerEl(sr)
+                const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+                  .setLngLat([sr.lng!, sr.lat!])
+                  .addTo(map)
+                el.addEventListener('click', (e) => {
+                  e.stopPropagation()
+                  doSelectSubRegionRef.current(sr.id)
                 })
-                sm.addListener('click', () => doSelectSubRegionRef.current(sr.id))
-                subRegionGmRef.current.push(sm)
-              }, skipAnimation ? 50 : 200 + i * 150)
+                subRegionMarkersRef.current.push(marker)
+              }, 300 + i * 120)
             })
           } else {
-            // Others: go straight to places
+            region.subregions.forEach(sr => spawnPlaceMarkers(sr, region))
+          }
+        } else {
+          // Skip-animation path (on map remount / back-navigation restore)
+          map.jumpTo({ center: [cam.lng, cam.lat], zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing })
+
+          if (region.showSubRegionsFirst) {
+            region.subregions.forEach((sr, i) => {
+              if (!sr.lat || !sr.lng) return
+              setTimeout(() => {
+                const el = buildSubRegionMarkerEl(sr)
+                const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+                  .setLngLat([sr.lng!, sr.lat!])
+                  .addTo(map)
+                el.addEventListener('click', (e) => {
+                  e.stopPropagation()
+                  doSelectSubRegionRef.current(sr.id)
+                })
+                subRegionMarkersRef.current.push(marker)
+              }, 50 + i * 60)
+            })
+          } else {
             region.subregions.forEach(sr => spawnPlaceMarkers(sr, region))
           }
         }
+      }
 
-        /* ── Level 1 → 2: Select a sub-region ────────────────── */
-        doSelectSubRegionRef.current = async (subRegionId: string, skipAnimation = false) => {
-          // Search ALL regions with showSubRegionsFirst for this sub-region ID
-          // (previously only searched the first match, which was J&K not HP!)
-          let region: HimalayaRegion | undefined
-          let sr: HimalayaSubRegion | undefined
-          for (const r of HIMALAYA_REGIONS) {
-            if (!r.showSubRegionsFirst) continue
-            const found = r.subregions.find(s => s.id === subRegionId)
-            if (found) { region = r; sr = found; break }
-          }
-          if (!region || !sr) return
-          if (!sr.lat || !sr.lng) return
+      doSelectSubRegionRef.current = async (subRegionId: string, skipAnimation = false) => {
+        let region: HimalayaRegion | undefined
+        let sr: HimalayaSubRegion | undefined
+        for (const r of HIMALAYA_REGIONS) {
+          if (!r.showSubRegionsFirst) continue
+          const found = r.subregions.find(s => s.id === subRegionId)
+          if (found) { region = r; sr = found; break }
+        }
+        if (!region || !sr || !sr.lat || !sr.lng) return
 
-          setSubRegion(subRegionId)
-          clearPlaceMarkers()
+        setSubRegion(subRegionId)
+        clearPlaceMarkers()
 
-          // Dim sub-region markers except selected
-          subRegionGmRef.current.forEach(m => {
-            const isActive = m.title === sr.name
-            const el = m.content as HTMLElement
-            if (isActive) {
-              m.map = null // Hide the selected sub-region hub completely so places are visible
-            } else {
-              m.map = map
-              el.style.opacity       = '0.15'
-              el.style.transform     = 'scale(0.75)'
-              el.style.pointerEvents = 'auto'
-            }
-          })
-
-          if (!skipAnimation) {
-            isAnimatingRef.current = true
-            stopRotation()
-            await animateCamera(map, {
-              lat:     sr.lat,
-              lng:     sr.lng,
-              zoom:    sr.zoom ?? 11,
-              tilt:    60,
-              heading: sr.heading ?? 320,
-            }, 1400)
-            isAnimatingRef.current = false
-            startRotation()
+        subRegionMarkersRef.current.forEach(m => {
+          const el = m.getElement()
+          if (el.textContent?.includes(sr!.name)) {
+            el.style.display = 'none'
           } else {
-            map.setCenter({ lat: sr.lat, lng: sr.lng })
-            map.setZoom(sr.zoom ?? 11)
-            map.setTilt(sr.tilt ?? 55)
-            map.setHeading(sr.heading ?? 0)
-            await sleep(100)
+            el.style.display = 'flex'
+            el.style.opacity = '0.15'
+            el.style.transform = 'scale(0.75)'
+            el.style.pointerEvents = 'auto'
           }
-
-          spawnPlaceMarkers(sr, region)
-        }
-
-        /* ── Back to sub-region level (level 2 → 1) ───────────── */
-        doBackToRegionRef.current = () => {
-          setSubRegion(null)
-          clearPlaceMarkers()
-
-          // Use the currently active region (not hardcoded to HP)
-          const activeId = useMapStore.getState().activeRegionId
-          const region = HIMALAYA_REGIONS.find(r => r.id === activeId)
-          if (!region) return
-
-          // Restore sub-region markers
-          subRegionGmRef.current.forEach(m => {
-            m.map = map
-            const el = m.content as HTMLElement
-            el.style.opacity = '1'; el.style.transform = 'scale(1)'; el.style.pointerEvents = 'auto'
-          })
-
-          map.panTo({ lat: region.lat, lng: region.lng })
-          setTimeout(() => {
-            map.setZoom(region.zoom)
-            map.setTilt(region.tilt)
-            map.setHeading(region.heading)
-          }, 400)
-        }
-
-        /* ── Full reset ────────────────────────────────────────── */
-        doResetRef.current = () => {
-          setSubRegion(null)
-          clearSubRegionMarkers()
-          clearPlaceMarkers()
-          restoreStates()
-          closePanel()
-          map.panTo({ lat: INIT.lat, lng: INIT.lng })
-          setTimeout(() => {
-            map.setZoom(INIT.zoom)
-            map.setTilt(INIT.tilt)
-            map.setHeading(INIT.heading)
-          }, 400)
-        }
-
-        /* ── Select from Sidebar ───────────────────────────────── */
-        doSelectPlaceRef.current = async (placeId: string) => {
-          let foundPlace: HimalayaPlace | null = null
-          let foundRegion: HimalayaRegion | null = null
-          for (const r of HIMALAYA_REGIONS) {
-            for (const sr of r.subregions) {
-              const p = sr.places.find(pl => pl.id === placeId)
-              if (p) { foundPlace = p; foundRegion = r; break }
-            }
-          }
-          if (!foundPlace || !foundRegion) return
-
-          await handlePlaceClick(foundPlace, foundRegion)
-        }
-
-        /* ── Create the 4 state markers ────────────────────────── */
-        HIMALAYA_REGIONS.forEach((region, idx) => {
-          const el = buildStateMarkerEl(region, idx)
-          stateElsRef.current[region.id] = el
-          const gm = new AdvancedMarkerElement({
-            position: { lat: region.lat, lng: region.lng },
-            map, content: el, title: region.name, zIndex: 10,
-          })
-          stateGmRef.current[region.id] = gm
-          gm.addListener('click', () => doSelectStateRef.current(region.id))
         })
 
-        /* ── Sync from Store to Map on Load ────────────────────── */
-        const initRegionId    = useMapStore.getState().activeRegionId
-        const initSubRegionId = useMapStore.getState().activeSubRegionId
+        // Use south-offset north-facing camera so all places spread across the terrain
+        // with the snowy Himalayan backdrop visible
+        const srCam = SUBREGION_CAMERAS[subRegionId]
+        const camLat  = srCam?.lat     ?? (sr.lat - 0.5)
+        const camLng  = srCam?.lng     ?? sr.lng
+        const camZoom = srCam?.zoom    ?? (sr.zoom ?? 11)
+        const camPitch = srCam?.pitch  ?? 68
+        const camBear  = srCam?.bearing ?? 5
 
-        if (initRegionId) {
-          setTimeout(() => {
-            doSelectStateRef.current(initRegionId, true).then(() => {
-              if (initSubRegionId) {
-                setTimeout(() => doSelectSubRegionRef.current(initSubRegionId, true), 100)
-              }
-            })
-          }, 200)
+        if (!skipAnimation) {
+          await flyToCamera(map, {
+            lat: camLat, lng: camLng,
+            zoom: camZoom, pitch: camPitch, bearing: camBear,
+            duration: 1500
+          })
+        } else {
+          map.jumpTo({ center: [camLng, camLat], zoom: camZoom, pitch: camPitch, bearing: camBear })
         }
 
-      } catch (err) {
-        console.error('Map load error:', err)
-        setError('Map failed to load.')
-        setLoading(false)
+        spawnPlaceMarkers(sr, region)
       }
-    })()
+
+      doBackToRegionRef.current = () => {
+        setSubRegion(null)
+        clearPlaceMarkers()
+
+        const activeId = useMapStore.getState().activeRegionId
+        if (!activeId) return
+        const region = HIMALAYA_REGIONS.find(r => r.id === activeId)
+        if (!region) return
+
+        subRegionMarkersRef.current.forEach(m => {
+          const el = m.getElement()
+          el.style.display = 'flex'
+          el.style.opacity = '1'
+          el.style.transform = 'scale(1)'
+          el.style.pointerEvents = 'auto'
+        })
+
+        // Return to the south-offset north-facing region camera
+        const cam = REGION_CAMERAS[activeId] ?? {
+          lat: region.lat - 0.8, lng: region.lng,
+          zoom: region.zoom, pitch: 68, bearing: 5
+        }
+        flyToCamera(map, {
+          lat: cam.lat, lng: cam.lng,
+          zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing,
+          duration: 1200
+        })
+      }
+
+      doResetRef.current = () => {
+        setSubRegion(null)
+        clearSubRegionMarkers()
+        clearPlaceMarkers()
+        // Fade ALL region markers back in with CSS transition
+        restoreStates()
+        setMarkerVisibilityState('regions')
+        closePanel()
+
+        // Clear any in-flight dim overlay
+        if (flightDimTimerRef.current) clearTimeout(flightDimTimerRef.current)
+        setFlightDimOverlay('hidden')
+        setFlyingTo(null)
+
+        flyToCamera(map, {
+          lat: INIT.lat,
+          lng: INIT.lng,
+          zoom: INIT.zoom,
+          pitch: INIT.pitch,
+          bearing: INIT.bearing,
+          duration: 1200
+        })
+      }
+
+      doSelectPlaceRef.current = async (placeId: string) => {
+        let foundPlace: HimalayaPlace | null = null
+        let foundRegion: HimalayaRegion | null = null
+        for (const r of HIMALAYA_REGIONS) {
+          for (const sr of r.subregions) {
+            const p = sr.places.find(pl => pl.id === placeId)
+            if (p) { foundPlace = p; foundRegion = r; break }
+          }
+        }
+        if (!foundPlace || !foundRegion) return
+        await handlePlaceClick(foundPlace, foundRegion)
+      }
+
+      // Initialize state markers
+      HIMALAYA_REGIONS.forEach((region, idx) => {
+        const el = buildStateMarkerEl(region, idx)
+        const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat([region.lng, region.lat])
+          .addTo(map)
+        
+        el.addEventListener('click', (e) => {
+          e.stopPropagation()
+          doSelectStateRef.current(region.id)
+        })
+        stateMarkersRef.current[region.id] = marker
+      })
+
+      // Sync state on load
+      const initRegionId = useMapStore.getState().activeRegionId
+      const initSubRegionId = useMapStore.getState().activeSubRegionId
+      if (initRegionId) {
+        setTimeout(() => {
+          doSelectStateRef.current(initRegionId, true).then(() => {
+            if (initSubRegionId) {
+              setTimeout(() => doSelectSubRegionRef.current(initSubRegionId, true), 100)
+            }
+          })
+        }, 200)
+      }
+    })
+
+    return () => {
+      map.remove()
+    }
   }, [])
 
   const activateMap = () => {
     setMapActive(true)
-    const m = mapObj.current
-    if (m) {
-      m.setOptions({ gestureHandling: 'greedy' })
-      // Re-assert satellite + tilt in case gestureHandling change triggers
-      // an internal re-render that resets the map type
-      m.setMapTypeId('satellite')
-      m.setTilt(INIT.tilt)
+    if (mapRef.current) {
+      // Enable interactions on click
+      mapRef.current.boxZoom.enable()
+      mapRef.current.scrollZoom.enable()
+      mapRef.current.dragPan.enable()
+      mapRef.current.dragRotate.enable()
+      mapRef.current.keyboard.enable()
+      mapRef.current.doubleClickZoom.enable()
+      mapRef.current.touchZoomRotate.enable()
     }
   }
 
-  /* Fullscreen state */
   const [isFullscreen, setIsFullscreen] = useState(false)
 
   useEffect(() => {
@@ -900,7 +826,7 @@ export default function MapContainer() {
   }, [])
 
   const toggleFullscreen = () => {
-    const el = mapRef.current?.parentElement as HTMLElement | null
+    const el = mapContainerRef.current?.parentElement as HTMLElement | null
     if (!document.fullscreenElement) {
       el?.requestFullscreen()
     } else {
@@ -908,36 +834,32 @@ export default function MapContainer() {
     }
   }
 
-  /* ESC key: step back through levels */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
-      if (activeSubRegionId)  { doBackToRegionRef.current(); return }
-      if (activeRegionId)     { doResetRef.current() }
+      if (activeSubRegionId) { doBackToRegionRef.current(); return }
+      if (activeRegionId) { doResetRef.current() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [activeSubRegionId, activeRegionId])
 
-  /* Derived UI data */
-  const activeRegion    = HIMALAYA_REGIONS.find(r => r.id === activeRegionId) ?? null
+  const activeRegion = HIMALAYA_REGIONS.find(r => r.id === activeRegionId) ?? null
   const activeSubRegion = activeRegion?.subregions.find(s => s.id === activeSubRegionId) ?? null
 
-  /* Back action: what one ESC/back-button press does */
   const handleBack = () => {
     if (activeSubRegionId) { doBackToRegionRef.current(); return }
-    if (activeRegionId)    { doResetRef.current() }
+    if (activeRegionId) { doResetRef.current() }
   }
   const showBackBtn = !!activeRegionId && !loading
 
-  /* ── Render ──────────────────────────────────────────────────── */
   return (
     <div style={{ position:'relative', width:'100%', height:'80vh', minHeight:'600px', background:'#06080c', overflow:'hidden' }}>
-
-      {/* Keyframe import for Playfair Display */}
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital@1&display=swap');`}</style>
+      <style>{`
+        .mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right { display: none !important; }
+      `}</style>
 
-      {/* Loading */}
       {loading && (
         <div style={{ position:'absolute', inset:0, zIndex:30, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:'16px', background:'#06080c' }}>
           <svg width="56" height="56" viewBox="0 0 56 56" fill="none" style={{ animation:'spin 1.5s linear infinite' }}>
@@ -955,27 +877,51 @@ export default function MapContainer() {
         </div>
       )}
 
-      {/* Map canvas */}
-      <div ref={mapRef} style={{ width:'100%', height:'100%' }} />
+      <div ref={mapContainerRef} style={{ width:'100%', height:'100%' }} />
 
-      {/* Cinematic Fly-to Overlay */}
-      <FlyingOverlay flying={flyingTo} />
-
-      {/* Earth Studio Video Transition */}
-      {earthTransition && (
-        <EarthTransition
-          videoUrl={earthTransition.videoUrl}
-          placeName={earthTransition.placeName}
-          onComplete={() => {
-            navigate(earthTransition.navigateTo, { state: { from: 'map' } })
+      {/* ── Cinematic flight dim overlay — fades screen during region fly ── */}
+      {flightDimOverlay !== 'hidden' && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 19,
+            pointerEvents: 'none',
+            background: 'rgba(0,0,0,0.32)',
+            opacity: flightDimOverlay === 'dimming' ? 1 : 0,
+            transition: flightDimOverlay === 'dimming'
+              ? 'opacity 400ms ease'
+              : 'opacity 400ms ease',
           }}
         />
       )}
 
-      {/* Compact region popup — lives inside relative map wrapper */}
+      <FlyingOverlay flying={flyingTo} />
+
+      {/* ── Expedition Mode Banner — appears only while trek is live ─ */}
+      {liveTrekAlt !== null && (
+        <div style={{
+          position: 'absolute', top: '16px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 22, pointerEvents: 'none',
+          display: 'flex', alignItems: 'center', gap: '10px',
+          background: 'rgba(6,8,12,0.88)', border: '1px solid rgba(232,201,122,0.3)',
+          borderRadius: '8px', padding: '8px 18px', backdropFilter: 'blur(16px)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.4), 0 0 0 0.5px rgba(232,201,122,0.08)',
+          animation: 'expBannerIn 0.4s ease',
+        }}>
+          <style>{`@keyframes expBannerIn { from { opacity:0; transform:translateX(-50%) translateY(-8px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }`}</style>
+          <div style={{ width:'6px', height:'6px', borderRadius:'50%', background:'#4ab8a0',
+            boxShadow:'0 0 8px #4ab8a0', animation:'expDot 1.2s ease-in-out infinite' }} />
+          <style>{`@keyframes expDot { 0%,100%{opacity:1}50%{opacity:0.3} }`}</style>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'9px', letterSpacing:'0.22em',
+            color:'rgba(232,201,122,0.85)', textTransform:'uppercase' }}>Expedition Mode · Patalsu Peak</span>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'9px',
+            color:'rgba(255,255,255,0.25)', letterSpacing:'0.1em' }}>Solang → 4261m</span>
+        </div>
+      )}
+
       <RegionPanel />
 
-      {/* Click-to-activate */}
       {!loading && !mapActive && (
         <div onClick={activateMap} style={{ position:'absolute', inset:0, zIndex:15, cursor:'pointer', display:'flex', alignItems:'flex-end', justifyContent:'center', paddingBottom:'64px' }}>
           <div style={{ display:'flex', alignItems:'center', gap:'10px', background:'rgba(6,8,12,.9)', border:'1px solid rgba(232,201,122,.45)', borderRadius:'10px', padding:'11px 22px', backdropFilter:'blur(16px)', animation:'phint 2s ease-in-out infinite' }}>
@@ -986,7 +932,6 @@ export default function MapContainer() {
         </div>
       )}
 
-      {/* ── Back button (top-left) ─────────────────────────── */}
       {showBackBtn && (
         <button
           onClick={handleBack}
@@ -1008,64 +953,126 @@ export default function MapContainer() {
         </button>
       )}
 
-      {/* Breadcrumb — shows current location path */}
       {activeRegion && (
         <div style={{ position:'absolute', top:'58px', left:'20px', zIndex:18, display:'flex', alignItems:'center', gap:'6px', flexWrap:'wrap' }}>
-          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.15em', color:'rgba(255,255,255,.2)', textTransform:'uppercase' }}>
-            India
-          </span>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.15em', color:'rgba(255,255,255,.2)', textTransform:'uppercase' }}>India</span>
           <span style={{ color:'rgba(255,255,255,.15)', fontSize:'10px' }}>›</span>
-          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.15em', color: activeSubRegion ? 'rgba(232,201,122,.5)' : '#e8c97a', textTransform:'uppercase' }}>
-            {activeRegion.name}
-          </span>
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.15em', color: activeSubRegion ? 'rgba(232,201,122,.5)' : '#e8c97a', textTransform:'uppercase' }}>{activeRegion.name}</span>
           {activeSubRegion && (
             <>
               <span style={{ color:'rgba(255,255,255,.15)', fontSize:'10px' }}>›</span>
-              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.15em', color:'#e8c97a', textTransform:'uppercase' }}>
-                {activeSubRegion.name}
-              </span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.15em', color:'#e8c97a', textTransform:'uppercase' }}>{activeSubRegion.name}</span>
             </>
           )}
         </div>
       )}
 
-      {/* Trail stats overlay — bottom left, above region stats */}
-      {trekStats && (
+      {/* ── Live Altitude HUD — appears while trail is being drawn ── */}
+      {liveTrekAlt !== null && (
         <div style={{
-          position: 'absolute',
-          bottom: '118px',
-          left: '20px',
-          zIndex: 18,
-          background: 'rgba(6,8,12,0.88)',
-          border: '1px solid rgba(232,201,122,0.2)',
-          borderRadius: '10px',
-          padding: '12px 16px',
-          backdropFilter: 'blur(14px)',
-          animation: 'trekStatsIn 0.4s ease forwards',
+          position: 'absolute', top: '50%', right: '24px', transform: 'translateY(-50%)',
+          zIndex: 22, pointerEvents: 'none',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+          animation: 'altHudIn 0.5s ease',
         }}>
           <style>{`
-            @keyframes trekStatsIn {
-              0%   { opacity: 0; transform: translateY(8px); }
-              100% { opacity: 1; transform: translateY(0); }
-            }
+            @keyframes altHudIn { from { opacity:0; transform:translateY(calc(-50% + 10px)); } to { opacity:1; transform:translateY(-50%); } }
+            @keyframes altDigitFlip { from { opacity:0.4; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
           `}</style>
-          <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '9px', letterSpacing: '0.2em', color: '#e8c97a', textTransform: 'uppercase', marginBottom: '8px' }}>
-            Trail
+
+          {/* Vertical gradient bar */}
+          <div style={{ position:'relative', width:'3px', height:'140px', borderRadius:'2px',
+            background:'linear-gradient(to top, #4ab8a0, #e8a030, #e8c97a)' }}>
+            {/* moving needle */}
+            <div style={{
+              position:'absolute', left:'-5px',
+              top: `${100 - ((liveTrekAlt - 2468) / (4261 - 2468)) * 100}%`,
+              width:'13px', height:'2px',
+              background:'#fff', borderRadius:'1px',
+              boxShadow:'0 0 8px rgba(255,255,255,0.8)',
+              transition:'top 0.3s ease',
+            }} />
           </div>
-          <div style={{ display: 'flex', gap: '20px' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '8px', letterSpacing: '0.12em', color: 'rgba(232,201,122,0.4)', textTransform: 'uppercase' }}>Distance</span>
-              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '13px', color: '#e8c97a', fontWeight: 700 }}>{trekStats.distanceKm} km</span>
+
+          {/* Altitude number */}
+          <div style={{
+            background:'rgba(6,8,12,0.92)', border:'1px solid rgba(232,201,122,0.35)',
+            borderRadius:'8px', padding:'10px 14px', backdropFilter:'blur(16px)',
+            textAlign:'center', minWidth:'90px',
+            boxShadow:'0 0 24px rgba(232,201,122,0.15)',
+          }}>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.2em',
+              color:'rgba(232,201,122,0.5)', textTransform:'uppercase', marginBottom:'6px' }}>Altitude</div>
+            <div key={liveTrekAlt} style={{ fontFamily:"'Space Mono',monospace", fontSize:'22px',
+              fontWeight:700, color:'#e8c97a', lineHeight:1, letterSpacing:'-0.01em',
+              animation:'altDigitFlip 0.15s ease' }}>
+              {liveTrekAlt.toLocaleString()}
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '8px', letterSpacing: '0.12em', color: 'rgba(232,201,122,0.4)', textTransform: 'uppercase' }}>Waypoints</span>
-              <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '13px', color: '#e8c97a', fontWeight: 700 }}>{trekStats.points}</span>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px',
+              color:'rgba(232,201,122,0.4)', letterSpacing:'0.15em', marginTop:'4px' }}>metres</div>
+          </div>
+
+          {/* Colour legend */}
+          <div style={{ background:'rgba(6,8,12,0.85)', border:'1px solid rgba(255,255,255,0.06)',
+            borderRadius:'6px', padding:'8px 10px', backdropFilter:'blur(10px)', width:'90px' }}>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:'7px', letterSpacing:'0.15em',
+              color:'rgba(255,255,255,0.2)', textTransform:'uppercase', marginBottom:'6px' }}>Elevation</div>
+            {[
+              { color:'#4ab8a0', label:'Valley  2,468m' },
+              { color:'#e8a030', label:'Treeline 3,500m' },
+              { color:'#e8c97a', label:'Summit  4,261m' },
+            ].map(({ color, label }) => (
+              <div key={label} style={{ display:'flex', alignItems:'center', gap:'6px', marginBottom:'4px' }}>
+                <div style={{ width:'8px', height:'2px', borderRadius:'1px', background:color, flexShrink:0 }} />
+                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'6.5px',
+                  color:'rgba(255,255,255,0.35)', letterSpacing:'0.05em', whiteSpace:'nowrap' }}>{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Trek Stats card — appears after trail fully drawn ─────── */}
+      {trekStats && (
+        <div style={{
+          position: 'absolute', bottom: '118px', left: '20px', zIndex: 18,
+          background: 'rgba(6,8,12,0.92)', border: '1px solid rgba(232,201,122,0.25)',
+          borderRadius: '12px', padding: '14px 18px', backdropFilter: 'blur(18px)',
+          animation: 'trekStatsIn 0.5s ease forwards',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 0.5px rgba(232,201,122,0.1)',
+        }}>
+          <style>{`@keyframes trekStatsIn { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } }`}</style>
+
+          {/* Gradient colour bar at top */}
+          <div style={{ height:'2px', borderRadius:'1px', marginBottom:'12px',
+            background:'linear-gradient(to right, #4ab8a0, #e8a030, #e8c97a)' }} />
+
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:'8px', letterSpacing:'0.22em',
+            color:'rgba(232,201,122,0.5)', textTransform:'uppercase', marginBottom:'10px' }}>⛰️ Patalsu Peak — Completed</div>
+
+          <div style={{ display: 'flex', gap: '20px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'7.5px', letterSpacing:'0.12em',
+                color:'rgba(232,201,122,0.4)', textTransform:'uppercase' }}>Distance</span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'15px',
+                color:'#e8c97a', fontWeight:700 }}>{trekStats.distanceKm} km</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'7.5px', letterSpacing:'0.12em',
+                color:'rgba(232,201,122,0.4)', textTransform:'uppercase' }}>Gain</span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'15px',
+                color:'#4ab8a0', fontWeight:700 }}>+1,793m</span>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'7.5px', letterSpacing:'0.12em',
+                color:'rgba(232,201,122,0.4)', textTransform:'uppercase' }}>Summit</span>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:'15px',
+                color:'#e8c97a', fontWeight:700 }}>4,261m</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Region stats bar */}
       {activeRegion && !isMobile && (
         <div style={{ position:'absolute', bottom:'60px', left:'20px', zIndex:18 }}>
           <div style={{ background:'rgba(6,8,12,.9)', border:'1px solid rgba(255,255,255,.08)', borderRadius:'8px', padding:'8px 14px', display:'flex', gap:'20px', backdropFilter:'blur(12px)' }}>
@@ -1092,13 +1099,11 @@ export default function MapContainer() {
         </div>
       )}
 
-      {/* Vignette */}
       <div style={{ position:'absolute', inset:0, pointerEvents:'none', background: 'radial-gradient(ellipse at center, transparent 40%, rgba(6,8,12,0.8) 85%, #06080c 100%)', zIndex:3 }} />
 
-      {/* ── Fullscreen button (bottom-right corner) ─────────── */}
       <button
         onClick={toggleFullscreen}
-          title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
         style={{
           position:'absolute', bottom:'20px', right:'20px', zIndex:10,
           width:'38px', height:'38px',
@@ -1109,7 +1114,6 @@ export default function MapContainer() {
         }}
       >
         {isFullscreen ? (
-          /* Compress icon */
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M6 1V6H1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M10 1V6H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1117,7 +1121,6 @@ export default function MapContainer() {
             <path d="M10 15V10H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         ) : (
-          /* Expand icon — 4 corner brackets */
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M1 5V1H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             <path d="M11 1H15V5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -1127,8 +1130,7 @@ export default function MapContainer() {
         )}
       </button>
 
-      {/* Idle hint */}
-      {mapActive && !activeRegion && (
+      {mapActive && !activeRegion && markerVisibilityState === 'regions' && (
         <div style={{ position:'absolute', bottom:'20px', left:'50%', transform:'translateX(-50%)', zIndex:10, fontFamily:"'Space Mono',monospace", fontSize:'9px', letterSpacing:'0.15em', color:'rgba(255,255,255,.2)', textTransform:'uppercase', whiteSpace:'nowrap', pointerEvents:'none' }}>
           Click a region to begin exploring
         </div>

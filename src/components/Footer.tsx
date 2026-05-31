@@ -1,9 +1,19 @@
-import { motion } from 'framer-motion'
+import { useRef } from 'react'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
 
 export default function Footer() {
   const year = new Date().getFullYear()
   const { ref, isInView } = useReveal({ margin: '-20px' })
+
+  // Parallax: the heading slides up at 0.3× scroll speed as it enters view
+  const sectionRef = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ['start end', 'end start'],
+  })
+  // Map scroll 0→1 to y: 40px → -60px  (element starts slightly low, moves up)
+  const parallaxY = useTransform(scrollYProgress, [0, 1], [40, -60])
 
   const socials = [
     { label: 'YouTube',   href: 'https://youtube.com/@ashish_0968' },
@@ -26,26 +36,28 @@ export default function Footer() {
   )
 
   return (
-    <footer className="reveal" ref={ref} style={{
+    <footer ref={sectionRef} className="reveal" style={{
       position: 'relative',
       background: '#040508',
       borderTop: '1px solid rgba(255,255,255,0.05)',
       padding: '80px 24px 60px',
       overflow: 'hidden'
     }}>
-      <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div ref={ref} style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         
-        {/* Cinematic Header */}
-        <h2 style={{
-          fontFamily: "'Playfair Display', serif",
-          fontStyle: 'italic',
-          fontSize: 'clamp(40px, 6vw, 64px)',
-          color: '#e8c97a',
-          margin: '0 0 60px 0',
-          fontWeight: 400
-        }}>
-          {heading.map((w, i) => <AnimatedScaleWord key={i} word={w} delay={0.1*i} />)}
-        </h2>
+        {/* Cinematic Header — parallax at 0.3× scroll speed */}
+        <motion.div style={{ y: parallaxY }}>
+          <h2 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontStyle: 'italic',
+            fontSize: 'clamp(40px, 6vw, 64px)',
+            color: '#e8c97a',
+            margin: '0 0 60px 0',
+            fontWeight: 400
+          }}>
+            {heading.map((w, i) => <AnimatedScaleWord key={i} word={w} delay={0.1*i} />)}
+          </h2>
+        </motion.div>
 
         <div style={{
           width: '100%',
