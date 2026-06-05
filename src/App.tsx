@@ -5,6 +5,7 @@ import { useThemeStore } from './store/themeStore'
 
 const LazyHomePage = lazy(() => import('./pages/HomePage'))
 const LazyPlacePage = lazy(() => import('./pages/PlacePage'))
+const LazyHorizonPage = lazy(() => import('./pages/HorizonPage'))
 const LazyCursor = lazy(() => import('./components/Cursor'))
 
 export default function App() {
@@ -47,6 +48,7 @@ export default function App() {
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<LazyHomePage />} />
             <Route path="/place/:regionId/:placeId" element={<LazyPlacePage />} />
+            <Route path="/horizon" element={<LazyHorizonPage />} />
           </Routes>
         </AnimatePresence>
       </Suspense>

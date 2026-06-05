@@ -2,7 +2,7 @@
  *  himalaya.ts — Hierarchical data for the 4-region Himalayan atlas
  * ═══════════════════════════════════════════════════════════════════ */
 
-import { buildCloudinaryUrl } from '../lib/cloudinary'
+import { buildRootCloudinaryUrl } from '../lib/cloudinary'
 
 export type PlaceType = 'road' | 'trek' | 'spiritual' | 'scenic' | 'adventure' | 'lake'
 
@@ -136,13 +136,22 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
     cardDesc: 'From the alpine meadows of Rajouri to the Dal Lake houseboats of Srinagar — J&K is where every road leads to something extraordinary.',
     tags: ['kashmir', 'rajouri', 'passes', 'meadows'],
     travelTypes: ['road', 'scenic', 'spiritual'],
-    showSubRegionsFirst: false,
+    showSubRegionsFirst: true,
     subregions: [
       {
         id: 'rajouri', name: 'Rajouri',
         lat: 33.47, lng: 74.43, zoom: 10.8, tilt: 60, heading: 0,
         camera: { lat: 33.2200, lng: 74.4000, zoom: 10.5, tilt: 75, heading: 0 },
         places: [
+          { 
+            id: 'rajouri-home', name: 'Ghar', emoji: '🏠', lat: 33.306694, lng: 74.349544, heading: 0, elevation: '915m', 
+            desc: 'A personal sanctuary in the heart of Rajouri, where the hills meet the horizon.',
+            trekPath: [
+              { lat: 33.3088, lng: 74.3566 }, // LookAt position
+              { lat: 33.306694, lng: 74.349544 }, // Ghar position
+            ],
+            type: 'scenic' 
+          },
           { 
             id: 'peer-ki-gali', name: 'Peer Ki Gali', emoji: '🌿', lat: 33.6297724909923, lng: 74.51998442871115, heading: 180, elevation: '3,490m', 
             meta: 'High-altitude pass · Mughal Road', season: 'May – October',
@@ -166,6 +175,19 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             type: 'road'
           },
+          { id: 'bakori', name: 'Bakori', emoji: '🗺️', lat: 33.3798561352325, lng: 74.49660914607517, heading: 300, elevation: '1,400m', desc: 'Near JNV Kotranka / Budhal — largely unexplored and far off any tourist circuit.',
+            trekPath: [
+              { lat: 33.36, lng: 74.52 },  // Budhal connection
+              { lat: 33.3899, lng: 74.5132 },// Ridge overlook
+              { lat: 33.3798561352325, lng: 74.49660914607517 },  // Bakori village center
+            ],
+            trekStops: [
+              { id: 'start', scrollDepth: 0, altitude: 900, title: 'Off the map', moment: 'No signboards. No tourists. Just a dirt road winding into Budhal valley.', type: 'text' },
+              { id: 'village', scrollDepth: 50, altitude: 1200, title: 'Kotranka ridge', moment: 'The road climbs to a ridge. Below, terraced fields step down to a silver river.', type: 'photo', mediaUrl: '' },
+              { id: 'summit', scrollDepth: 80, altitude: 1400, title: 'Bakori', moment: 'A crossroads village where the Pir Panjal begins to rise. Wild and untouched.', type: 'summit' },
+              { id: 'descent', scrollDepth: 95, altitude: 1100, title: 'Heading back', moment: 'The road back feels shorter. The mountains watch you leave.', type: 'text' },
+            ],
+            type: 'road' },
           { id: 'dera-ki-gali', name: 'Dera Ki Gali', emoji: '🏕️', lat: 33.58214546019835, lng: 74.3623380739086, heading: 140, elevation: '3,200m', desc: 'Dense pine forests and open grasslands on the Pir Panjal ridge, ideal for camping.',
             trekPath: [
               { lat: 33.51, lng: 74.34 },  // Thanamandi
@@ -181,7 +203,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 2400, title: 'Back through the trees', moment: 'The descent is quiet. Birdsong returns.', type: 'text' },
             ],
             type: 'trek' },
-          { id: 'darhal', name: 'Darhal Water Fall', emoji: '🌲', lat: 33.49235317402844, lng: 74.44683246130484, heading: 270, elevation: '1,800m', desc: 'A stunning waterfall in a quiet Gujjar village in the Chenab valley, gateway to untouched alpine meadows.',
+          { id: 'dharal', name: 'Dharal Water Fall', emoji: '🌲', lat: 33.49235317402844, lng: 74.44683246130484, heading: 270, elevation: '1,800m', desc: 'A stunning waterfall in a quiet Gujjar village in the Chenab valley, gateway to untouched alpine meadows.',
             trekPath: [
               { lat: 33.48, lng: 74.42 },  // Darhal bridge
               { lat: 33.485, lng: 74.44 }, // Village path
@@ -195,27 +217,59 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 1300, title: 'The return', moment: 'Golden afternoon light filters through the canopy. The village reappears.', type: 'text' },
             ],
             type: 'scenic' },
-          { id: 'bakori', name: 'Bakori', emoji: '🗺️', lat: 33.3798561352325, lng: 74.49660914607517, heading: 300, elevation: '1,400m', desc: 'Near JNV Kotranka / Budhal — largely unexplored and far off any tourist circuit.',
+        ],
+      },
+      {
+        id: 'kashmir', name: 'Kashmir',
+        lat: 34.20, lng: 75.10, zoom: 10, tilt: 55, heading: 0,
+        camera: { lat: 34.10, lng: 74.70, zoom: 9.5, tilt: 65, heading: 330 },
+        places: [
+          { id: 'zojila-pass', name: 'Zojila Pass', emoji: '🏔️', lat: 34.21, lng: 75.47, heading: 90, elevation: '3,528m', desc: 'The dramatic gateway between Kashmir and Ladakh — open only in summer.',
             trekPath: [
-              { lat: 33.36, lng: 74.52 },  // Budhal connection
-              { lat: 33.3899, lng: 74.5132 },// Ridge overlook
-              { lat: 33.3798561352325, lng: 74.49660914607517 },  // Bakori village center
+              { lat: 34.18, lng: 75.33 },  // Sonmarg exit
+              { lat: 34.19, lng: 75.38 },  // Lower switchbacks
+              { lat: 34.20, lng: 75.43 },  // Snowfield approach
+              { lat: 34.21, lng: 75.47 },  // Zojila summit
             ],
             trekStops: [
-              { id: 'start', scrollDepth: 0, altitude: 900, title: 'Off the map', moment: 'No signboards. No tourists. Just a dirt road winding into Budhal valley.', type: 'text' },
-              { id: 'village', scrollDepth: 50, altitude: 1200, title: 'Kotranka ridge', moment: 'The road climbs to a ridge. Below, terraced fields step down to a silver river.', type: 'photo', mediaUrl: '' },
-              { id: 'summit', scrollDepth: 80, altitude: 1400, title: 'Bakori', moment: 'A crossroads village where the Pir Panjal begins to rise. Wild and untouched.', type: 'summit' },
-              { id: 'descent', scrollDepth: 95, altitude: 1100, title: 'Heading back', moment: 'The road back feels shorter. The mountains watch you leave.', type: 'text' },
+              { id: 'start', scrollDepth: 0, altitude: 2800, title: 'Sonmarg exit', moment: 'The last green valley disappears. Ahead is only rock and snow.', type: 'text' },
+              { id: 'switchbacks', scrollDepth: 30, altitude: 3100, title: 'The switchbacks', moment: 'Trucks crawl. The road crumbles at the edges. One lane for both directions.', type: 'photo', mediaUrl: '' },
+              { id: 'snowfield', scrollDepth: 55, altitude: 3350, title: 'Snowfields', moment: 'Walls of dirty snow line both sides. The world shrinks to gravel and ice.', type: 'photo', mediaUrl: '' },
+              { id: 'summit', scrollDepth: 80, altitude: 3528, title: 'Zojila Pass', moment: 'The pass. Kashmir ends here. Ladakh begins beyond this wall of rock.', type: 'summit' },
+              { id: 'descent', scrollDepth: 95, altitude: 3200, title: 'Into Ladakh', moment: 'Brown mountains replace green. The desert begins.', type: 'text' },
             ],
             type: 'road' },
           { 
-            id: 'rajouri-home', name: 'Ghar', emoji: '🏠', lat: 33.306694, lng: 74.349544, heading: 0, elevation: '915m', 
-            desc: 'A personal sanctuary in the heart of Rajouri, where the hills meet the horizon.',
-            trekPath: [
-              { lat: 33.3088, lng: 74.3566 }, // LookAt position
-              { lat: 33.306694, lng: 74.349544 }, // Ghar position
+            id: 'sonmarg-jk', name: 'Sonmarg', emoji: '🌾', lat: 34.30, lng: 75.29, heading: 230, elevation: '2,800m',
+            meta: 'Meadow of Gold', season: 'May – October',
+            desc: '"Meadow of Gold" — a glacial valley at the end of Kashmir, just before Ladakh begins.',
+            experience: 'Sonmarg surprised me with its scale. I found a wide glacial valley fringed with soaring peaks.',
+            tips: ['Hire a local guide for trekking.', 'Arrive early to avoid crowds.'],
+            stats: [{ label: 'Altitude', value: '2,800 m' }, { label: 'Distance', value: '80 km from Srinagar' }],
+            trekStops: [
+              { id: 'start', scrollDepth: 0, altitude: 2200, title: 'The highway', moment: 'The Srinagar–Leh highway twists through poplar-lined corridors. Sonmarg is around the next bend.', type: 'text' },
+              { id: 'valley', scrollDepth: 30, altitude: 2500, title: 'Valley floor', moment: 'The Sind river braids through a wide valley. Glaciers hang on every peak above.', type: 'photo', mediaUrl: '' },
+              { id: 'glacier', scrollDepth: 55, altitude: 2700, title: 'Thajiwas Glacier', moment: 'Snow even in July. Ponies carry tourists but the walk is better alone.', type: 'photo', mediaUrl: '' },
+              { id: 'summit', scrollDepth: 80, altitude: 2800, title: 'Meadow of Gold', moment: 'The meadow earns its name. Late light turns every blade of grass to gold.', type: 'summit' },
+              { id: 'descent', scrollDepth: 95, altitude: 2400, title: 'The road back', moment: 'Sonmarg shrinks in the mirror. Zojila waits ahead if you dare.', type: 'text' },
             ],
-            type: 'scenic' 
+            type: 'trek'
+          },
+          { 
+            id: 'dal-lake', name: 'Dal Lake', emoji: '🛶', lat: 34.08, lng: 74.79, heading: 310, elevation: '1,585m',
+            meta: 'Summer capital of J&K', season: 'March – October',
+            desc: 'The summer capital of J&K — Dal Lake houseboats, Mughal gardens, and the fragrance of saffron fields at every turn.',
+            experience: 'Waking up on a houseboat on Dal Lake as the shikara men begin their morning rounds is one of travel\'s finest pleasures.',
+            tips: ['Negotiate shikara prices before boarding.', 'Visit Nishat Bagh early morning.'],
+            stats: [{ label: 'Altitude', value: '1,585 m' }, { label: 'Famous For', value: 'Dal Lake, Houseboats' }],
+            trekStops: [
+              { id: 'start', scrollDepth: 0, altitude: 1585, title: 'Dal Gate', moment: 'The boulevard hums with shikara wallahs calling for passengers. The lake stretches ahead.', type: 'text' },
+              { id: 'shikara', scrollDepth: 25, altitude: 1585, title: 'On the water', moment: 'The shikara glides through lotus gardens. Kingfishers dart between the stems.', type: 'photo', mediaUrl: '' },
+              { id: 'houseboat', scrollDepth: 50, altitude: 1585, title: 'The houseboat', moment: 'Cedar-panelled rooms floating on still water. Tea arrives without being asked.', type: 'photo', mediaUrl: '' },
+              { id: 'summit', scrollDepth: 75, altitude: 1585, title: 'Dawn on Dal Lake', moment: 'The sun catches the Zabarwan hills. The whole lake turns to gold.', type: 'summit' },
+              { id: 'descent', scrollDepth: 95, altitude: 1585, title: 'Leaving the lake', moment: 'The boulevard crowds return. Dal Lake stays perfectly still behind you.', type: 'text' },
+            ],
+            type: 'scenic'
           },
         ],
       },
@@ -250,7 +304,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 2200, title: 'Descending', moment: 'Sunset paints the western sky gold. The viewpoint disappears behind a ridge.', type: 'text' },
             ],
             type: 'scenic' },
-          { id: 'sanasar', name: 'Sanasar Lake', emoji: '🏞️', lat: 33.15, lng: 75.25, heading: 160, elevation: '2,050m', desc: 'A serene bowl-shaped meadow with a glacial lake — silent and perfect for camping.',
+          { id: 'sanasar', name: 'Sanasar', emoji: '🏞️', lat: 33.15, lng: 75.25, heading: 160, elevation: '2,050m', desc: 'A serene bowl-shaped meadow with a glacial lake — silent and perfect for camping.',
             trekPath: [
               { lat: 33.17, lng: 75.27 },  // Meadow path start
               { lat: 33.16, lng: 75.26 },  // Wildflower slope
@@ -263,60 +317,6 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 1850, title: 'Leaving the bowl', moment: 'The lake vanishes behind the rim. You carry the silence with you.', type: 'text' },
             ],
             type: 'lake' },
-        ],
-      },
-      {
-        id: 'kashmir-valley', name: 'Kashmir Valley',
-        lat: 34.20, lng: 75.10, zoom: 10, tilt: 55, heading: 0,
-        camera: { lat: 34.10, lng: 74.70, zoom: 9.5, tilt: 65, heading: 330 },
-        places: [
-          { id: 'zojila-pass', name: 'Zojila Pass', emoji: '🏔️', lat: 34.21, lng: 75.47, heading: 90, elevation: '3,528m', desc: 'The dramatic gateway between Kashmir and Ladakh — open only in summer.',
-            trekPath: [
-              { lat: 34.18, lng: 75.33 },  // Sonmarg exit
-              { lat: 34.19, lng: 75.38 },  // Lower switchbacks
-              { lat: 34.20, lng: 75.43 },  // Snowfield approach
-              { lat: 34.21, lng: 75.47 },  // Zojila summit
-            ],
-            trekStops: [
-              { id: 'start', scrollDepth: 0, altitude: 2800, title: 'Sonmarg exit', moment: 'The last green valley disappears. Ahead is only rock and snow.', type: 'text' },
-              { id: 'switchbacks', scrollDepth: 30, altitude: 3100, title: 'The switchbacks', moment: 'Trucks crawl. The road crumbles at the edges. One lane for both directions.', type: 'photo', mediaUrl: '' },
-              { id: 'snowfield', scrollDepth: 55, altitude: 3350, title: 'Snowfields', moment: 'Walls of dirty snow line both sides. The world shrinks to gravel and ice.', type: 'photo', mediaUrl: '' },
-              { id: 'summit', scrollDepth: 80, altitude: 3528, title: 'Zojila Pass', moment: 'The pass. Kashmir ends here. Ladakh begins beyond this wall of rock.', type: 'summit' },
-              { id: 'descent', scrollDepth: 95, altitude: 3200, title: 'Into Ladakh', moment: 'Brown mountains replace green. The desert begins.', type: 'text' },
-            ],
-            type: 'road' },
-          { 
-            id: 'srinagar', name: 'Srinagar', emoji: '🛶', lat: 34.08, lng: 74.79, heading: 310, elevation: '1,585m',
-            meta: 'Summer capital of J&K', season: 'March – October',
-            desc: 'The summer capital of J&K — Dal Lake houseboats, Mughal gardens, and the fragrance of saffron fields at every turn.',
-            experience: 'Waking up on a houseboat on Dal Lake as the shikara men begin their morning rounds is one of travel\'s finest pleasures.',
-            tips: ['Negotiate shikara prices before boarding.', 'Visit Nishat Bagh early morning.'],
-            stats: [{ label: 'Altitude', value: '1,585 m' }, { label: 'Famous For', value: 'Dal Lake, Houseboats' }],
-            trekStops: [
-              { id: 'start', scrollDepth: 0, altitude: 1585, title: 'Dal Gate', moment: 'The boulevard hums with shikara wallahs calling for passengers. The lake stretches ahead.', type: 'text' },
-              { id: 'shikara', scrollDepth: 25, altitude: 1585, title: 'On the water', moment: 'The shikara glides through lotus gardens. Kingfishers dart between the stems.', type: 'photo', mediaUrl: '' },
-              { id: 'houseboat', scrollDepth: 50, altitude: 1585, title: 'The houseboat', moment: 'Cedar-panelled rooms floating on still water. Tea arrives without being asked.', type: 'photo', mediaUrl: '' },
-              { id: 'summit', scrollDepth: 75, altitude: 1585, title: 'Dawn on Dal Lake', moment: 'The sun catches the Zabarwan hills. The whole lake turns to gold.', type: 'summit' },
-              { id: 'descent', scrollDepth: 95, altitude: 1585, title: 'Leaving the lake', moment: 'The boulevard crowds return. Dal Lake stays perfectly still behind you.', type: 'text' },
-            ],
-            type: 'scenic'
-          },
-          { 
-            id: 'sonmarg-jk', name: 'Sonmarg', emoji: '🌾', lat: 34.30, lng: 75.29, heading: 230, elevation: '2,800m',
-            meta: 'Meadow of Gold', season: 'May – October',
-            desc: '"Meadow of Gold" — a glacial valley at the end of Kashmir, just before Ladakh begins.',
-            experience: 'Sonmarg surprised me with its scale. I found a wide glacial valley fringed with soaring peaks.',
-            tips: ['Hire a local guide for trekking.', 'Arrive early to avoid crowds.'],
-            stats: [{ label: 'Altitude', value: '2,800 m' }, { label: 'Distance', value: '80 km from Srinagar' }],
-            trekStops: [
-              { id: 'start', scrollDepth: 0, altitude: 2200, title: 'The highway', moment: 'The Srinagar–Leh highway twists through poplar-lined corridors. Sonmarg is around the next bend.', type: 'text' },
-              { id: 'valley', scrollDepth: 30, altitude: 2500, title: 'Valley floor', moment: 'The Sind river braids through a wide valley. Glaciers hang on every peak above.', type: 'photo', mediaUrl: '' },
-              { id: 'glacier', scrollDepth: 55, altitude: 2700, title: 'Thajiwas Glacier', moment: 'Snow even in July. Ponies carry tourists but the walk is better alone.', type: 'photo', mediaUrl: '' },
-              { id: 'summit', scrollDepth: 80, altitude: 2800, title: 'Meadow of Gold', moment: 'The meadow earns its name. Late light turns every blade of grass to gold.', type: 'summit' },
-              { id: 'descent', scrollDepth: 95, altitude: 2400, title: 'The road back', moment: 'Sonmarg shrinks in the mirror. Zojila waits ahead if you dare.', type: 'text' },
-            ],
-            type: 'trek'
-          },
         ],
       },
     ],
@@ -344,8 +344,8 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 3500, title: 'Leh town', moment: 'Prayer flags snap in the wind above whitewashed walls. The palace watches over everything.', type: 'text' },
-              { id: 'palace', scrollDepth: 30, altitude: 3524, title: 'Leh Palace', moment: 'Nine stories of mud-brick and timber. The Stok range fills the windows.', type: 'photo', mediaUrl: '/images/generated/leh-palace.png' },
-              { id: 'summit', scrollDepth: 65, altitude: 3600, title: 'Shanti Stupa', moment: 'A white dome on a hill. The entire Indus valley unfolds below like a map.', type: 'summit', mediaUrl: '/images/generated/shanti-stupa.png' },
+              { id: 'palace', scrollDepth: 30, altitude: 3524, title: 'Leh Palace', moment: 'Nine stories of mud-brick and timber. The Stok range fills the windows.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('leh-palace', 'png') },
+              { id: 'summit', scrollDepth: 65, altitude: 3600, title: 'Shanti Stupa', moment: 'A white dome on a hill. The entire Indus valley unfolds below like a map.', type: 'summit', mediaUrl: buildRootCloudinaryUrl('shanti-stupa', 'png') },
               { id: 'descent', scrollDepth: 95, altitude: 3500, title: 'Back to the bazaar', moment: 'The old town hums. Chai steam rises from a roadside stall.', type: 'text' },
             ],
             type: 'spiritual' },
@@ -357,7 +357,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 3400, title: 'The approach', moment: 'The Leh–Srinagar highway cuts between magnetic hills. The shrine is in the rock itself.', type: 'text' },
-              { id: 'shrine', scrollDepth: 50, altitude: 3500, title: 'Inside the mountain', moment: 'Cool air, oil lamps, and the sound of kirtan echoing off stone walls.', type: 'photo', mediaUrl: '/images/generated/gurudwara.png' },
+              { id: 'shrine', scrollDepth: 50, altitude: 3500, title: 'Inside the mountain', moment: 'Cool air, oil lamps, and the sound of kirtan echoing off stone walls.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('gurudwara', 'png') },
               { id: 'summit', scrollDepth: 80, altitude: 3500, title: 'Pathar Sahib', moment: 'The boulder with the impression. Faith pressed into stone.', type: 'summit' },
               { id: 'descent', scrollDepth: 95, altitude: 3400, title: 'Back on the highway', moment: 'The shrine disappears behind a bend. The magnetic hill pulls at the wheels.', type: 'text' },
             ],
@@ -424,7 +424,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
     cardDesc: 'Manali to Lahaul, Shimla to Kinnaur — Himachal is a state that keeps revealing itself the further you push into the mountains.',
     tags: ['manali', 'kullu', 'lahaul', 'kinnaur'],
     travelTypes: ['road', 'trek', 'adventure'],
-    showSubRegionsFirst: false,
+    showSubRegionsFirst: true,
     subregions: [
       {
         id: 'kullu', name: 'Kullu-Manali',
@@ -433,7 +433,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
         places: [
           { 
             id: 'manali', name: 'Manali', emoji: '🏘️',
-            image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'manali', 'manali'),
+            image: buildRootCloudinaryUrl('manali', 'png'),
             lat: 32.24, lng: 77.19, heading: 330, elevation: '2,050m',
             meta: 'Adventure base · Kullu Valley', season: 'Year-round',
             desc: 'The adventure capital of Himachal — starting gun for Spiti, Lahaul and Ladakh expeditions.',
@@ -449,7 +449,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             type: 'road'
           },
-          { id: 'solang-valley', name: 'Solang Valley', emoji: '🎿', image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'solang-valley', 'solang'), lat: 32.33, lng: 77.15, heading: 350, elevation: '2,480m', desc: 'World-class skiing in winter, paragliding in summer.',
+          { id: 'solang-valley', name: 'Solang Valley', emoji: '🎿', image: buildRootCloudinaryUrl('solang', 'png'), lat: 32.33, lng: 77.15, heading: 350, elevation: '2,480m', desc: 'World-class skiing in winter, paragliding in summer.',
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 2050, title: 'Leaving Manali', moment: 'The road climbs north. Deodar forest flanks both sides.', type: 'text' },
               { id: 'gondola', scrollDepth: 35, altitude: 2300, title: 'The gondola base', moment: 'A cable car station at the valley mouth. Snow peaks fill every window.', type: 'photo', mediaUrl: '' },
@@ -457,7 +457,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 2200, title: 'The return', moment: 'Paragliders drift overhead. The valley catches the last golden light.', type: 'text' },
             ],
             type: 'adventure' },
-          { id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️', image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'rohtang-pass', 'Rohtang'), lat: 32.37, lng: 77.24, heading: 280, elevation: '3,978m', desc: 'The great divide between green Kullu Valley and the cold desert of Lahaul.',
+          { id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️', image: buildRootCloudinaryUrl('rohtang', 'png'), lat: 32.37, lng: 77.24, heading: 280, elevation: '3,978m', desc: 'The great divide between green Kullu Valley and the cold desert of Lahaul.',
             trekPath: [
               { lat: 32.2504, lng: 77.2417 },  // Manali side base
               { lat: 32.3018, lng: 77.2402 },  // Mid climb / Marhi
@@ -471,7 +471,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 3400, title: 'Into Lahaul', moment: 'The cold desert begins. Colour drains from the landscape. A new country.', type: 'text' },
             ],
             type: 'road' },
-          { id: 'sethan', name: 'Sethan', emoji: '❄️', image: buildCloudinaryUrl('himachal-pradesh', 'kullu', 'sethan', 'sethan'), lat: 32.19, lng: 77.24, heading: 310, elevation: '2,750m',
+          { id: 'sethan', name: 'Sethan', emoji: '❄️', image: buildRootCloudinaryUrl('sethan', 'png'), lat: 32.19, lng: 77.24, heading: 310, elevation: '2,750m',
             trekPath: [
               // Real GPS track from KML — 13 waypoints (Sethan village trail)
               { lat: 32.2396739, lng: 77.2253057 },
@@ -505,7 +505,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
           },
           {
             id: 'patalsu-peak', name: 'Patalsu Peak', emoji: '⛰️',
-            image: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/patalsu.jpg',
+            image: buildRootCloudinaryUrl('2clearviewofPatalsu', 'jpg'),
             lat: 32.3538, lng: 77.1910, heading: 200, elevation: '4,261m',
             meta: 'Non-technical summit · Solang Valley', season: 'May – October',
             desc: 'A non-technical high-altitude summit rising above Solang Valley, offering a 360° panorama of the Kullu and Lahaul ranges. One of the most rewarding day-summit treks from Manali.',
@@ -559,7 +559,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'solang-village', scrollDepth: 28, altitude: 2582, title: 'Solang village', moment: 'Stone houses, wooden balconies. A shepherd crosses the path without looking up. You are officially off the map.', cinematicText: 'The cable cars and ski slopes give way to stone paths and centuries of silence.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/6SolangVillage.jpg' },
               { id: 'trail-start', scrollDepth: 35, altitude: 2650, title: 'The trail begins', moment: 'Two figures on a rocky path. The valley stretches below. The peak hides above. This is where the scooty stays.', cinematicText: 'This is where the road ends and the mountain begins. You choose to keep going.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/7trekStart.jpg' },
               { id: 'forest-entry', scrollDepth: 42, altitude: 2820, title: 'Into the forest', moment: 'Pine trees close in on both sides. Cattle graze in clearings between the trunks. The air carries pine resin and cold mud.', cinematicText: 'In the forest, time slows. Every step sounds like it matters.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/8intotheforestsectionCattleGrazing.jpg' },
-              { id: 'dog-hiking', scrollDepth: 49, altitude: 3100, title: 'An unexpected companion', moment: 'A stray dog appeared at the treeline and decided to join the expedition. He moved faster than us on every switchback.', cinematicText: 'Some companions choose you. Not the other way around.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/9_1doghiking.jpg' },
+              { id: 'dog-hiking', scrollDepth: 49, altitude: 3100, title: 'An unexpected companion', moment: 'A stray dog appeared at the treeline and decided to join the expedition. He moved faster than us on every switchback.', cinematicText: 'Some companions choose you. Not the other way around.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/v1777212310/9_1doghiking.jpg' },
               { id: 'above-treeline', scrollDepth: 56, altitude: 3500, title: 'Above the treeline', moment: 'The trees end abruptly. A vast, open sky. The Dhauladhar ranges appear — white and endless from horizon to horizon.', cinematicText: 'You are in the sky now. What was a valley is now a map.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/10abovetheTreelineViewOfDhauladharRanges.jpg' },
               { id: 'ridgeline', scrollDepth: 63, altitude: 3800, title: 'Into the ridgeline', moment: 'Loose scree. Wind picking up. The ridge is steep and exposed. Every ten steps — stop and breathe.', cinematicText: 'The mountain tests your patience before it rewards your persistence.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/11IntoRidgeline.jpg' },
               { id: 'hanuman-tibba-view', scrollDepth: 70, altitude: 3900, title: 'Hanuman Tibba reveals itself', moment: 'You are now eye-level with giants. Hanuman Tibba fills the entire view. 5,982 metres of pure Himalayan scale.', cinematicText: 'The scale of the Himalaya stops being abstract.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/13ViewOfHanumanTibba.jpg' },

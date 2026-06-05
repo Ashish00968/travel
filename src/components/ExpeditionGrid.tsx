@@ -313,11 +313,16 @@ const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: Himalaya
       onClick={() => navigate(`/place/${regionId}/${place.id}`, { state: { from: 'grid' } })}
       className="cinematic-card"
       style={{
-        background: bg, borderRadius: '12px', overflow: 'hidden', cursor: 'pointer',
-        border: '1px solid rgba(255,255,255,0.04)',
+        background: bg, borderRadius: '16px', overflow: 'hidden', cursor: 'pointer',
+        border: '1px solid rgba(255,255,255,0.08)',
+        position: 'relative',
+        height: '320px',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
       }}
     >
-      <div style={{ height: '140px', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '42px', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
         {place.image ? (
           <OptimizedImage 
             src={place.image} 
@@ -328,22 +333,24 @@ const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: Himalaya
             }}
           />
         ) : (
-          <span className="cinematic-card-img">
+          <div className="cinematic-card-img" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '64px', background: 'rgba(255,255,255,0.02)' }}>
             {place.emoji}
-          </span>
+          </div>
         )}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0) 100%)' }} />
       </div>
-      <div style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-           <h4 style={{ fontSize: '17px', color: '#edeae2', margin: 0, fontWeight: 600 }}>{place.name}</h4>
-           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: TYPE_COLOR[place.type] }} title={TYPE_LABEL[place.type]} />
+
+      <div style={{ position: 'relative', padding: '24px', zIndex: 2 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
+           <h4 style={{ fontSize: '24px', color: '#ffffff', margin: 0, fontWeight: 600, fontFamily: "'Playfair Display',serif", textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>{place.name}</h4>
+           <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: TYPE_COLOR[place.type], boxShadow: `0 0 8px ${TYPE_COLOR[place.type]}`, marginTop: '8px' }} title={TYPE_LABEL[place.type]} />
         </div>
-        <p style={{ fontSize: '12px', color: '#7a7570', lineHeight: 1.5, margin: '0 0 16px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <p style={{ fontSize: '13px', color: '#d6d3ce', lineHeight: 1.5, margin: '0 0 16px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
           {place.desc}
         </p>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '12px' }}>
-          <span style={{ fontSize: '11px', color: '#3d3b38' }}>{place.elevation}</span>
-          <span className="explore-text" style={{ fontSize: '10px', fontFamily: "'Space Mono',monospace" }}>View Story <span className="explore-arrow">→</span></span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.15)', paddingTop: '12px' }}>
+          <span style={{ fontSize: '11px', color: '#a8a49c', fontFamily: "'Space Mono',monospace" }}>{place.elevation}</span>
+          <span className="explore-text" style={{ fontSize: '11px', fontFamily: "'Space Mono',monospace", textTransform: 'uppercase', letterSpacing: '0.05em' }}>View Story <span className="explore-arrow">→</span></span>
         </div>
       </div>
     </motion.div>

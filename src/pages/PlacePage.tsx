@@ -8,8 +8,6 @@ import { blurPlaceholderFromUrl } from '../lib/cloudinary'
 
 import { useMediaQuery } from '../hooks/useMediaQuery'
 
-const LiteYouTube = 'lite-youtube' as any
-
 /* ─────────────────────────────────────────────────────────────────────
  * DEFAULT STOPS
  * ───────────────────────────────────────────────────────────────────── */
@@ -67,7 +65,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
         height: stop.type === 'summit' ? 520 : 'clamp(320px,40vw,440px)' }}
       initial={{ opacity:0, scale:1.04 }}
       whileInView={{ opacity:1, scale:1 }}
-      viewport={{ once:false, margin:'-80px' }}
+      viewport={{ once:true, margin:'-20px' }}
       transition={{ duration:1.0, ease:[0.25,0.8,0.25,1] }}
     >
       {mediaUrl ? (
@@ -752,34 +750,52 @@ export default function PlacePage() {
         </section>
       </div>{/* /z-index wrapper */}
 
-      {/* ── Video Modal ──────────────────────────────────────────────── */}
+      {/* ── Centered Video Modal ──────────────────────────────────────────────── */}
       <AnimatePresence>
         {activeVideo && (
           <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
-            transition={{ duration:0.25 }}
+            transition={{ duration:0.3 }}
             style={{ position:'fixed', inset:0, zIndex:200, display:'flex',
               alignItems:'center', justifyContent:'center', padding:24 }}
             onClick={closeModal}>
-            <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.92)' }} />
-            <motion.div initial={{ scale:0.92, opacity:0 }} animate={{ scale:1, opacity:1 }}
-              exit={{ scale:0.92, opacity:0 }}
-              transition={{ duration:0.3, ease:[0.22,1,0.36,1] }}
-              style={{ position:'relative', width:'100%', maxWidth:900 }}
+            
+            {/* Blurred Backdrop */}
+            <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0.85)', backdropFilter:'blur(16px)' }} />
+            
+            <motion.div initial={{ scale:0.95, opacity:0 }} animate={{ scale:1, opacity:1 }}
+              exit={{ scale:0.95, opacity:0 }}
+              transition={{ duration:0.4, ease:[0.22,1,0.36,1] }}
+              style={{ position:'relative', width:'80vw', maxWidth:1400, display:'flex', flexDirection:'column', alignItems:'center' }}
               onClick={e => e.stopPropagation()}>
-              <button onClick={closeModal} style={{ position:'absolute', top:-44, right:0,
-                background:'none', border:'none', color:'#5a5550',
-                fontSize:13, fontFamily:"'DM Sans',sans-serif", cursor:'pointer',
-                display:'flex', alignItems:'center', gap:8 }}>
-                Close <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center',
-                  width:28, height:28, borderRadius:8, background:'rgba(255,255,255,0.08)', fontSize:11 }}>ESC</span>
-              </button>
-              <div style={{ position:'relative', width:'100%', borderRadius:16, overflow:'hidden',
-                boxShadow:'0 24px 80px rgba(0,0,0,0.7)', paddingBottom:'56.25%' }}>
-                <LiteYouTube videoid={activeVideo.youtubeId} playlabel={activeVideo.title} params="autoplay=1"
-                  style={{ position:'absolute', inset:0, width:'100%', height:'100%' }} />
+              
+              {/* Title on Top */}
+              <div style={{ width:'100%', display:'flex', justifyContent:'space-between', alignItems:'flex-end', marginBottom:20 }}>
+                <h3 style={{ fontFamily:"'Playfair Display',serif", fontSize:'clamp(24px, 3vw, 36px)', color:'#edeae2', margin:0, fontWeight:600 }}>
+                  {activeVideo.title}
+                </h3>
+                <button onClick={closeModal} style={{ 
+                  background:'rgba(255,255,255,0.08)', border:'1px solid rgba(255,255,255,0.15)', color:'#edeae2',
+                  fontSize:12, fontFamily:"'Space Mono',monospace", cursor:'pointer',
+                  display:'flex', alignItems:'center', gap:8, textTransform:'uppercase', letterSpacing:'0.1em',
+                  padding:'8px 16px', borderRadius:8, transition:'all 0.2s ease' }}
+                  onMouseEnter={e => { e.currentTarget.style.background='rgba(255,255,255,0.15)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background='rgba(255,255,255,0.08)' }}>
+                  Close <span style={{ display:'inline-flex', alignItems:'center', justifyContent:'center',
+                    width:24, height:24, borderRadius:4, background:'rgba(232,201,122,0.2)', fontSize:10, color:'#e8c97a' }}>ESC</span>
+                </button>
               </div>
-              <p style={{ marginTop:14, textAlign:'center', fontFamily:"'Space Mono',monospace",
-                fontSize:11, color:'rgba(255,255,255,0.25)' }}>{activeVideo.title}</p>
+
+              {/* True 16:9 Player with instant Autoplay */}
+              <div style={{ position:'relative', width:'100%', aspectRatio:'16/9', borderRadius:16, overflow:'hidden', boxShadow:'0 30px 100px rgba(0,0,0,0.9)', border:'1px solid rgba(255,255,255,0.1)', background:'#000' }}>
+                <iframe 
+                  src={`https://www.youtube.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0&modestbranding=1`} 
+                  title={activeVideo.title}
+                  frameBorder="0" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                  allowFullScreen
+                  style={{ position:'absolute', inset:0, width:'100%', height:'100%' }}
+                />
+              </div>
             </motion.div>
           </motion.div>
         )}

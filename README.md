@@ -2,7 +2,10 @@
 
 A cinematic, interactive 3D travel atlas documenting the Himalayas through high-performance geospatial storytelling. Built with **React**, **TypeScript**, **Mapbox GL JS**, and **Cloudinary**.
 
-## 🚀 Key Features
+## 🚀 Latest Updates
+- **v10.0 (Quantum Alpine Edition)**: Pushed to GitHub on **June 1, 2026, 2:13 AM**.
+
+## 🏔 Key Features
 
 - **Cinematic 3D Map**: Immersive terrain visualization using Mapbox GL JS with 2.0x exaggeration and atmospheric fog.
 - **Hierarchical Storytelling**: Experience-driven navigation from Regions → Sub-regions → Places.

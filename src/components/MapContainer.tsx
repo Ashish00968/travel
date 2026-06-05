@@ -43,7 +43,7 @@ const REGION_CAMERAS: Record<string, { lat: number; lng: number; zoom: number; p
 const SUBREGION_CAMERAS: Record<string, { lat: number; lng: number; zoom: number; pitch: number; bearing: number }> = {
   'rajouri':          { lat: 33.00, lng: 74.43, zoom: 10.0, pitch: 70, bearing: 5   },
   'jammu':            { lat: 32.80, lng: 75.28, zoom: 10.0, pitch: 68, bearing: 5   },
-  'kashmir-valley':   { lat: 33.60, lng: 74.90, zoom: 10.0, pitch: 68, bearing: 5   },
+  'kashmir':          { lat: 33.60, lng: 74.90, zoom: 10.0, pitch: 68, bearing: 5   },
   'leh-beyond':       { lat: 33.50, lng: 77.58, zoom: 9.5,  pitch: 68, bearing: 355 },
   'kullu':            { lat: 31.80, lng: 77.15, zoom: 10.2, pitch: 70, bearing: 5   },
   'mandi':            { lat: 31.30, lng: 76.93, zoom: 10.5, pitch: 68, bearing: 5   },
@@ -222,9 +222,11 @@ export default function MapContainer() {
       interactive: false // Initial state, user must click to interact
     })
 
+    let isCancelled = false
     mapRef.current = map
 
     map.on('style.load', () => {
+      if (isCancelled) return
       // Hide all default Mapbox labels, borders, and streets for a clean cinematic look
       const layers = map.getStyle().layers;
       if (layers) {
@@ -263,24 +265,50 @@ export default function MapContainer() {
         clearTrekPath()
       }
 
-      // Hide ALL region-level markers (including the one just selected).
-      // The CSS transition on each element (set in buildStateMarkerEl) handles the 300ms fade.
       const dimStates = () => {
         Object.values(stateMarkersRef.current).forEach(m => {
-          const el = m.getElement()
-          el.style.opacity = '0'
-          el.style.transform = 'scale(0.75)'
-          el.style.pointerEvents = 'none'
+          m.remove()
         })
       }
 
       const restoreStates = () => {
         Object.values(stateMarkersRef.current).forEach(m => {
-          const el = m.getElement()
-          el.style.opacity = '1'
-          el.style.transform = 'scale(1)'
-          el.style.pointerEvents = 'auto'
+          m.addTo(map)
         })
+      }
+
+      // ── De-overlap: push sub-region markers apart if they're closer than
+      //    MIN_PX pixels in screen space. Runs 3 relaxation passes.
+      const computeSubRegionOffsets = (
+        srs: HimalayaSubRegion[],
+        MIN_PX = 80
+      ): Map<string, [number, number]> => {
+        const valid = srs.filter(sr => sr.lat && sr.lng)
+        const offsets = new Map<string, [number, number]>(valid.map(sr => [sr.id, [0, 0]]))
+
+        for (let pass = 0; pass < 4; pass++) {
+          for (let i = 0; i < valid.length; i++) {
+            for (let j = i + 1; j < valid.length; j++) {
+              const a = valid[i], b = valid[j]
+              const oa = offsets.get(a.id)!, ob = offsets.get(b.id)!
+              const pa = map.project([a.lng!, a.lat!])
+              const pb = map.project([b.lng!, b.lat!])
+              // current screen positions (geographic projection + accumulated pixel offset)
+              const ax = pa.x + oa[0], ay = pa.y + oa[1]
+              const bx = pb.x + ob[0], by = pb.y + ob[1]
+              const dx = bx - ax, dy = by - ay
+              const dist = Math.sqrt(dx * dx + dy * dy)
+              if (dist < MIN_PX) {
+                const push = (dist === 0 ? MIN_PX / 2 : (MIN_PX - dist) / 2) + 4
+                const nx = dist === 0 ? 0 : dx / dist
+                const ny = dist === 0 ? -1 : dy / dist
+                offsets.set(a.id, [oa[0] - nx * push, oa[1] - ny * push])
+                offsets.set(b.id, [ob[0] + nx * push, ob[1] + ny * push])
+              }
+            }
+          }
+        }
+        return offsets
       }
 
       const clearTrekPath = () => {
@@ -575,16 +603,50 @@ export default function MapContainer() {
         clearSubRegionMarkers()
         clearPlaceMarkers()
 
-        // Hide ALL region markers immediately (CSS transition on each element handles the fade)
+        // Hide ALL region markers (including the selected one)
         dimStates()
         setMarkerVisibilityState('subregions')
 
         openRegionPanel(regionId)
 
-        // Use south-offset north-facing camera so snowy Himalayas fill the background
+        // ── Compute a bounding box from all sub-regions that have lat/lng ──
+        const srCoords = region.subregions
+          .filter(sr => sr.lat && sr.lng)
+          .map(sr => [sr.lng!, sr.lat!] as [number, number])
+
+        // Fall back to the fixed camera if no sub-region coordinates exist
         const cam = REGION_CAMERAS[regionId] ?? {
           lat: region.lat - 0.8, lng: region.lng,
           zoom: region.zoom, pitch: 68, bearing: 5
+        }
+
+        // Helper: fit all sub-region pins in view with padding
+        const flyToFitSubRegions = async (animate: boolean) => {
+          if (srCoords.length >= 2) {
+            const lngs = srCoords.map(c => c[0])
+            const lats = srCoords.map(c => c[1])
+            const bounds: [[number, number], [number, number]] = [
+              [Math.min(...lngs) - 0.3, Math.min(...lats) - 0.3],
+              [Math.max(...lngs) + 0.3, Math.max(...lats) + 0.3],
+            ]
+            await new Promise<void>(resolve => {
+              map.once('moveend', () => resolve())
+              map.fitBounds(bounds, {
+                padding: { top: 80, bottom: 80, left: 80, right: 420 },
+                pitch: 55,
+                bearing: 5,
+                duration: animate ? 1600 : 0,
+                essential: true,
+              })
+            })
+          } else {
+            // Single or no sub-region — use fixed camera
+            if (animate) {
+              await flyToCamera(map, { lat: cam.lat, lng: cam.lng, zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing, duration: 1400 })
+            } else {
+              map.jumpTo({ center: [cam.lng, cam.lat], zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing })
+            }
+          }
         }
 
         if (!skipAnimation) {
@@ -595,17 +657,8 @@ export default function MapContainer() {
           // ── 2. Show FlyingOverlay text for the region ─────────────────────────
           setFlyingTo({ name: region.name, emoji: region.emoji })
 
-          // ── 3. Two-stage cinematic fly (each awaits map.once('moveend')) ──────
-          await flyToCamera(map, {
-            lat: cam.lat - 0.6, lng: cam.lng,
-            zoom: cam.zoom - 1.2, pitch: 45, bearing: cam.bearing,
-            duration: 900
-          })
-          await flyToCamera(map, {
-            lat: cam.lat, lng: cam.lng,
-            zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing,
-            duration: 1400
-          })
+          // ── 3. Fly to fit all sub-regions in view ──────────────────────────────
+          await flyToFitSubRegions(true)
 
           // ── 4. Flight done — clear the FlyingOverlay and start dim fade-out ──
           setFlyingTo(null)
@@ -615,11 +668,13 @@ export default function MapContainer() {
 
           // ── 5. Spawn place / subregion markers (staggered, post-flight) ──────
           if (region.showSubRegionsFirst) {
+            const offsets = computeSubRegionOffsets(region.subregions)
             region.subregions.forEach((sr, i) => {
               if (!sr.lat || !sr.lng) return
               setTimeout(() => {
                 const el = buildSubRegionMarkerEl(sr)
-                const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+                const [ox, oy] = offsets.get(sr.id) ?? [0, 0]
+                const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [ox, oy] })
                   .setLngLat([sr.lng!, sr.lat!])
                   .addTo(map)
                 el.addEventListener('click', (e) => {
@@ -634,14 +689,16 @@ export default function MapContainer() {
           }
         } else {
           // Skip-animation path (on map remount / back-navigation restore)
-          map.jumpTo({ center: [cam.lng, cam.lat], zoom: cam.zoom, pitch: cam.pitch, bearing: cam.bearing })
+          await flyToFitSubRegions(false)
 
           if (region.showSubRegionsFirst) {
+            const offsets = computeSubRegionOffsets(region.subregions)
             region.subregions.forEach((sr, i) => {
               if (!sr.lat || !sr.lng) return
               setTimeout(() => {
                 const el = buildSubRegionMarkerEl(sr)
-                const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+                const [ox, oy] = offsets.get(sr.id) ?? [0, 0]
+                const marker = new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [ox, oy] })
                   .setLngLat([sr.lng!, sr.lat!])
                   .addTo(map)
                 el.addEventListener('click', (e) => {
@@ -799,6 +856,7 @@ export default function MapContainer() {
     })
 
     return () => {
+      isCancelled = true
       map.remove()
     }
   }, [])
