@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Himalayan Atlas - Technical Architecture & Spec v10.0 (Quantum Alpine Edition)</title>
+    <title>Himalayan Atlas - Technical Architecture & Spec v11.0 (Persistent Viewport Edition)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -594,7 +594,7 @@
 <!-- TOP SPEC BAR -->
 <nav class="spec-nav">
     <a href="#" class="nav-logo">
-        🏔️ Himalayan Atlas <span>v10.0 STABLE</span>
+        🏔️ Himalayan Atlas <span>v11.0 STABLE</span>
     </a>
     <div class="nav-links">
         <a href="#cloudinary">Cloudinary Media</a>
@@ -607,6 +607,7 @@
         <a href="#optimization">Flight Optimization</a>
         <a href="#ux-overhaul">UX Overhaul</a>
         <a href="#v10-updates">v10 Updates</a>
+        <a href="#v11-updates">v11 Updates</a>
     </div>
 </nav>
 
@@ -627,6 +628,7 @@
             <li class="toc-item"><a href="#optimization" class="toc-link">8. Flight Optimization</a></li>
             <li class="toc-item"><a href="#ux-overhaul" class="toc-link">9. UX &amp; Hierarchy Overhaul</a></li>
             <li class="toc-item"><a href="#v10-updates" class="toc-link">10. v10 Responsiveness & Polish</a></li>
+            <li class="toc-item"><a href="#v11-updates" class="toc-link">11. v11 Map Persistence &amp; Orbit</a></li>
         </ul>
     </aside>
 
@@ -637,7 +639,7 @@
             <div class="header-meta">
                 <span class="badge badge-gold"><span class="pulse-dot"></span> System Live</span>
                 <span class="badge badge-glow">Mapbox GL 3D DEM</span>
-                <span class="badge badge-success">Optimized Engine v10.0</span>
+                <span class="badge badge-success">Optimized Engine v11.0</span>
             </div>
             <h1>Himalayan Atlas</h1>
             <p>System Architecture and Core Specification Dossier. A detailed analysis of the performance mechanisms, route rendering algorithms, and camera flight state controllers.</p>
@@ -796,19 +798,31 @@
             </div>
 
             <h3>Back-Navigation Transition Logic</h3>
-            <p>The custom back controller determines the target page programmatically, avoiding dead ends.</p>
-            <pre><code><span class="token-keyword">const</span> <span class="token-function">handleBack</span> = <span class="token-function">useCallback</span>(() =&gt; {
-  <span class="token-keyword">const</span> usr  = window.history.state?.usr;
-  <span class="token-keyword">const</span> from = usr?.from;
-
-  <span class="token-keyword">if</span> (from === <span class="token-token-string">'grid'</span>) <span class="token-function">navigate</span>(<span class="token-token-string">'/#regions'</span>);
-  <span class="token-keyword">else if</span> (from === <span class="token-token-string">'map'</span>) {
-    <span class="token-function">navigate</span>(<span class="token-token-string">'/'</span>);
-    <span class="token-keyword">if</span> (regionId) <span class="token-function">openRegionPanel</span>(regionId); <span class="token-comment">// Restores sidebar panel in-place</span>
+            <p>The back navigation behavior operates contexts selectively in `PlacePage.tsx` and `MapContainer.tsx` to handle page-level routing and map-level subregion states independently:</p>
+            <pre><code><span class="token-comment">// 1. Page-level Back Controller in PlacePage.tsx</span>
+<span class="token-keyword">const</span> <span class="token-function">handleBack</span> = <span class="token-function">useCallback</span>(() =&gt; {
+  window.history.scrollRestoration = <span class="token-token-string">'manual'</span>;
+  window.<span class="token-function">scrollTo</span>(<span class="token-number">0</span>, <span class="token-number">0</span>);
+  <span class="token-keyword">if</span> (navFrom === <span class="token-token-string">'grid'</span>) {
+    <span class="token-function">navigate</span>(<span class="token-token-string">'/horizon'</span>, { state: { from: <span class="token-token-string">'grid'</span> } });
   } <span class="token-keyword">else</span> {
-    <span class="token-function">navigate</span>(<span class="token-number">-1</span>); <span class="token-comment">// Standby browser fallback</span>
+    <span class="token-function">navigate</span>(<span class="token-token-string">'/'</span>, { state: { from: <span class="token-token-string">'map'</span> } });
   }
-}, [navigate, regionId, openRegionPanel]);</code></pre>
+}, [navigate, navFrom]);
+
+<span class="token-comment">// 2. Map-level Back Controller in MapContainer.tsx</span>
+<span class="token-keyword">const</span> <span class="token-function">handleBack</span> = () =&gt; {
+  <span class="token-keyword">if</span> (liveTrekAlt !== <span class="token-keyword">null</span> || trekStats !== <span class="token-keyword">null</span>) {
+    <span class="token-function">setLiveTrekAlt</span>(<span class="token-keyword">null</span>);
+    <span class="token-function">setTrekStats</span>(<span class="token-keyword">null</span>);
+    <span class="token-keyword">if</span> (activeSubRegionId &amp;&amp; doSelectSubRegionRef.current) {
+      doSelectSubRegionRef.current(activeSubRegionId, <span class="token-keyword">false</span>);
+    }
+    <span class="token-keyword">return</span>;
+  }
+  <span class="token-keyword">if</span> (activeSubRegionId) { doBackToRegionRef.current(); <span class="token-keyword">return</span>; }
+  <span class="token-keyword">if</span> (activeRegionId) { doResetRef.current(); }
+};</code></pre>
 
             <div class="callout">
                 <div class="callout-icon">⚡</div>
@@ -962,25 +976,22 @@ map.<span class="token-function">on</span>(<span class="token-token-string">'loa
     <span class="token-comment">// Transition from Amber (#e8a030) to Summit Gold (#e8c97a)</span>
     <span class="token-keyword">const</span> t2 = (t - <span class="token-number">0.45</span>) / <span class="token-number">0.55</span>;
     <span class="token-keyword">const</span> g = <span class="token-class">Math</span>.<span class="token-function">round</span>(<span class="token-number">0xa0</span> + (<span class="token-number">0xc9</span> - <span class="token-number">0xa0</span>) * t2);
-    <span class="token-keyword">const</span> b = <span class="token-class">Math</span>.<span class="token-function">round</span>(<span class="token-number">0x30</span> + (<span class="token-number">0x7a</span> - <span class="token-number">0x30</span>) * t2);
+    <span class="token-keyword">const</span> b = <span class="token-class">Math</span>.<span class="token-number">round</span>(<span class="token-number">0x30</span> + (<span class="token-number">0x7a</span> - <span class="token-number">0x30</span>) * t2);
     <span class="token-keyword">return</span> <span class="token-token-string">`#e8a0${b.toString(16).padStart(2,'0')}`</span>;
   }
 }</code></pre>
 
             <h3>Summit Drone Orbit</h3>
-            <p>Upon completing the trek, a 360-degree drone orbit around the summit is initiated to showcase the high-altitude landscape.</p>
-            <pre><code><span class="token-comment">// Easing-free summit drone loop</span>
-<span class="token-keyword">const</span> orbitInterval = <span class="token-function">setInterval</span>(() =&gt; {
-  bearing = (bearing + <span class="token-number">1.2</span>) % <span class="token-number">360</span>;
-  map.<span class="token-function">easeTo</span>({
-    bearing,
-    center: [summitLng, summitLat],
-    zoom: <span class="token-number">13.5</span>,
-    pitch: <span class="token-number">68</span>,
-    duration: <span class="token-number">80</span>,
-    easing: t =&gt; t
-  });
-}, <span class="token-number">80</span>);</code></pre>
+            <p>To eliminate CPU-bound rendering bottlenecks, the orbit is driven by a single native WebGL camera rotation interpolation over 5 seconds:</p>
+            <pre><code><span class="token-comment">// Smooth WebGL GPU Orbit Rotation</span>
+map.<span class="token-function">easeTo</span>({ 
+  bearing: map.<span class="token-function">getBearing</span>() + <span class="token-number">75</span>, 
+  center: [summitLng, summitLat], 
+  zoom: <span class="token-number">13.5</span>, 
+  pitch: <span class="token-number">68</span>, 
+  duration: <span class="token-number">5000</span>, 
+  easing: t =&gt; t 
+});</code></pre>
         </section>
 
         <!-- SECTION: NORTH-FACING CAMERA SYSTEM -->
@@ -1120,23 +1131,43 @@ map.<span class="token-function">on</span>(<span class="token-token-string">'loa
                 </table>
             </div>
 
-            <h3>Updated Transition Handler in <code>MapContainer.tsx</code></h3>
-            <p>The updated transition handler routes users directly to the high-performance Cinematic Expedition engine if no pre-rendered video is defined in the destination schema.</p>
-            <pre><code><span class="token-comment">// Transition Handler Logic</span>
-<span class="token-keyword">const</span> <span class="token-function">handlePlaceClick</span> = <span class="token-function">useCallback</span>((place: <span class="token-class">HimalayaPlace</span>) =&gt; {
-  <span class="token-comment">// If videoTransitionUrl is defined, play the video transition</span>
-  <span class="token-keyword">if</span> (place.videoTransitionUrl) {
-    <span class="token-function">setEarthTransition</span>({
-      videoUrl: place.videoTransitionUrl,
-      navigateTo: <span class="token-token-string">`/place/${activeRegionId}/${place.id}`</span>
+            <h3>Place Marker Click Transition Handler</h3>
+            <p>When a destination is selected, the map filters out other markers to prevent visual clutter, initiates a direct camera sweep, saves the homepage scroll offset, and shifts the route destination context:</p>
+            <pre><code><span class="token-comment">// Dynamic Place Selection &amp; Camera Transition Handler</span>
+<span class="token-keyword">const</span> <span class="token-function">handlePlaceClick</span> = <span class="token-keyword">async</span> (place: <span class="token-class">HimalayaPlace</span>, region: <span class="token-class">HimalayaRegion</span>) =&gt; {
+  <span class="token-keyword">const</span> targetHeading = place.heading ?? <span class="token-number">5</span>;
+  <span class="token-keyword">const</span> navTarget = <span class="token-token-string">`/place/${region.id}/${place.id}`</span>;
+  <span class="token-keyword">const</span> hasTrek = place.trekPath &amp;&amp; place.trekPath.length &gt; <span class="token-number">1</span>;
+
+  <span class="token-comment">// Filter out unrelated place markers to prevent clutter</span>
+  placeMarkersRef.current.<span class="token-function">forEach</span>(m =&gt; {
+    <span class="token-keyword">const</span> el = m.<span class="token-function">getElement</span>();
+    <span class="token-keyword">if</span> (!el.textContent?.<span class="token-function">includes</span>(place.name.<span class="token-function">toUpperCase</span>()) &amp;&amp; !el.textContent?.<span class="token-function">includes</span>(place.name)) {
+      el.style.display = <span class="token-token-string">'none'</span>;
+    }
+  });
+
+  <span class="token-function">setFlyingTo</span>({ name: place.name, emoji: place.emoji, image: place.image });
+
+  <span class="token-keyword">if</span> (!hasTrek) {
+    <span class="token-keyword">await</span> <span class="token-function">flyToCamera</span>(map, {
+      lat: place.lat - <span class="token-number">0.03</span>,
+      lng: place.lng,
+      zoom: <span class="token-number">14</span>,
+      pitch: <span class="token-number">75</span>,
+      bearing: targetHeading,
+      duration: <span class="token-number">1500</span>
     });
+    <span class="token-function">setFlyingTo</span>(<span class="token-keyword">null</span>);
   } <span class="token-keyword">else</span> {
-    <span class="token-comment">// Direct transition to the native 3D flight engine</span>
-    <span class="token-function">navigate</span>(<span class="token-token-string">`/place/${activeRegionId}/${place.id}`</span>, {
-      state: { from: <span class="token-token-string">'map'</span> }
-    });
+    <span class="token-function">setTimeout</span>(() =&gt; <span class="token-function">setFlyingTo</span>(<span class="token-keyword">null</span>), <span class="token-number">1500</span>);
+    <span class="token-keyword">const</span> isCinematic = place.id === <span class="token-token-string">'patalsu-peak'</span>;
+    <span class="token-keyword">await</span> <span class="token-function">drawTrekPath</span>(place.trekPath, place.name, isCinematic);
   }
-}, [activeRegionId, navigate]);</code></pre>
+
+  sessionStorage.<span class="token-function">setItem</span>(<span class="token-token-string">'mapScrollY'</span>, window.scrollY.<span class="token-function">toString</span>());
+  <span class="token-function">navigate</span>(navTarget, { state: { from: <span class="token-token-string">'map'</span> } });
+};</code></pre>
         </section>
 
         <!-- SECTION: UX & HIERARCHY OVERHAUL -->
@@ -1212,13 +1243,49 @@ map.<span class="token-function">on</span>(<span class="token-token-string">'loa
             <p>Following the final iteration, the codebase cleared a <strong>0-warning TypeScript compilation</strong> (<code>tsc --noEmit</code>) and a 0-issue Vite chunk warning. All mapbox dependencies were successfully isolated via Rollup manual chunking. Vercel deployment cache headers were successfully configured for maximum static asset retention.</p>
         </section>
 
+        <!-- SECTION: v11 Updates -->
+        <section id="v11-updates">
+            <h2><span>11 /</span> v11 Map Component Persistence &amp; WebGL Optimization</h2>
+            <p>The v11.0 release targets viewport re-rendering lag and Mapbox GL state preservation by restructuring the app router lifecycle and optimizing camera ease dynamics.</p>
+            
+            <div class="gold-box">
+                <h3>Persistent DOM Rendering System</h3>
+                <p>Instead of unmounting and destroying the Mapbox GL instance when navigating to subpages (which causes heavy garbage collection cycles and high-latency re-initialization), the homepage layout is kept active in the background:</p>
+                <pre><code><span class="token-comment">// In App.tsx: Persistent homepage caching</span>
+&lt;<span class="token-keyword">div</span> style={{ display: location.pathname === <span class="token-token-string">'/'</span> ? <span class="token-token-string">'block'</span> : <span class="token-token-string">'none'</span> }}&gt;
+  &lt;<span class="token-class">Suspense</span> fallback={<span class="token-keyword">null</span>}&gt;
+    &lt;<span class="token-class">LazyHomePage</span> /&gt;
+  &lt;/<span class="token-class">Suspense</span>&gt;
+&lt;/<span class="token-keyword">div</span>&gt;</code></pre>
+                <p>To avoid rendering bugs post-restoration, a dynamic window <code>resize</code> event is triggered immediately after displaying the cached component, forcing Mapbox GL to recalibrate its pixel aspect ratios.</p>
+            </div>
+
+            <div class="info-box">
+                <h3>Scroll Context Restoration</h3>
+                <p>When diving into a deep place detail page, the vertical scroll offset is written to <code>sessionStorage</code>. Returning from the page instantly resets the viewport back to the recorded position using instant-jump layouts, maintaining complete visual consistency.</p>
+            </div>
+
+            <h3>Smooth Eased Transitions</h3>
+            <p>Camera flight sequences have been switched from linear interpolations to custom ease-out curves, providing a highly organic deceleration profile:</p>
+            <pre><code><span class="token-comment">// Eased flyToCamera implementation in mapUtils.ts</span>
+map.<span class="token-function">easeTo</span>({
+  center: [opts.lng, opts.lat],
+  zoom: opts.zoom,
+  pitch: opts.pitch,
+  bearing: opts.bearing,
+  duration: opts.duration ?? <span class="token-number">2000</span>,
+  essential: <span class="token-keyword">true</span>,
+  easing: t =&gt; t * (<span class="token-number">2</span> - t) <span class="token-comment">// Quadratic ease-out spline</span>
+});</code></pre>
+        </section>
+
     </main>
 </div>
 
 <!-- FOOTER SECTION -->
 <footer>
-    HIMALAYAN ATLAS &mdash; ARCHITECTURE SPEC v10.0 // QUANTUM ALPINE EDITION // 2026<br/>
-    <span style="font-size: 0.8em; opacity: 0.6; margin-top: 8px; display: inline-block;">Latest GitHub Update: June 1, 2026, 2:13 AM</span>
+    HIMALAYAN ATLAS &mdash; ARCHITECTURE SPEC v11.0 // PERSISTENT VIEWPORT EDITION // 2026<br/>
+    <span style="font-size: 0.8em; opacity: 0.6; margin-top: 8px; display: inline-block;">Latest GitHub Update: June 6, 2026, 5:25 PM</span>
 </footer>
 
 <!-- ACTIVE SECTION HIGHLIGHTER SCRIPT -->

@@ -31,6 +31,12 @@ export default function App() {
         </Suspense>
       )}
 
+      <div style={{ display: location.pathname === '/' ? 'block' : 'none' }}>
+        <Suspense fallback={null}>
+          <LazyHomePage />
+        </Suspense>
+      </div>
+      
       <Suspense fallback={
         <div style={{ backgroundColor: '#06080c' }} className="fixed inset-0 z-50 flex flex-col items-center justify-center">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -46,7 +52,6 @@ export default function App() {
       }>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            <Route path="/" element={<LazyHomePage />} />
             <Route path="/place/:regionId/:placeId" element={<LazyPlacePage />} />
             <Route path="/horizon" element={<LazyHorizonPage />} />
           </Routes>

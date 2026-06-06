@@ -29,13 +29,14 @@ export function flyToCamera(
   return new Promise(resolve => {
     const onEnd = () => { resolve() }
     map.once('moveend', onEnd)
-    map.flyTo({
+    map.easeTo({
       center: [opts.lng, opts.lat],
       zoom: opts.zoom,
       pitch: opts.pitch,
       bearing: opts.bearing,
       duration: opts.duration ?? 2000,
       essential: true,
+      easing: t => t * (2 - t) // simple ease-out
     })
   })
 }

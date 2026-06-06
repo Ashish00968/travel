@@ -15,14 +15,23 @@ export default function HomePage() {
   /* ── Scroll to correct section when returning from a place page ─── */
   useEffect(() => {
     if (returnFrom === 'map') {
-      // Instant jump — no animation, no flash
-      document.getElementById('map-section')?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
+      const savedY = sessionStorage.getItem('mapScrollY')
+      if (savedY) {
+        window.scrollTo({ top: parseInt(savedY, 10), behavior: 'instant' })
+      } else {
+        document.getElementById('map-section')?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
+      }
     } else if (returnFrom === 'grid') {
       document.getElementById('regions')?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
     }
     // Re-enable scroll restoration for future navigations
     window.history.scrollRestoration = 'auto'
-  }, [returnFrom])
+    
+    // Trigger a resize event so Mapbox redraws correctly after display:none
+    if (location.pathname === '/') {
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50)
+    }
+  }, [returnFrom, location.pathname])
 
   /* ── Page-level SEO ────────────────────────────────────────────── */
   useEffect(() => {

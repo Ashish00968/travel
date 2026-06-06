@@ -465,17 +465,13 @@ export default function PlacePage() {
     }
   }, [place, region])
 
-  /* ── Back ────────────────────────────────────────────────────────── */
   const handleBack = useCallback(() => {
-    if (navFrom) {
-      // Prevent the browser from animating scroll restoration on the
-      // current page before the route transition completes.
-      window.history.scrollRestoration = 'manual'
-      window.scrollTo(0, 0)
-      navigate(-1)
+    window.history.scrollRestoration = 'manual'
+    window.scrollTo(0, 0)
+    if (navFrom === 'grid') {
+      navigate('/horizon', { state: { from: 'grid' } })
     } else {
-      // Direct URL access — no previous history entry, fall back to home
-      navigate('/')
+      navigate('/', { state: { from: 'map' } })
     }
   }, [navigate, navFrom])
 

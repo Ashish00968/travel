@@ -149,6 +149,7 @@ export default function MapContainer() {
   const subRegionMarkersRef = useRef<mapboxgl.Marker[]>([])
   const placeMarkersRef = useRef<mapboxgl.Marker[]>([])
   const trekMarkersRef = useRef<mapboxgl.Marker[]>([])
+  const lastAnimatedSubRegionRef = useRef<string | null>(null)
 
   const doSelectStateRef = useRef<(id: string, skipAnimation?: boolean) => Promise<void>>(async () => {})
   const doSelectSubRegionRef = useRef<(id: string, skipAnimation?: boolean) => Promise<void>>(async () => {})
@@ -200,6 +201,14 @@ export default function MapContainer() {
       doSelectPlaceRef.current(storePlaceId)
     }
   }, [storePlaceId])
+
+  useEffect(() => {
+    if (activeSubRegionId && activeSubRegionId !== lastAnimatedSubRegionRef.current) {
+      if (doSelectSubRegionRef.current) {
+        doSelectSubRegionRef.current(activeSubRegionId)
+      }
+    }
+  }, [activeSubRegionId])
 
   useEffect(() => {
     if (!mapContainerRef.current) return
@@ -419,21 +428,9 @@ export default function MapContainer() {
 
         // ── Cinematic multi-stage fly for Patalsu ──────────────────
         if (isCinematic) {
-          // Stage 1: Approach from Manali — wide valley view
+          // Approach from Manali — wide valley view
           await flyToCamera(map, {
-            lat: 32.305, lng: 77.155, zoom: 11, pitch: 45, bearing: 20, duration: 1600
-          })
-          // Stage 2: Rise up the valley looking toward the peak
-          await flyToCamera(map, {
-            lat: 32.330, lng: 77.162, zoom: 12.5, pitch: 68, bearing: 15, duration: 1800
-          })
-          // Stage 3: Swoop low over the ridgeline
-          await flyToCamera(map, {
-            lat: 32.348, lng: 77.175, zoom: 13, pitch: 75, bearing: 350, duration: 1600
-          })
-          // Stage 4: Summit reveal — zoom in tight, looking up
-          await flyToCamera(map, {
-            lat: 32.3547, lng: 77.1939, zoom: 13.5, pitch: 72, bearing: 200, duration: 1800
+            lat: 32.305, lng: 77.155, zoom: 11.5, pitch: 50, bearing: 20, duration: 2000
           })
         } else {
           // Standard fly for other treks
@@ -499,15 +496,19 @@ export default function MapContainer() {
               // ── Post-summit orbit: slowly circle the peak ─────────
               const summitLng = summit.lng
               const summitLat = summit.lat
-              let bearing = 200
-              const orbitInterval = setInterval(() => {
-                bearing = (bearing + 1.2) % 360
-                map.easeTo({ bearing, center: [summitLng, summitLat], zoom: 13.5, pitch: 68, duration: 80, easing: t => t })
-              }, 80)
+              
+              map.easeTo({ 
+                bearing: map.getBearing() + 75, 
+                center: [summitLng, summitLat], 
+                zoom: 13.5, 
+                pitch: 68, 
+                duration: 5000, 
+                easing: t => t 
+              })
+
               setTimeout(() => {
-                clearInterval(orbitInterval)
-                setTimeout(resolve, 200)
-              }, 6000)
+                resolve()
+              }, 5000)
               return
             }
 
@@ -546,34 +547,35 @@ export default function MapContainer() {
       const handlePlaceClick = async (place: HimalayaPlace, region: HimalayaRegion) => {
         const targetHeading = place.heading ?? 5
         const navTarget = `/place/${region.id}/${place.id}`
+        const hasTrek = place.trekPath && place.trekPath.length > 1
+
+        // Hide other place markers to avoid clutter
+        placeMarkersRef.current.forEach(m => {
+          const el = m.getElement()
+          if (!el.textContent?.includes(place.name.toUpperCase()) && !el.textContent?.includes(place.name)) {
+            el.style.display = 'none'
+          }
+        })
 
         setFlyingTo({ name: place.name, emoji: place.emoji, image: place.image })
 
-        await flyToCamera(map, {
-          lat: (region.lat + place.lat) / 2,
-          lng: (region.lng + place.lng) / 2,
-          zoom: Math.max(map.getZoom() - 1, 6),
-          pitch: 45,
-          bearing: map.getBearing(),
-          duration: 600
-        })
-
-        await flyToCamera(map, {
-          lat: place.lat - 0.05,
-          lng: place.lng,
-          zoom: 12.5,
-          pitch: 75,
-          bearing: targetHeading,
-          duration: 1200
-        })
-
-        setFlyingTo(null)
-
-        if (place.trekPath && place.trekPath.length > 1) {
+        if (!hasTrek) {
+          await flyToCamera(map, {
+            lat: place.lat - 0.03,
+            lng: place.lng,
+            zoom: 14,
+            pitch: 75,
+            bearing: targetHeading,
+            duration: 1500
+          })
+          setFlyingTo(null)
+        } else {
+          setTimeout(() => setFlyingTo(null), 1500)
           const isCinematic = place.id === 'patalsu-peak'
-          await drawTrekPath(place.trekPath, place.name, isCinematic)
+          await drawTrekPath(place.trekPath!, place.name, isCinematic)
         }
 
+        sessionStorage.setItem('mapScrollY', window.scrollY.toString())
         navigate(navTarget, { state: { from: 'map' } })
       }
 
@@ -715,6 +717,7 @@ export default function MapContainer() {
       }
 
       doSelectSubRegionRef.current = async (subRegionId: string, skipAnimation = false) => {
+        lastAnimatedSubRegionRef.current = subRegionId
         let region: HimalayaRegion | undefined
         let sr: HimalayaSubRegion | undefined
         for (const r of HIMALAYA_REGIONS) {
@@ -729,14 +732,7 @@ export default function MapContainer() {
 
         subRegionMarkersRef.current.forEach(m => {
           const el = m.getElement()
-          if (el.textContent?.includes(sr!.name)) {
-            el.style.display = 'none'
-          } else {
-            el.style.display = 'flex'
-            el.style.opacity = '0.15'
-            el.style.transform = 'scale(0.75)'
-            el.style.pointerEvents = 'auto'
-          }
+          el.style.display = 'none'
         })
 
         // Use south-offset north-facing camera so all places spread across the terrain
@@ -906,6 +902,14 @@ export default function MapContainer() {
   const activeSubRegion = activeRegion?.subregions.find(s => s.id === activeSubRegionId) ?? null
 
   const handleBack = () => {
+    if (liveTrekAlt !== null || trekStats !== null) {
+      setLiveTrekAlt(null)
+      setTrekStats(null)
+      if (activeSubRegionId && doSelectSubRegionRef.current) {
+        doSelectSubRegionRef.current(activeSubRegionId, false)
+      }
+      return
+    }
     if (activeSubRegionId) { doBackToRegionRef.current(); return }
     if (activeRegionId) { doResetRef.current() }
   }
@@ -1007,7 +1011,9 @@ export default function MapContainer() {
           <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
             <path d="M11 5H1M1 5L5 1M1 5L5 9" stroke="#e8c97a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          {activeSubRegionId ? activeRegion?.name : 'All Regions'}
+          {(liveTrekAlt !== null || trekStats !== null) && activeSubRegion
+            ? activeSubRegion.name
+            : (activeSubRegionId ? activeRegion?.name : 'All Regions')}
         </button>
       )}
 

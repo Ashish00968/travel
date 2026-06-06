@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
 import { useMapStore } from '../store/mapStore'
 import { HIMALAYA_REGIONS, type HimalayaSubRegion, type HimalayaPlace } from '../data/himalaya'
 import { useMediaQuery } from '../hooks/useMediaQuery'
@@ -259,12 +258,11 @@ function SubRegionRow({ sub, onClick, isLast }: { sub: HimalayaSubRegion; onClic
 /* ── Place row (level 2) ────────────────────────────────────────── */
 function PlaceRow({ place, regionId, isLast }: { place: HimalayaPlace; regionId: string; isLast?: boolean }) {
   const [hovered, setHovered]  = useState(false)
-  const navigate = useNavigate()
 
   return (
     <motion.div
       variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}
-      onClick={() => navigate(`/place/${regionId}/${place.id}`, { state: { from: 'map' } })}
+      onClick={() => useMapStore.getState().openPlace(regionId, place.id)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
