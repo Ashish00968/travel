@@ -469,7 +469,7 @@ export default function PlacePage() {
     window.history.scrollRestoration = 'manual'
     window.scrollTo(0, 0)
     if (navFrom === 'grid') {
-      navigate('/horizon', { state: { from: 'grid' } })
+      navigate('/', { state: { from: 'grid' } })
     } else {
       navigate('/', { state: { from: 'map' } })
     }
