@@ -248,8 +248,8 @@ export default function MapContainer() {
 
       map.setFog({
         'range': [0.5, 10],
-        'color': '#06080c',
-        'high-color': '#245cdf',
+        'color': '#07090F',
+        'high-color': '#161A22',
         'space-color': '#000000',
         'star-intensity': 0.8
       })
@@ -359,17 +359,17 @@ export default function MapContainer() {
       // Map progress 0→1 to a colour: forest-green → amber → summit-gold
       const trekColor = (t: number): string => {
         if (t < 0.45) {
-          // green (#4ab8a0) → amber (#e8a030)
-          const r = Math.round(0x4a + (0xe8 - 0x4a) * (t / 0.45))
-          const g = Math.round(0xb8 + (0xa0 - 0xb8) * (t / 0.45))
-          const b = Math.round(0xa0 + (0x30 - 0xa0) * (t / 0.45))
+          // green (#4ab8a0) → red (#e8c97a)
+          const r = Math.round(0x4a + (0xd9 - 0x4a) * (t / 0.45))
+          const g = Math.round(0xb8 + (0x38 - 0xb8) * (t / 0.45))
+          const b = Math.round(0xa0 + (0x1e - 0xa0) * (t / 0.45))
           return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
         } else {
-          // amber (#e8a030) → gold (#e8c97a)
+          // red (#e8c97a) → ice (#b4d2e7)
           const t2 = (t - 0.45) / 0.55
-          const r = 0xe8
-          const g = Math.round(0xa0 + (0xc9 - 0xa0) * t2)
-          const b = Math.round(0x30 + (0x7a - 0x30) * t2)
+          const r = Math.round(0xd9 + (0xb4 - 0xd9) * t2)
+          const g = Math.round(0x38 + (0xd2 - 0x38) * t2)
+          const b = Math.round(0x1e + (0xe7 - 0x1e) * t2)
           return `#${r.toString(16).padStart(2,'0')}${g.toString(16).padStart(2,'0')}${b.toString(16).padStart(2,'0')}`
         }
       }
@@ -423,25 +423,59 @@ export default function MapContainer() {
         clearTrekPath()
 
         const distKm = calcTrekDistance(path)
-        const coordinates = path.map(p => [p.lng, p.lat])
+        let coordinates = path.map(p => [p.lng, p.lat] as [number, number])
+        
+        try {
+          const { lineString } = await import('@turf/helpers')
+          const bezierSpline = (await import('@turf/bezier-spline')).default
+          const lineChunk = (await import('@turf/line-chunk')).default
+          const { length } = await import('@turf/length')
+
+          const line = lineString(coordinates)
+          // Smooth the path using bezier spline for a cinematic curved trail
+          const smoothed = bezierSpline(line, { resolution: 10000, sharpness: 0.85 })
+          const totalLength = length(smoothed, { units: 'kilometers' })
+          
+          // Chunk into exactly 40 segments so animation time is constant
+          const segmentLength = totalLength / 40
+          const chunks = lineChunk(smoothed, segmentLength, { units: 'kilometers' })
+          
+          const newCoords: [number, number][] = []
+          chunks.features.forEach(f => {
+            if (f.geometry.coordinates.length > 0) {
+              newCoords.push(f.geometry.coordinates[0] as [number, number])
+            }
+          })
+          // ensure last point is the exact summit
+          newCoords.push(coordinates[coordinates.length - 1])
+          coordinates = newCoords
+        } catch (e) {
+          console.warn('Turf processing failed, falling back to raw coordinates', e)
+        }
+
         const total = coordinates.length
 
         // ── Cinematic multi-stage fly for Patalsu ──────────────────
         if (isCinematic) {
-          // Approach from Manali — wide valley view
           await flyToCamera(map, {
             lat: 32.305, lng: 77.155, zoom: 11.5, pitch: 50, bearing: 20, duration: 2000
           })
         } else {
-          // Standard fly for other treks
           const midLat = (path[0].lat + path[path.length - 1].lat) / 2
           const midLng = (path[0].lng + path[path.length - 1].lng) / 2
           await flyToCamera(map, { lat: midLat, lng: midLng, zoom: 12, pitch: 55, bearing: 0, duration: 1500 })
         }
 
         // Pull camera back to see full trail
+        const centerLat = (path[0].lat + path[path.length - 1].lat) / 2
+        const centerLng = (path[0].lng + path[path.length - 1].lng) / 2
         await flyToCamera(map, {
-          lat: 32.336, lng: 77.172, zoom: 12.2, pitch: 62, bearing: 355, duration: 1200
+          lat: isCinematic ? 32.336 : centerLat - 0.01,
+          lng: isCinematic ? 77.172 : centerLng,
+          zoom: isCinematic ? 12.2 : 12,
+          pitch: 62,
+          bearing: isCinematic ? 355 : 0,
+          duration: 1200
         })
 
         // ── Add per-segment gradient sources (pre-create all, draw empty) ─
@@ -498,17 +532,17 @@ export default function MapContainer() {
               const summitLat = summit.lat
               
               map.easeTo({ 
-                bearing: map.getBearing() + 75, 
+                bearing: map.getBearing() + (isCinematic ? 75 : 45), 
                 center: [summitLng, summitLat], 
-                zoom: 13.5, 
+                zoom: isCinematic ? 13.5 : 13, 
                 pitch: 68, 
-                duration: 5000, 
+                duration: isCinematic ? 5000 : 3000, 
                 easing: t => t 
               })
 
               setTimeout(() => {
                 resolve()
-              }, 5000)
+              }, isCinematic ? 5000 : 3000)
               return
             }
 
@@ -528,7 +562,7 @@ export default function MapContainer() {
             setLiveTrekAlt(alt)
 
             // Spawn named waypoint markers at key stops
-            if (PATALSU_WAYPOINTS[currentIdx] && !drawnWaypoints.has(currentIdx)) {
+            if (isCinematic && PATALSU_WAYPOINTS[currentIdx] && !drawnWaypoints.has(currentIdx)) {
               drawnWaypoints.add(currentIdx)
               const wp = PATALSU_WAYPOINTS[currentIdx]
               const color = trekColor(currentIdx / (total - 1))

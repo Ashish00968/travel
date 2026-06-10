@@ -21,8 +21,14 @@ export default function HomePage() {
       } else {
         document.getElementById('map-section')?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
       }
+      // Clear state so a manual refresh doesn't scroll down again
+      window.history.replaceState({}, '')
     } else if (returnFrom === 'grid') {
       document.getElementById('regions')?.scrollIntoView({ behavior: 'instant' as ScrollBehavior })
+      window.history.replaceState({}, '')
+    } else {
+      // Force scroll to top on fresh load so they see the Hero section
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' })
     }
     // Re-enable scroll restoration for future navigations
     window.history.scrollRestoration = 'auto'

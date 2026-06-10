@@ -5,20 +5,13 @@ import {
   TYPE_COLOR,
 } from '../data/himalaya'
 
-/* ── Haversine distance ─────────────────────────────────────────── */
-export function haversineDistance(p1: { lat: number; lng: number }, p2: { lat: number; lng: number }): number {
-  const R = 6371000
-  const dLat = (p2.lat - p1.lat) * Math.PI / 180
-  const dLon = (p2.lng - p1.lng) * Math.PI / 180
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) * Math.sin(dLon / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-}
+import { length } from '@turf/length';
+import { lineString } from '@turf/helpers';
 
 export function calcTrekDistance(path: Array<{ lat: number; lng: number }>): number {
-  let total = 0
-  for (let i = 0; i < path.length - 1; i++) total += haversineDistance(path[i], path[i + 1])
-  return total / 1000
+  if (path.length < 2) return 0;
+  const line = lineString(path.map(p => [p.lng, p.lat]));
+  return length(line, { units: 'kilometers' });
 }
 
 /* ── Fly-to helper wrapping Mapbox flyTo as a promise ───────────── */
