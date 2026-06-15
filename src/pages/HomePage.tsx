@@ -62,6 +62,7 @@ export default function HomePage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8, ease: "easeInOut" }}
+      style={{ position: 'relative' }}
     >
       <Navbar />
       <Hero />

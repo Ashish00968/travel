@@ -20,7 +20,7 @@ export default function ScenicLayout({ place, region, subRegionName, onBack, nav
         border:'1px solid rgba(255,255,255,0.08)',
         cursor:'pointer', transition:'all 0.2s ease',
       }}>
-        <span style={{ color:'#e8c97a' }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : 'Back to map'}
+        <span style={{ color:'#e8c97a' }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : `Back to ${subRegionName}`}
       </button>
 
       {/* ── Hero Fullscreen ─────────────────────────────────── */}

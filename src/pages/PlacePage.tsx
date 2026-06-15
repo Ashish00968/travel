@@ -46,9 +46,9 @@ export default function PlacePage() {
     if (navFrom === 'grid') {
       navigate('/', { state: { from: 'grid' } })
     } else {
-      navigate('/', { state: { from: 'map' } })
+      navigate('/', { state: { from: 'map', returnedFromPlace: place?.id } })
     }
-  }, [navigate, navFrom])
+  }, [navigate, navFrom, place?.id])
 
   /* ── Guard ───────────────────────────────────────────────────────── */
   if (!region || !place) {

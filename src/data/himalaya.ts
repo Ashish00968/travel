@@ -457,37 +457,89 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 2200, title: 'The return', moment: 'Paragliders drift overhead. The valley catches the last golden light.', type: 'text' },
             ],
             type: 'adventure' },
-          { id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️', image: buildRootCloudinaryUrl('rohtang', 'png'), lat: 32.37, lng: 77.24, heading: 280, elevation: '3,978m', desc: 'The great divide between green Kullu Valley and the cold desert of Lahaul.',
+          { id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️', image: buildRootCloudinaryUrl('rohtang', 'png'), lat: 32.37, lng: 77.25, heading: 280, elevation: '3,978m',
+            meta: 'Trek to the Pass', season: 'May – October',
+            desc: 'The old trekking route to Rohtang Pass, bypassing the motorable road to follow shepherd trails and steep slopes.',
+            experience: 'Following the old trader route to Rohtang is entirely different from the drive. You earn every meter of altitude.',
+            tips: ['Start early to avoid afternoon weather changes.', 'Snow is present near the pass almost year-round.'],
+            stats: [{ label: 'Altitude', value: '3,978 m' }, { label: 'Trek', value: 'Steep climb' }],
             trekPath: [
-              { lat: 32.2504, lng: 77.2417 },  // Manali side base
-              { lat: 32.3018, lng: 77.2402 },  // Mid climb / Marhi
-              { lat: 32.3732, lng: 77.2302 },  // Rohtang Pass top
+              // Real GPS track from Rohtangtrekroute.kml
+              { lat: 32.394570, lng: 77.257042 },
+              { lat: 32.393390, lng: 77.257237 },
+              { lat: 32.392604, lng: 77.257661 },
+              { lat: 32.392354, lng: 77.257990 },
+              { lat: 32.392005, lng: 77.258440 },
+              { lat: 32.391597, lng: 77.258691 },
+              { lat: 32.391381, lng: 77.258395 },
+              { lat: 32.391060, lng: 77.258375 },
+              { lat: 32.390859, lng: 77.257885 },
+              { lat: 32.390723, lng: 77.257413 },
+              { lat: 32.390293, lng: 77.257245 },
+              { lat: 32.389979, lng: 77.257520 },
+              { lat: 32.389243, lng: 77.257313 },
+              { lat: 32.389617, lng: 77.256453 },
+              { lat: 32.390361, lng: 77.256093 },
+              { lat: 32.390541, lng: 77.255828 },
+              { lat: 32.390404, lng: 77.255440 },
+              { lat: 32.389971, lng: 77.254804 },
+              { lat: 32.389584, lng: 77.254232 },
+              { lat: 32.389417, lng: 77.253504 },
+              { lat: 32.391286, lng: 77.253253 },
+              { lat: 32.392484, lng: 77.251798 },
+              { lat: 32.392646, lng: 77.251355 },
+              { lat: 32.391312, lng: 77.252593 },
+              { lat: 32.389821, lng: 77.252781 },
+              { lat: 32.388254, lng: 77.253246 },
+              { lat: 32.390393, lng: 77.252127 },
+              { lat: 32.390967, lng: 77.251524 },
+              { lat: 32.391768, lng: 77.251003 },
+              { lat: 32.392013, lng: 77.250352 },
+              { lat: 32.390146, lng: 77.251478 },
+              { lat: 32.389412, lng: 77.251585 },
+              { lat: 32.390882, lng: 77.250194 },
+              { lat: 32.391624, lng: 77.249438 },
+              { lat: 32.391404, lng: 77.249343 },
+              { lat: 32.389469, lng: 77.250643 },
+              { lat: 32.388468, lng: 77.251979 },
+              { lat: 32.388207, lng: 77.251726 },
+              { lat: 32.388927, lng: 77.250851 },
+              { lat: 32.390697, lng: 77.248223 },
+              { lat: 32.386660, lng: 77.251517 },
+              { lat: 32.388148, lng: 77.249630 },
+              { lat: 32.389525, lng: 77.247715 },
+              { lat: 32.389482, lng: 77.247394 },
+              { lat: 32.389169, lng: 77.247782 },
+              { lat: 32.388068, lng: 77.249073 },
+              { lat: 32.386554, lng: 77.250107 },
+              { lat: 32.385899, lng: 77.250683 },
+              { lat: 32.385442, lng: 77.250871 },
+              { lat: 32.386343, lng: 77.249336 },
+              { lat: 32.388099, lng: 77.247174 },
+              { lat: 32.388483, lng: 77.246165 },
+              { lat: 32.387229, lng: 77.247430 },
+              { lat: 32.385387, lng: 77.248892 },
+              { lat: 32.382875, lng: 77.251280 },
+              { lat: 32.382753, lng: 77.250903 },
+              { lat: 32.383442, lng: 77.249976 },
+              { lat: 32.384545, lng: 77.248612 },
+              { lat: 32.386942, lng: 77.246031 },
+              { lat: 32.385028, lng: 77.247804 },
+              { lat: 32.383568, lng: 77.248878 },
+              { lat: 32.380421, lng: 77.250939 },
+              { lat: 32.379146, lng: 77.252311 },
+              { lat: 32.377547, lng: 77.250795 },
+              { lat: 32.375272, lng: 77.249516 },
+              { lat: 32.372999, lng: 77.248059 },
             ],
             trekStops: [
-              { id: 'start', scrollDepth: 0, altitude: 2480, title: 'Above Solang', moment: 'The treeline thins. The road becomes gravel and switchback.', type: 'text' },
-              { id: 'marhi', scrollDepth: 25, altitude: 3100, title: 'Marhi', moment: 'A cluster of dhabas in the clouds. Hot maggi and sweet chai before the final push.', type: 'photo', mediaUrl: '' },
-              { id: 'snowfield', scrollDepth: 50, altitude: 3600, title: 'Through snow walls', moment: 'BRO has carved a corridor through six-foot snowbanks. Trucks groan upward.', type: 'photo', mediaUrl: '' },
-              { id: 'summit', scrollDepth: 75, altitude: 3978, title: 'Rohtang Pass', moment: 'The divide. Green Kullu behind, grey Lahaul ahead. Two worlds separated by a single ridge.', type: 'summit' },
-              { id: 'descent', scrollDepth: 95, altitude: 3400, title: 'Into Lahaul', moment: 'The cold desert begins. Colour drains from the landscape. A new country.', type: 'text' },
+              { id: 'start', scrollDepth: 0, altitude: 3100, title: 'The old trail', moment: 'Leaving the tarmac behind. The trail cuts straight up through the meadows.', type: 'text' },
+              { id: 'midway', scrollDepth: 40, altitude: 3500, title: 'Shepherd routes', moment: 'Gaining altitude fast. The road switchbacks are visible far below.', type: 'photo', mediaUrl: '' },
+              { id: 'summit', scrollDepth: 75, altitude: 3978, title: 'Rohtang Pass', moment: 'Reaching the ridge on foot. The wind hits you with the full force of Lahaul.', type: 'summit' },
+              { id: 'descent', scrollDepth: 95, altitude: 3800, title: 'The descent', moment: 'The weather changes by noon. Time to head back down before the clouds roll in.', type: 'text' }
             ],
-            type: 'road' },
-          { id: 'sethan', name: 'Sethan', emoji: '❄️', image: buildRootCloudinaryUrl('sethan', 'png'), lat: 32.19, lng: 77.24, heading: 310, elevation: '2,750m',
-            trekPath: [
-              // Real GPS track from KML — 13 waypoints (Sethan village trail)
-              { lat: 32.2396739, lng: 77.2253057 },
-              { lat: 32.242666,  lng: 77.2258135 },
-              { lat: 32.2426823, lng: 77.226397  },
-              { lat: 32.24198,   lng: 77.2265341 },
-              { lat: 32.2416249, lng: 77.2269606 },
-              { lat: 32.2410628, lng: 77.227755  },
-              { lat: 32.2408283, lng: 77.228165  },
-              { lat: 32.2406233, lng: 77.2286088 },
-              { lat: 32.24031,   lng: 77.2289534 },
-              { lat: 32.2401446, lng: 77.2295315 },
-              { lat: 32.240025,  lng: 77.229512  },
-              { lat: 32.240237,  lng: 77.2298524 },
-              { lat: 32.2404221, lng: 77.2300251 },  // Sethan
-            ],
+            type: 'trek' },
+          { id: 'sethan', name: 'Sethan', emoji: '❄️', image: buildRootCloudinaryUrl('sethan', 'png'), lat: 32.2349, lng: 77.2223, heading: 40, elevation: '2,750m',
             season: 'December – March',
             desc: 'A hidden shoulder above Manali that becomes a complete snowfield in winter.', 
             experience: 'Visiting Sethan in mid-winter feels like stepping into a snow globe. The silence is absolute, broken only by the crunch of boots on fresh powder. With sweeping views of the Kullu Valley below, it is the perfect retreat from the bustling tourist crowds in Manali.',
@@ -709,11 +761,55 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             tips: ['Start the trek by 5 AM.', 'Prepare for rapid weather changes.'],
             stats: [{ label: 'Altitude', value: '3,583 m' }, { label: 'Trek', value: '16 km' }],
             trekPath: [
-              { lat: 30.67, lng: 79.02 },  // Gaurikund trailhead
-              { lat: 30.69, lng: 79.03 },  // Jungle Chatti
-              { lat: 30.71, lng: 79.04 },  // Rambara bridge
-              { lat: 30.73, lng: 79.05 },  // Lincholi
-              { lat: 30.74, lng: 79.07 },  // Kedarnath Temple
+              { lat: 30.742707, lng: 79.496572 },
+              { lat: 30.744168, lng: 79.496328 },
+              { lat: 30.747220, lng: 79.498203 },
+              { lat: 30.751156, lng: 79.497673 },
+              { lat: 30.755734, lng: 79.499399 },
+              { lat: 30.756695, lng: 79.499621 },
+              { lat: 30.759002, lng: 79.499627 },
+              { lat: 30.762661, lng: 79.499769 },
+              { lat: 30.764799, lng: 79.499321 },
+              { lat: 30.767225, lng: 79.498870 },
+              { lat: 30.768661, lng: 79.498049 },
+              { lat: 30.770274, lng: 79.496730 },
+              { lat: 30.771318, lng: 79.495941 },
+              { lat: 30.773031, lng: 79.494815 },
+              { lat: 30.773450, lng: 79.493986 },
+              { lat: 30.774319, lng: 79.493153 },
+              { lat: 30.773963, lng: 79.492526 },
+              { lat: 30.773702, lng: 79.491601 },
+              { lat: 30.773874, lng: 79.489465 },
+              { lat: 30.774331, lng: 79.488367 },
+              { lat: 30.774891, lng: 79.487822 },
+              { lat: 30.775347, lng: 79.487028 },
+              { lat: 30.775256, lng: 79.486476 },
+              { lat: 30.775493, lng: 79.484630 },
+              { lat: 30.775581, lng: 79.483773 },
+              { lat: 30.776899, lng: 79.482029 },
+              { lat: 30.777152, lng: 79.481281 },
+              { lat: 30.777783, lng: 79.478969 },
+              { lat: 30.778876, lng: 79.477240 },
+              { lat: 30.779431, lng: 79.474847 },
+              { lat: 30.779482, lng: 79.474110 },
+              { lat: 30.779782, lng: 79.473361 },
+              { lat: 30.779851, lng: 79.472150 },
+              { lat: 30.780233, lng: 79.471121 },
+              { lat: 30.780577, lng: 79.470436 },
+              { lat: 30.780225, lng: 79.469336 },
+              { lat: 30.780522, lng: 79.467597 },
+              { lat: 30.781120, lng: 79.466543 },
+              { lat: 30.781826, lng: 79.464656 },
+              { lat: 30.784156, lng: 79.461126 },
+              { lat: 30.785392, lng: 79.457815 },
+              { lat: 30.785592, lng: 79.457107 },
+              { lat: 30.786142, lng: 79.455149 },
+              { lat: 30.786578, lng: 79.454492 },
+              { lat: 30.786951, lng: 79.454203 },
+              { lat: 30.787242, lng: 79.453944 },
+              { lat: 30.787603, lng: 79.453382 },
+              { lat: 30.788178, lng: 79.452798 },
+              { lat: 30.788757, lng: 79.451500 }
             ],
             trekStops: [
               { id: 'start', scrollDepth: 0, altitude: 1982, title: 'Gaurikund', moment: 'Hot springs steam in the cold air. The pilgrimage begins with a prayer and a first step upward.', type: 'text' },
@@ -723,7 +819,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'summit', scrollDepth: 80, altitude: 3583, title: 'Kedarnath Temple', moment: 'Grey stone against white snow. 1,200 years of faith in a single structure. The boulder that saved it towers behind.', type: 'summit' },
               { id: 'descent', scrollDepth: 95, altitude: 2800, title: 'Descending', moment: 'The temple shrinks behind. The chanting fades. But the mountain stays with you.', type: 'text' },
             ],
-            type: 'spiritual'
+            type: 'trek'
           },
           { 
             id: 'valley-of-flowers', name: 'Valley of Flowers', emoji: '🌸', lat: 30.73, lng: 79.61, heading: 220, elevation: '3,658m',
@@ -748,10 +844,54 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             ],
             type: 'trek'
           },
+          {
+            id: "badrinath", name: "Badrinath", emoji: "🛕", lat: 30.741882, lng: 79.494420, heading: 0,
+            desc: "A holy town and a major pilgrimage site for Vaishnavites.", type: "spiritual"
+          },
+          {
+            id: "gangotri", name: "Gangotri", emoji: "🌊", lat: 30.995051, lng: 78.939514, heading: 0,
+            desc: "The origin of the holy river Ganges, surrounded by majestic peaks.", type: "spiritual"
+          },
+          {
+            id: "yamnotri", name: "Yamnotri", emoji: "💧", lat: 31.000245, lng: 78.463092, heading: 0,
+            desc: "The source of the Yamuna River and the seat of Goddess Yamuna.", type: "spiritual"
+          },
+          {
+            id: "vasudhara-falls", name: "Vasudhara Falls", emoji: "💦", lat: 30.787862, lng: 79.450979, heading: 0, elevation: '3,691m',
+            desc: "A stunning waterfall near Badrinath with a steep trek.",
+            experience: 'The water falls from 400ft, turning into a fine mist before it hits the ground.',
+            stats: [{ label: 'Altitude', value: '3,691 m' }, { label: 'Trek', value: 'Steep climb' }],
+            trekPath: [
+
+            ],
+            trekStops: [
+              { id: 'start', scrollDepth: 0, altitude: 3100, title: 'Mana Village', moment: 'The last Indian village. The path begins past the ancient Saraswati river bridge.', type: 'text' },
+              { id: 'midway', scrollDepth: 40, altitude: 3400, title: 'Glacial valley', moment: 'Barren, rocky terrain. The Alaknanda river roars far below the trail.', type: 'photo', mediaUrl: '' },
+              { id: 'summit', scrollDepth: 75, altitude: 3691, title: 'Vasudhara Falls', moment: '400 feet of mist. The wind blows the waterfall apart before it hits the ground.', type: 'summit' },
+              { id: 'descent', scrollDepth: 95, altitude: 3200, title: 'Return to Mana', moment: 'The chill sets in as the sun dips behind the towering peaks.', type: 'text' }
+            ],
+            type: "trek"
+          },
+          {
+            id: "uttarkashi", name: "Uttarkashi", emoji: "🏘️", lat: 30.729002, lng: 78.442464, heading: 0,
+            desc: "A significant town on the banks of the Bhagirathi river.", type: "road"
+          },
+          {
+            id: "barkot", name: "Barkot", emoji: "🏞️", lat: 30.808933, lng: 78.208222, heading: 0,
+            desc: "A scenic town acting as a base for Yamunotri.", type: "road"
+          },
+          {
+            id: "joshimath", name: "Joshimath", emoji: "🚠", lat: 30.556247, lng: 79.554283, heading: 0,
+            desc: "A winter destination and gateway to several Himalayan expeditions.", type: "adventure"
+          },
+          {
+            id: "urgam-valley", name: "Urgam Valley", emoji: "🌲", lat: 30.537885, lng: 79.455306, heading: 0,
+            desc: "A lush green valley famous for the Kalpeshwar temple.", type: "scenic"
+          },
         ],
       },
     ],
-  },
+  }
 ]
 
 /* ── Helpers ─────────────────────────────────────────────────────── */

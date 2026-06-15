@@ -52,8 +52,10 @@ export default function App() {
       }>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
+            <Route path="/" element={null} />
             <Route path="/place/:regionId/:placeId" element={<LazyPlacePage />} />
             <Route path="/horizon" element={<LazyHorizonPage />} />
+            <Route path="*" element={null} />
           </Routes>
         </AnimatePresence>
       </Suspense>

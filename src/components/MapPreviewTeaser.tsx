@@ -1,13 +1,16 @@
 import { useState } from 'react'
 
 const REGION_PINS = [
-  { id: 'jammu-kashmir',    label: 'J & K',       left: '18%', top: '28%', delay: '0s'   },
-  { id: 'ladakh',           label: 'Ladakh',       left: '42%', top: '18%', delay: '0.35s' },
-  { id: 'himachal-pradesh', label: 'Himachal',     left: '30%', top: '52%', delay: '0.7s' },
-  { id: 'uttarakhand',      label: 'Uttarakhand',  left: '62%', top: '55%', delay: '1.05s' },
+  { id: 'jammu-kashmir',    label: 'J & K',       left: '38%', top: '20%', delay: '0s'   },
+  { id: 'ladakh',           label: 'Ladakh',       left: '50%', top: '16%', delay: '0.35s' },
+  { id: 'himachal-pradesh', label: 'Himachal',     left: '48%', top: '32%', delay: '0.7s' },
+  { id: 'uttarakhand',      label: 'Uttarakhand',  left: '58%', top: '42%', delay: '1.05s' },
 ]
 
-const BG_URL = 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/wallpaper.jpg'
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN
+const BG_URL = MAPBOX_TOKEN 
+  ? `https://api.mapbox.com/styles/v1/mapbox/satellite-v9/static/76.8,29.5,5.4,0,48/1200x800@2x?access_token=${MAPBOX_TOKEN}`
+  : 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/wallpaper.jpg'
 
 interface MapPreviewTeaserProps {
   onExplore: () => void

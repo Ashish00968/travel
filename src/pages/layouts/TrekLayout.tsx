@@ -360,7 +360,7 @@ export default function TrekLayout({ place, region, subRegionName, onBack, navFr
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(232,201,122,0.4)'; e.currentTarget.style.background = 'rgba(6,8,12,0.8)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.background = 'rgba(6,8,12,0.6)'; e.currentTarget.style.transform = 'translateY(0)' }}
         >
-          <span style={{ color:'var(--color-accent)', fontSize:16, lineHeight:1 }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : 'Return to Map'}
+          <span style={{ color:'var(--color-accent)', fontSize:16, lineHeight:1 }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : `Back to ${subRegionName}`}
         </button>
 
         <section style={{ height:'100vh', position:'relative', display:'flex', alignItems:'flex-start', justifyContent:'center', padding: isMobile ? '12vh 6% 0' : '8vh 6% 0' }}>

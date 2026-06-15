@@ -30,7 +30,7 @@ export default function RoadLayout({ place, region, subRegionName, onBack, navFr
         border:'1px solid var(--color-border)',
         cursor:'pointer', transition:'all 0.2s ease',
       }}>
-        <span style={{ color:'var(--color-accent)' }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : 'Back to map'}
+        <span style={{ color:'var(--color-accent)' }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : `Back to ${subRegionName}`}
       </button>
 
       {/* ── Hero ─────────────────────────────────── */}

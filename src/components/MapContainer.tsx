@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 // @ts-ignore
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
@@ -25,7 +25,7 @@ import {
 } from './mapUtils'
 
 /* ── Initial map view — looking NORTH at the full Himalayan arc ── */
-const INIT = { lat: 31.0, lng: 77.0, zoom: 5.2, pitch: 65, bearing: 0 }
+const INIT = { lat: 29.5, lng: 76.8, zoom: 5.4, pitch: 48, bearing: 0 }
 
 /* ── Per-region cinematic south-offset camera (looks northward at peaks) ─
  *  lat/lng = camera position (placed SOUTH of region for northward look)
@@ -160,6 +160,11 @@ export default function MapContainer() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mapActive, setMapActive] = useState(false)
+  const location = useLocation()
+  const returnedFromPlaceRaw = (location.state as any)?.returnedFromPlace
+  const [clearedReturn, setClearedReturn] = useState(false)
+  const returnedFromPlace = clearedReturn ? undefined : returnedFromPlaceRaw
+
   const [flyingTo, setFlyingTo] = useState<FlyingState | null>(null)
   // 'hidden' → no overlay | 'dimming' → fading in (pre-flight) | 'clearing' → fading out (post-flight)
   const [flightDimOverlay, setFlightDimOverlay] = useState<'hidden' | 'dimming' | 'clearing'>('hidden')
@@ -205,10 +210,38 @@ export default function MapContainer() {
   useEffect(() => {
     if (activeSubRegionId && activeSubRegionId !== lastAnimatedSubRegionRef.current) {
       if (doSelectSubRegionRef.current) {
-        doSelectSubRegionRef.current(activeSubRegionId)
+        doSelectSubRegionRef.current(activeSubRegionId, !!returnedFromPlace)
       }
     }
-  }, [activeSubRegionId])
+  }, [activeSubRegionId, returnedFromPlace])
+
+  useEffect(() => {
+    if (!mapActive || !returnedFromPlace || !mapRef.current) return
+    let foundPlace: HimalayaPlace | null = null
+    for (const r of HIMALAYA_REGIONS) {
+      for (const sr of r.subregions) {
+        const p = sr.places.find(x => x.id === returnedFromPlace)
+        if (p) {
+          foundPlace = p
+          break
+        }
+      }
+      if (foundPlace) break
+    }
+    if (foundPlace) {
+      const targetHeading = foundPlace.heading ?? 5
+      const rad = targetHeading * Math.PI / 180
+      const pLat = foundPlace.lat - 0.04 * Math.cos(rad)
+      const pLng = foundPlace.lng - 0.04 * Math.sin(rad)
+      mapRef.current.flyTo({
+        center: [pLng, pLat],
+        zoom: 13.0,
+        pitch: 65,
+        bearing: targetHeading + 10,
+        duration: 0
+      })
+    }
+  }, [mapActive, returnedFromPlace])
 
   useEffect(() => {
     if (!mapContainerRef.current) return
@@ -322,7 +355,7 @@ export default function MapContainer() {
 
       const clearTrekPath = () => {
         // Remove gradient segments
-        for (let i = 0; i < 36; i++) {
+        for (let i = 0; i < 100; i++) {
           if (map.getLayer(`trek-seg-glow-${i}`)) map.removeLayer(`trek-seg-glow-${i}`)
           if (map.getLayer(`trek-seg-${i}`)) map.removeLayer(`trek-seg-${i}`)
           if (map.getSource(`trek-seg-${i}`)) map.removeSource(`trek-seg-${i}`)
@@ -349,10 +382,38 @@ export default function MapContainer() {
         35: { label: '⛰️ SUMMIT 4261m', alt: 4261 },
       }
 
+      // Rohtang-specific key waypoints: index → { label, alt }
+      const ROHTANG_WAYPOINTS: Record<number, { label: string; alt: number }> = {
+        0:  { label: 'The Old Trail', alt: 3100 },
+        10: { label: 'Shepherd Route', alt: 3300 },
+        20: { label: 'High Meadows', alt: 3600 },
+        30: { label: 'Snow Slopes', alt: 3800 },
+        39: { label: '⛰️ ROHTANG PASS 3978m', alt: 3978 },
+      }
+
+      // Kedarnath-specific key waypoints: index → { label, alt }
+      const KEDARNATH_WAYPOINTS: Record<number, { label: string; alt: number }> = {
+        0:  { label: 'Gaurikund', alt: 1982 },
+        10: { label: 'Jungle Chatti', alt: 2500 },
+        20: { label: 'Rambara', alt: 2900 },
+        30: { label: 'Lincholi', alt: 3200 },
+        39: { label: '⛩️ KEDARNATH 3583m', alt: 3583 },
+      }
+
+      // Vasudhara-specific key waypoints: index → { label, alt }
+      const VASUDHARA_WAYPOINTS: Record<number, { label: string; alt: number }> = {
+        0:  { label: 'Mana Village', alt: 3100 },
+        13: { label: 'Saraswati River', alt: 3250 },
+        26: { label: 'Glacial Valley', alt: 3400 },
+        39: { label: '💦 VASUDHARA FALLS 3691m', alt: 3691 },
+      }
+
       // Interpolate altitude between known waypoints
-      const interpolateAlt = (idx: number, total: number): number => {
-        const altStart = 2468
-        const altEnd   = 4261
+      const interpolateAlt = (idx: number, total: number, placeName: string): number => {
+        let altStart = 2468, altEnd = 4261
+        if (placeName.includes('Rohtang')) { altStart = 3100; altEnd = 3978 }
+        else if (placeName.includes('Kedarnath')) { altStart = 1982; altEnd = 3583 }
+        else if (placeName.includes('Vasudhara')) { altStart = 3100; altEnd = 3691 }
         return Math.round(altStart + (altEnd - altStart) * (idx / (total - 1)))
       }
 
@@ -455,11 +516,25 @@ export default function MapContainer() {
 
         const total = coordinates.length
 
-        // ── Cinematic multi-stage fly for Patalsu ──────────────────
+        // ── Cinematic multi-stage fly for Patalsu / Rohtang / Kedarnath / Vasudhara ──────────────────
         if (isCinematic) {
-          await flyToCamera(map, {
-            lat: 32.305, lng: 77.155, zoom: 11.5, pitch: 50, bearing: 20, duration: 2000
-          })
+          if (placeName.includes('Rohtang')) {
+            await flyToCamera(map, {
+              lat: 32.385, lng: 77.255, zoom: 11.5, pitch: 50, bearing: -20, duration: 2000
+            })
+          } else if (placeName.includes('Kedarnath')) {
+            await flyToCamera(map, {
+              lat: 30.68, lng: 79.03, zoom: 12, pitch: 55, bearing: 15, duration: 2000
+            })
+          } else if (placeName.includes('Vasudhara')) {
+            await flyToCamera(map, {
+              lat: 30.76, lng: 79.48, zoom: 12.5, pitch: 50, bearing: -10, duration: 2000
+            })
+          } else {
+            await flyToCamera(map, {
+              lat: 32.305, lng: 77.155, zoom: 11.5, pitch: 50, bearing: 20, duration: 2000
+            })
+          }
         } else {
           const midLat = (path[0].lat + path[path.length - 1].lat) / 2
           const midLng = (path[0].lng + path[path.length - 1].lng) / 2
@@ -469,12 +544,34 @@ export default function MapContainer() {
         // Pull camera back to see full trail
         const centerLat = (path[0].lat + path[path.length - 1].lat) / 2
         const centerLng = (path[0].lng + path[path.length - 1].lng) / 2
+        let pullBackLat = centerLat - 0.01
+        let pullBackLng = centerLng
+        let pullBackBearing = 0
+        if (isCinematic) {
+          if (placeName.includes('Rohtang')) {
+            pullBackLat = 32.378
+            pullBackLng = 77.265
+            pullBackBearing = 310
+          } else if (placeName.includes('Kedarnath')) {
+            pullBackLat = 30.67
+            pullBackLng = 79.04
+            pullBackBearing = 345
+          } else if (placeName.includes('Vasudhara')) {
+            pullBackLat = 30.75
+            pullBackLng = 79.49
+            pullBackBearing = 330
+          } else {
+            pullBackLat = 32.336
+            pullBackLng = 77.172
+            pullBackBearing = 355
+          }
+        }
         await flyToCamera(map, {
-          lat: isCinematic ? 32.336 : centerLat - 0.01,
-          lng: isCinematic ? 77.172 : centerLng,
+          lat: pullBackLat,
+          lng: pullBackLng,
           zoom: isCinematic ? 12.2 : 12,
           pitch: 62,
-          bearing: isCinematic ? 355 : 0,
+          bearing: pullBackBearing,
           duration: 1200
         })
 
@@ -558,19 +655,26 @@ export default function MapContainer() {
             particleMarker.setLngLat([coordinates[currentIdx + 1][0], coordinates[currentIdx + 1][1]])
 
             // Update live altitude HUD
-            const alt = interpolateAlt(currentIdx + 1, total)
+            const alt = interpolateAlt(currentIdx + 1, total, placeName)
             setLiveTrekAlt(alt)
 
             // Spawn named waypoint markers at key stops
-            if (isCinematic && PATALSU_WAYPOINTS[currentIdx] && !drawnWaypoints.has(currentIdx)) {
-              drawnWaypoints.add(currentIdx)
-              const wp = PATALSU_WAYPOINTS[currentIdx]
-              const color = trekColor(currentIdx / (total - 1))
-              const wpEl = buildWaypointMarkerEl(wp.label, wp.alt, color)
-              const wpMarker = new mapboxgl.Marker({ element: wpEl, anchor: 'bottom' })
-                .setLngLat([coordinates[currentIdx][0], coordinates[currentIdx][1]])
-                .addTo(map)
-              trekMarkersRef.current.push(wpMarker)
+            if (isCinematic) {
+              let wps = PATALSU_WAYPOINTS
+              if (placeName.includes('Rohtang')) wps = ROHTANG_WAYPOINTS
+              else if (placeName.includes('Kedarnath')) wps = KEDARNATH_WAYPOINTS
+              else if (placeName.includes('Vasudhara')) wps = VASUDHARA_WAYPOINTS
+
+              if (wps[currentIdx] && !drawnWaypoints.has(currentIdx)) {
+                drawnWaypoints.add(currentIdx)
+                const wp = wps[currentIdx]
+                const color = trekColor(currentIdx / (total - 1))
+                const wpEl = buildWaypointMarkerEl(wp.label, wp.alt, color)
+                const wpMarker = new mapboxgl.Marker({ element: wpEl, anchor: 'bottom' })
+                  .setLngLat([coordinates[currentIdx][0], coordinates[currentIdx][1]])
+                  .addTo(map)
+                trekMarkersRef.current.push(wpMarker)
+              }
             }
 
             currentIdx++
@@ -594,18 +698,54 @@ export default function MapContainer() {
         setFlyingTo({ name: place.name, emoji: place.emoji, image: place.image })
 
         if (!hasTrek) {
-          await flyToCamera(map, {
-            lat: place.lat - 0.03,
-            lng: place.lng,
-            zoom: 14,
-            pitch: 75,
-            bearing: targetHeading,
-            duration: 1500
-          })
-          setFlyingTo(null)
+          if (place.id === 'sethan') {
+            const rad = targetHeading * Math.PI / 180
+            
+            // Stage 1: Fast fly to a medium valley shot
+            const wideDist = 0.08
+            const wideLat = place.lat - wideDist * Math.cos(rad)
+            const wideLng = place.lng - wideDist * Math.sin(rad)
+            
+            await flyToCamera(map, {
+              lat: wideLat,
+              lng: wideLng,
+              zoom: 12.0,
+              pitch: 60,
+              bearing: targetHeading,
+              duration: 1200
+            })
+            
+            // Clear the "Flying to..." overlay so they can enjoy the view
+            setFlyingTo(null)
+            
+            // Stage 2: Slow zoom + rotate (perfect balance to see mountains behind)
+            await flyToCamera(map, {
+              lat: place.lat - 0.04 * Math.cos(rad),
+              lng: place.lng - 0.04 * Math.sin(rad),
+              zoom: 13.0,
+              pitch: 65,
+              bearing: targetHeading + 10,
+              duration: 2500
+            })
+          } else {
+            const rad = targetHeading * Math.PI / 180
+            const dist = 0.025
+            const camLat = place.lat - dist * Math.cos(rad)
+            const camLng = place.lng - dist * Math.sin(rad)
+
+            await flyToCamera(map, {
+              lat: camLat,
+              lng: camLng,
+              zoom: 14.5,
+              pitch: 72,
+              bearing: targetHeading,
+              duration: 2000
+            })
+            setFlyingTo(null)
+          }
         } else {
           setTimeout(() => setFlyingTo(null), 1500)
-          const isCinematic = place.id === 'patalsu-peak'
+          const isCinematic = ['patalsu-peak', 'rohtang-pass', 'kedarnath', 'vasudhara-falls'].includes(place.id)
           await drawTrekPath(place.trekPath!, place.name, isCinematic)
         }
 
@@ -936,6 +1076,13 @@ export default function MapContainer() {
   const activeSubRegion = activeRegion?.subregions.find(s => s.id === activeSubRegionId) ?? null
 
   const handleBack = () => {
+    if (returnedFromPlace) {
+      setClearedReturn(true)
+      if (activeSubRegionId && doSelectSubRegionRef.current) {
+        doSelectSubRegionRef.current(activeSubRegionId, false)
+      }
+      return
+    }
     if (liveTrekAlt !== null || trekStats !== null) {
       setLiveTrekAlt(null)
       setTrekStats(null)
@@ -1045,7 +1192,7 @@ export default function MapContainer() {
           <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
             <path d="M11 5H1M1 5L5 1M1 5L5 9" stroke="#e8c97a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          {(liveTrekAlt !== null || trekStats !== null) && activeSubRegion
+          {(liveTrekAlt !== null || trekStats !== null || returnedFromPlace) && activeSubRegion
             ? activeSubRegion.name
             : (activeSubRegionId ? activeRegion?.name : 'All Regions')}
         </button>

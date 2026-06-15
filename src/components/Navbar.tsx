@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 
 const NAV_LINKS = [
   { label: 'Home',           href: '#home' },
