@@ -42,7 +42,7 @@ export default function ExpeditionGrid() {
   const activeSubReg = useMemo(() => activeRegion?.subregions.find(s => s.id === activeSubRegId), [activeRegion, activeSubRegId])
 
   const handleRegionClick = (region: HimalayaRegion) => {
-    if (region.showSubRegionsFirst && region.subregions.length > 1) {
+    if (region.showSubRegionsFirst) {
       setGridState('subregions', region.id, null)
     } else {
       setGridState('places', region.id, region.subregions[0].id)
@@ -57,7 +57,7 @@ export default function ExpeditionGrid() {
 
   const handleBack = () => {
     if (viewLevel === 'places') {
-      if (activeRegion?.showSubRegionsFirst && activeRegion.subregions.length > 1) {
+      if (activeRegion?.showSubRegionsFirst) {
         setGridState('subregions', activeRegId, null)
       } else {
         setGridState('states', null, null)

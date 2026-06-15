@@ -388,24 +388,26 @@ export default function MapContainer() {
         10: { label: 'Shepherd Route', alt: 3300 },
         20: { label: 'High Meadows', alt: 3600 },
         30: { label: 'Snow Slopes', alt: 3800 },
-        39: { label: '⛰️ ROHTANG PASS 3978m', alt: 3978 },
+        39: { label: '⛰️ THE PASS 3978m', alt: 3978 },
       }
 
+
+      // Vasudhara-specific key waypoints: index → { label, alt }
+      
       // Kedarnath-specific key waypoints: index → { label, alt }
       const KEDARNATH_WAYPOINTS: Record<number, { label: string; alt: number }> = {
         0:  { label: 'Gaurikund', alt: 1982 },
         10: { label: 'Jungle Chatti', alt: 2500 },
         20: { label: 'Rambara', alt: 2900 },
         30: { label: 'Lincholi', alt: 3200 },
-        39: { label: '⛩️ KEDARNATH 3583m', alt: 3583 },
+        39: { label: '⛩️ THE TEMPLE 3583m', alt: 3583 },
       }
 
-      // Vasudhara-specific key waypoints: index → { label, alt }
       const VASUDHARA_WAYPOINTS: Record<number, { label: string; alt: number }> = {
         0:  { label: 'Mana Village', alt: 3100 },
         13: { label: 'Saraswati River', alt: 3250 },
         26: { label: 'Glacial Valley', alt: 3400 },
-        39: { label: '💦 VASUDHARA FALLS 3691m', alt: 3691 },
+        39: { label: '💦 THE FALLS 3691m', alt: 3691 },
       }
 
       // Interpolate altitude between known waypoints
@@ -524,7 +526,7 @@ export default function MapContainer() {
             })
           } else if (placeName.includes('Kedarnath')) {
             await flyToCamera(map, {
-              lat: 30.68, lng: 79.03, zoom: 12, pitch: 55, bearing: 15, duration: 2000
+              lat: 30.618, lng: 79.010, zoom: 13.6, pitch: 65, bearing: 345, duration: 2000
             })
           } else if (placeName.includes('Vasudhara')) {
             await flyToCamera(map, {
@@ -566,14 +568,21 @@ export default function MapContainer() {
             pullBackBearing = 355
           }
         }
-        await flyToCamera(map, {
-          lat: pullBackLat,
-          lng: pullBackLng,
-          zoom: isCinematic ? 12.2 : 12,
-          pitch: 62,
-          bearing: pullBackBearing,
-          duration: 1200
-        })
+        let shouldPullBack = true
+        if (isCinematic && placeName.includes('Kedarnath')) {
+          shouldPullBack = false
+        }
+        
+        if (shouldPullBack) {
+          await flyToCamera(map, {
+            lat: pullBackLat,
+            lng: pullBackLng,
+            zoom: isCinematic ? 12.2 : 12,
+            pitch: 62,
+            bearing: pullBackBearing,
+            duration: 1200
+          })
+        }
 
         // ── Add per-segment gradient sources (pre-create all, draw empty) ─
         for (let i = 0; i < total - 1; i++) {
@@ -653,6 +662,25 @@ export default function MapContainer() {
 
             // Move particle to current leading edge
             particleMarker.setLngLat([coordinates[currentIdx + 1][0], coordinates[currentIdx + 1][1]])
+            
+            // Active tracking camera for long Kedarnath trek
+            if (isCinematic && placeName.includes('Kedarnath')) {
+              const progress = currentIdx / (total - 1)
+              let currentBearing = 345 + (375 - 345) * progress
+              if (currentBearing >= 360) currentBearing -= 360
+              
+              const offsetLat = 0.008 * Math.cos(currentBearing * Math.PI / 180)
+              const offsetLng = 0.008 * Math.sin(currentBearing * Math.PI / 180)
+              
+              map.easeTo({
+                center: [coordinates[currentIdx + 1][0] + offsetLng, coordinates[currentIdx + 1][1] + offsetLat],
+                bearing: currentBearing,
+                pitch: 68,
+                zoom: 13.8,
+                duration: 160,
+                easing: t => t
+              })
+            }
 
             // Update live altitude HUD
             const alt = interpolateAlt(currentIdx + 1, total, placeName)
@@ -678,7 +706,7 @@ export default function MapContainer() {
             }
 
             currentIdx++
-          }, 80)
+          }, 160)
         })
       }
 

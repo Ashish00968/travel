@@ -18,18 +18,6 @@ interface WishlistPlace {
 
 const DEFAULT_PLACES: WishlistPlace[] = [
   {
-    id: 'valley-of-flowers',
-    name: 'Valley of Flowers',
-    region: 'Uttarakhand',
-    desc: 'A legendary high-altitude Himalayan valley carpeted with over 600 species of rare alpine flowers, bordered by snow-capped peaks.',
-    idealSeason: 'July – September (Monsoon)',
-    altitude: '3,658m',
-    whyVisit: 'To document the brief, vibrant monsoon bloom that transforms the glacial valley into a natural canvas.',
-    coordinates: '30.73° N, 79.61° E',
-    completed: false,
-    bgImage: 'https://images.unsplash.com/photo-1469521669194-bafa95b57580?auto=format&fit=crop&q=80&w=800'
-  },
-  {
     id: 'darma-valley',
     name: 'Darma Valley',
     region: 'Uttarakhand (Pithoragarh)',
