@@ -45,7 +45,7 @@ function StopBlock({ stop, index }: { stop: TrekStop; index: number }) {
 
   const photoEl = (
     <motion.div
-      style={{ position:'relative', borderRadius:20, overflow:'hidden', height: stop.type === 'summit' ? 520 : 'clamp(360px,45vw,540px)', border:'1px solid rgba(255,255,255,0.03)' }}
+      style={{ position:'relative', borderRadius:20, overflow:'hidden', aspectRatio: stop.aspectRatio || '4/3', border:'1px solid rgba(255,255,255,0.03)' }}
       initial={{ opacity:0, scale:0.95, y:40 }} whileInView={{ opacity:1, scale:1, y:0 }} viewport={{ once:true, margin:'-40px' }}
       transition={{ duration:1.2, ease:[0.2,0.8,0.2,1] }}
     >

@@ -20,6 +20,7 @@ type TrekStopBase = {
   moment:         string        // Space Mono field-notes captions
   cinematicText?: string        // Playfair italic emotional narration
   coordinates?:   { lat: number; lng: number }
+  aspectRatio?:   string        // optional CSS aspect ratio, e.g., '3/4', '16/9'
 }
 
 export type TrekStop =
@@ -459,12 +460,25 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { id: 'descent', scrollDepth: 95, altitude: 2200, title: 'The return', moment: 'Paragliders drift overhead. The valley catches the last golden light.', type: 'text' },
             ],
             type: 'adventure' },
-          { id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️', image: buildRootCloudinaryUrl('rohtang', 'png'), lat: 32.37, lng: 77.25, heading: 280, elevation: '3,978m',
-            meta: 'Trek to the Pass', season: 'May – October',
-            desc: 'The old trekking route to Rohtang Pass, bypassing the motorable road to follow shepherd trails and steep slopes.',
-            experience: 'Following the old trader route to Rohtang is entirely different from the drive. You earn every meter of altitude.',
-            tips: ['Start early to avoid afternoon weather changes.', 'Snow is present near the pass almost year-round.'],
-            stats: [{ label: 'Altitude', value: '3,978 m' }, { label: 'Trek', value: 'Steep climb' }],
+          {
+            id: 'rohtang-pass', name: 'Rohtang Pass', emoji: '🏔️',
+            image: buildRootCloudinaryUrl('27_Main2'),
+            lat: 32.37, lng: 77.25, heading: 280, elevation: '3,978m',
+            meta: 'The Accidental Ascent · October', season: 'May – October',
+            desc: 'We went for a scooty ride and ended up climbing Rohtang Pass on foot — through snow, no trail, in town shoes — reaching the top alone at sunset.',
+            experience: 'We crossed the Atal Tunnel on a scooty, got stopped at Koksar, and decided to hike "a bit". Six and a half hours later we reached Rohtang at sunset, the only two people on the pass. One vehicle came down — they\'d lost a phone and turned back to find it. They took us home.',
+            tips: [
+              'Cross Atal Tunnel early — saves 2+ hours vs the old Rohtang road.',
+              'If you hike from Koksar side, the snow is deep in October with no trail — start very early.',
+              'Dress for the mountain, not the scooty. Cold feet on snow are no joke.',
+              'The pass is deserted after tourist season ends. Carry food and water.',
+            ],
+            stats: [
+              { label: 'Altitude',  value: '3,978 m' },
+              { label: 'Duration',  value: '6.5 hrs on foot' },
+              { label: 'Distance',  value: '~18 km total' },
+              { label: 'Season',    value: 'Oct (off-season)' },
+            ],
             trekPath: [
               // Real GPS track from Rohtangtrekroute.kml
               { lat: 32.394570, lng: 77.257042 },
@@ -535,12 +549,44 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
               { lat: 32.372999, lng: 77.248059 },
             ],
             trekStops: [
-              { id: 'start', scrollDepth: 0, altitude: 3100, title: 'The old trail', moment: 'Leaving the tarmac behind. The trail cuts straight up through the meadows.', type: 'text' },
-              { id: 'midway', scrollDepth: 40, altitude: 3500, title: 'Shepherd routes', moment: 'Gaining altitude fast. The road switchbacks are visible far below.', type: 'photo', mediaUrl: '' },
-              { id: 'summit', scrollDepth: 75, altitude: 3978, title: 'Rohtang Pass', moment: 'Reaching the ridge on foot. The wind hits you with the full force of Lahaul.', type: 'summit' },
-              { id: 'descent', scrollDepth: 95, altitude: 3800, title: 'The descent', moment: 'The weather changes by noon. Time to head back down before the clouds roll in.', type: 'text' }
+              // ── Ch 01: Dawn in Manali ──────────────────────────────
+              { id: 'photo-01',       scrollDepth: 0,  altitude: 2050, title: 'Manali · Early Morning', moment: 'Night bus. Cold air. No plan. The town asleep, peaks catching first light.', cinematicText: 'Every accidental journey starts somewhere.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('1_ReachedManaliEarlyMorning'), aspectRatio: '3/4' },
+              { id: 'photo-02',       scrollDepth: 4,  altitude: 2050, title: 'Golden Sunrise', moment: 'Golden hour on the mountains.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('2_EarlyMorningSunriseGoldenMountainView'), aspectRatio: '9/20' },
+              // ── Ch 02: Through the Atal Tunnel ─────────────────────
+              { id: 'photo-03',       scrollDepth: 8,  altitude: 2300, title: 'On the Way', moment: 'Scooty pointed beyond the tunnel.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('3_WeDecidedToCrossTheGoBeyondAtalTunnelJustStartedOnthewaytoKoksarViaSolangValley'), aspectRatio: '16/9' },
+              { id: 'photo-04',       scrollDepth: 11, altitude: 2480, title: 'Solang Valley', moment: 'Reached Solang. Mountains everywhere.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('4_ReachedSolangValley'), aspectRatio: '4/3' },
+              { id: 'photo-05',       scrollDepth: 14, altitude: 3050, title: 'Snowy Peaks', moment: 'Snow-capped giants near the tunnel mouth.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('5SnowyMountainsNearbyAtalTunnelSouthPortal'), aspectRatio: '16/9' },
+              { id: 'photo-06',       scrollDepth: 17, altitude: 3100, title: 'Atal Tunnel', moment: 'South portal. 8.8 km through the mountain.', cinematicText: 'One tunnel. Two worlds.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('6_AtalTunnelSouthPortal'), aspectRatio: '5/3' },
+              { id: 'photo-07',       scrollDepth: 20, altitude: 3100, title: 'Crossed the Tunnel', moment: 'Lahaul opened up, brown and vast.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('7_CrossedTunnelAmazingViewOfMountains'), aspectRatio: '16/9' },
+              { id: 'photo-07a',      scrollDepth: 22, altitude: 3100, title: 'A Good View', moment: 'Stopped. Looked. Kept going.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('7_1GoodView'), aspectRatio: '16/9' },
+              { id: 'photo-08',       scrollDepth: 25, altitude: 3100, title: 'From the Scooty', moment: 'Breathtaking views at 40 km/h.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('8_breathTakingViewsFromOurScooty'), aspectRatio: '4/3' },
+              { id: 'photo-09',       scrollDepth: 28, altitude: 3100, title: 'The Scenic Road', moment: 'The road itself was the destination.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('9_ScenericRoad'), aspectRatio: '4/3' },
+              // ── Ch 03: Koksar — Where the Road Ends ────────────────
+              { id: 'photo-10',       scrollDepth: 32, altitude: 3150, title: 'Koksar in Snow', moment: 'Reached Koksar. Snow on everything.', cinematicText: 'The road ends. The mountain begins.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('10_ReachedKoksarInSnow'), aspectRatio: '4/3' },
+              { id: 'photo-11',       scrollDepth: 35, altitude: 3150, title: 'We Decided to Hike', moment: 'Scooty parked. We started walking.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('11_KoksarSnowWeDecidedToHikefromTheretoGetBetterViews'), aspectRatio: '16/9' },
+              // ── Ch 04: Into the Snow. No Trail. ────────────────────
+              { id: 'photo-12',       scrollDepth: 39, altitude: 3250, title: 'Started Hiking', moment: 'First steps into the white.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('12_StartedOurHikeTakingPhotos'), aspectRatio: '4/3' },
+              { id: 'photo-13',       scrollDepth: 42, altitude: 3350, title: 'Mid-Climb', moment: 'Both of us, mid-slope, still smiling.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('13_BothofusinTheMiddleOfTheSteepClimp'), aspectRatio: '16/9' },
+              { id: 'photo-14',       scrollDepth: 45, altitude: 3400, title: 'Cool Mountains', moment: 'The scale hit differently up here.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('14_coolMountiins'), aspectRatio: '16/9' },
+              { id: 'photo-15',       scrollDepth: 48, altitude: 3500, title: 'We Have To Climb This', moment: 'Looking up. The slope didn\'t end.', cinematicText: 'The mountain doesn\'t care about your shoes.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('15_WeHaveToClimbThis'), aspectRatio: '3/4' },
+              { id: 'photo-16',       scrollDepth: 51, altitude: 3550, title: 'Middle of the Mountains', moment: 'Surrounded. No trail. Just snow.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('16_InTheMiddleOftheMountains'), aspectRatio: '4/3' },
+              { id: 'photo-23',       scrollDepth: 57, altitude: 3650, title: 'The View at the Top', moment: 'Climb may be tough. View is always better.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('23_TheClimbMayBeToughButTheViewAtTheTopIsAlwaysBetter'), aspectRatio: '4/3' },
+              // ── Ch 05: The Road Appears ────────────────────────────
+              { id: 'photo-17',       scrollDepth: 61, altitude: 3700, title: 'Found the Road', moment: 'Exhausted. Decided to walk the road.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('17_WeHikedSteepSectionExaustedThenDecidedToCoverNextPartViaRoad'), aspectRatio: '4/3' },
+              { id: 'photo-18',       scrollDepth: 64, altitude: 3750, title: 'Peaks and Road', moment: 'Snow peaks. Road covered in white.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('18_BreathtakingshowPeaksandRoadCoveredWithSnow'), aspectRatio: '3/4' },
+              { id: 'photo-19',       scrollDepth: 67, altitude: 3800, title: 'Walking the Road', moment: 'Scenic views, cold feet, on foot.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('19_NowGoingFromTheRoadWithScenericViewsByourFoot'), aspectRatio: '4/3' },
+              { id: 'photo-20',       scrollDepth: 70, altitude: 3850, title: 'Straight Road', moment: 'Empty road vanishing into snow.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('20_StraightRoadWithshow'), aspectRatio: '4/3' },
+              { id: 'photo-21',       scrollDepth: 73, altitude: 3900, title: 'Valley in Snow', moment: 'Mountain valley buried in white.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('21_MountainFulleyCoveredWithSnow'), aspectRatio: '4/3' },
+              // ── Ch 06: Rohtang at Sunset. Alone. ───────────────────
+              { id: 'photo-24',       scrollDepth: 77, altitude: 3950, title: 'Finally Reached', moment: 'The last steps to the top.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('24_FinallyReached'), aspectRatio: '3/4' },
+              { id: 'photo-25',       scrollDepth: 80, altitude: 3970, title: 'About to Sunset', moment: 'The sky starting to burn.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('25_AboutToSunSet'), aspectRatio: '4/3' },
+              { id: 'photo-26',       scrollDepth: 83, altitude: 3978, title: 'Rohtang Top', moment: 'The summit. Nobody else. Just us.', cinematicText: '"Rohtang" means pile of corpses. We were the only ones alive on it.', type: 'summit', mediaUrl: buildRootCloudinaryUrl('26_MainRohtangTopPhoto'), aspectRatio: '3/4' },
+              { id: 'photo-27',       scrollDepth: 86, altitude: 3978, title: 'The Summit', moment: 'Wind, prayer flags, the whole Himalaya.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('27_Main2'), aspectRatio: '4/3' },
+              { id: 'photo-28',       scrollDepth: 90, altitude: 3978, title: 'Sunset', moment: 'The sun dropped behind the ridge.', type: 'photo', mediaUrl: buildRootCloudinaryUrl('28_Sunset'), aspectRatio: '4/3' },
+              { id: 'rescue',         scrollDepth: 95, altitude: 3978, title: 'The Rescue', moment: 'A vehicle came back for a lost phone. Found us instead.', type: 'text' },
             ],
-            type: 'trek' },
+            type: 'trek',
+          },
           { id: 'sethan', name: 'Sethan', emoji: '❄️', image: buildRootCloudinaryUrl('sethan', 'png'), lat: 32.2349, lng: 77.2223, heading: 40, elevation: '2,750m',
             season: 'December – March',
             desc: 'A hidden shoulder above Manali that becomes a complete snowfield in winter.', 
@@ -608,7 +654,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             trekStops: [
               { id: 'departure', scrollDepth: 0, altitude: 2050, title: 'Leaving Old Manali', moment: '09:30 AM. Starting out from Old Manali on a scooty, heading towards Solang Valley. The sun is up and the valley is awake.', cinematicText: 'Every journey starts with deciding to leave the familiar behind.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/1_oldmanali_viewofPatalsu.jpg' },
               { id: 'solang-road', scrollDepth: 7, altitude: 2235, title: 'The road to Solang', moment: 'Riding out of Old Manali before sunrise. Patalsu sits silent above the valley. You can feel it more than you can see it.', cinematicText: 'The mountain appears between the trees. Small. Distant. Yours.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/2clearviewofPatalsu.jpg' },
-              { id: 'solang-dhaba', scrollDepth: 14, altitude: 2468, title: 'Solang Valley — last chai', moment: 'Reached Solang Valley as the stalls were just opening. Aalu parantha, sweet chai. The paragliders were still asleep.', cinematicText: 'The last taste of the valley before you leave it behind forever.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/3ReachedSolangValleyforBreakfast.jpg' },
+              { id: 'solang-dhaba', scrollDepth: 14, altitude: 2468, title: 'Solang Valley — last chai', moment: 'Reached Solang Valley as the stalls were just opening. Aalu parantha, sweet chai. The paragliders were still asleep.', cinematicText: 'The last taste of the valley before you leave it behind forever.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/3ReachedSolangValleyforBreakfast.jpg', aspectRatio: '3/4' },
               { id: 'going-to-village', scrollDepth: 21, altitude: 2520, title: 'Into the upper valley', moment: "The tourist road ends. Now it's a dirt track winding up toward Solang village. No cable cars here.", cinematicText: 'Above the noise, above the resorts, above the world that brought you here.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/4GoingtoSolangVillage.jpg' },
               { id: 'solang-village', scrollDepth: 28, altitude: 2582, title: 'Solang village', moment: 'Stone houses, wooden balconies. A shepherd crosses the path without looking up. You are officially off the map.', cinematicText: 'The cable cars and ski slopes give way to stone paths and centuries of silence.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/6SolangVillage.jpg' },
               { id: 'trail-start', scrollDepth: 35, altitude: 2650, title: 'The trail begins', moment: 'Two figures on a rocky path. The valley stretches below. The peak hides above. This is where the scooty stays.', cinematicText: 'This is where the road ends and the mountain begins. You choose to keep going.', type: 'photo', mediaUrl: 'https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/7trekStart.jpg' },
@@ -758,7 +804,7 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
         lat: 30.55, lng: 79.0, zoom: 10.0, tilt: 60, heading: 0,
         places: [
           { 
-            id: 'kedarnath', name: 'Kedarnath', emoji: '⛩️', lat: 30.74, lng: 79.07, heading: 190, elevation: '3,583m',
+            id: 'kedarnath', name: 'Kedarnath', emoji: '🛕', lat: 30.74, lng: 79.07, heading: 190, elevation: '3,583m',
             meta: 'Sacred Shiva temple', season: 'May – June, Sep – Oct',
             desc: 'One of the twelve Jyotirlingas, perched at 3,583 m. Survived miracles for over 1,200 years.',
             experience: 'The 16-km trek from Gaurikund is a pilgrimage in every sense. Grey stone against white snow.',
@@ -997,11 +1043,11 @@ export const HIMALAYA_REGIONS: HimalayaRegion[] = [
             desc: "The origin of the holy river Ganges, surrounded by majestic peaks.", type: "spiritual"
           },
           {
-            id: "yamnotri", name: "Yamnotri", emoji: "💧", lat: 31.000245, lng: 78.463092, heading: 0,
+            id: "yamnotri", name: "Yamnotri", emoji: "🏞️", lat: 31.000245, lng: 78.463092, heading: 0,
             desc: "The source of the Yamuna River and the seat of Goddess Yamuna.", type: "spiritual"
           },
           {
-            id: 'vasudhara-falls', name: 'Vasudhara Falls', emoji: '💦', lat: 30.783, lng: 79.45, heading: 320, elevation: '3,691m',
+            id: 'vasudhara-falls', name: 'Vasudhara Falls', emoji: "🌧️", lat: 30.783, lng: 79.45, heading: 320, elevation: '3,691m',
             meta: 'Trek from Mana Village', season: 'May – June, Sep – Oct',
             desc: 'A magnificent 400ft waterfall near Mana Village. The water is believed to turn away from those not pure of heart.',
             experience: 'A 6km trek from Mana, the last Indian village. The path is rocky, windy, and offers spectacular views of the Alaknanda river.',
