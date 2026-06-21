@@ -12,6 +12,11 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/images/og-cover.jpg" />
 
+    <!-- DNS prefetch (fallback for older browsers before preconnect resolves) -->
+    <link rel="dns-prefetch" href="https://res.cloudinary.com">
+    <link rel="dns-prefetch" href="https://api.mapbox.com">
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+
     <!-- Resource Hints for Performance -->
     <link rel="preconnect" href="https://res.cloudinary.com">
     <link rel="preconnect" href="https://api.mapbox.com">
@@ -20,14 +25,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="image" href="https://res.cloudinary.com/dehriwm1o/image/upload/q_auto,f_auto/wallpaper.jpg" fetchpriority="high">
 
-    <!-- Playfair Display & Space Mono (loaded via stylesheet below) -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap" media="print" onload="this.media='all'">
+    <!-- Fonts: Playfair Display, Space Mono, DM Sans, Bricolage Grotesque -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap" media="print" onload="this.media='all'">
     <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap">
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Playfair+Display:ital,wght@0,700;1,400;1,700&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500&display=swap">
     </noscript>
 
-    <title>Peaks & Paths — Himalayan Travel Journal</title>
+    <title>Peaks &amp; Paths — Himalayan Travel Journal</title>
   </head>
   <body>
     <div id="root"></div>

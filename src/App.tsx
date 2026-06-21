@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from 'react'
+import { useEffect, useMemo, lazy, Suspense } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useThemeStore } from './store/themeStore'
@@ -11,6 +11,12 @@ const LazyCursor = lazy(() => import('./components/Cursor'))
 export default function App() {
   const theme = useThemeStore((s) => s.theme)
   const location = useLocation()
+
+  // Cache once — hover-capable device never changes mid-session
+  const hasHoverCursor = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches,
+    []
+  )
 
   /* ── Sync the theme class on <html> ──────────────────────────── */
   useEffect(() => {
@@ -25,7 +31,7 @@ export default function App() {
   return (
     <>
       {/* Global custom cursor overlaid on everything */}
-      {typeof window !== 'undefined' && window.matchMedia('(hover: hover)').matches && (
+      {hasHoverCursor && (
         <Suspense fallback={null}>
           <LazyCursor />
         </Suspense>

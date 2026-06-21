@@ -7,6 +7,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
     target: 'esnext',
+    minify: 'esbuild',
+    reportCompressedSize: false,   // speeds up build output step
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -16,7 +18,9 @@ export default defineConfig({
           if (id.includes('node_modules/framer-motion')) return 'framer'
           // Mapbox GL JS — very large (~1.6MB), only loaded when MapContainer mounts
           if (id.includes('node_modules/mapbox-gl')) return 'mapbox'
-          // Zustand — tiny state management, group with app utilities
+          // Turf.js — geospatial helpers, used only inside MapContainer
+          if (id.includes('node_modules/@turf')) return 'turf'
+          // Zustand — tiny state management
           if (id.includes('node_modules/zustand')) return 'zustand'
         }
       },

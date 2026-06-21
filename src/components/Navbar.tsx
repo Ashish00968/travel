@@ -182,12 +182,9 @@ export default function Navbar() {
         }}
       >
         {/* Left — Logo */}
-        <motion.a
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        <a
           href="/"
-          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}
+          style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', opacity: 0, animation: 'fadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.1s forwards' }}
         >
           <motion.svg
             width="22" height="16" viewBox="0 0 22 16" fill="none" aria-hidden="true"
@@ -207,7 +204,7 @@ export default function Navbar() {
           }}>
             Peaks &amp; Paths
           </span>
-        </motion.a>
+        </a>
 
         {/* Center — Nav links (hidden on mobile) */}
         <nav className="navbar-links" style={{ display: 'flex', gap: '32px' }} aria-label="Main navigation">
@@ -215,11 +212,8 @@ export default function Navbar() {
             const id       = href.replace('#', '')
             const isActive = activeSection === id
             return (
-              <motion.a
+              <a
                 key={label}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + i * 0.05, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
                 href={href}
                 onClick={(e) => {
                   if (href.startsWith('#')) {
@@ -229,20 +223,21 @@ export default function Navbar() {
                 }}
                 className="nav-link"
                 data-active={isActive ? "true" : "false"}
-                style={{ color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)' }}
+                style={{
+                  color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
+                  opacity: 0,
+                  animation: `fadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) ${0.15 + i * 0.05}s forwards`,
+                }}
               >
                 {label}
-              </motion.a>
+              </a>
             )
           })}
         </nav>
 
         {/* Right — CTA + Hamburger */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <motion.a
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+          <a
             href="https://youtube.com"
             target="_blank"
             rel="noopener noreferrer"
@@ -257,13 +252,15 @@ export default function Navbar() {
               color: 'var(--color-accent)', textDecoration: 'none',
               transition: 'background 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms, transform 160ms cubic-bezier(0.23, 1, 0.32, 1)',
               whiteSpace: 'nowrap',
+              opacity: 0,
+              animation: 'fadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.3s forwards',
             }}
           >
             <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor">
               <path d="M13.7 1.5C13.5 0.9 13.1 0.5 12.5 0.3C11.4 0 7 0 7 0C7 0 2.6 0 1.5 0.3C0.9 0.5 0.5 0.9 0.3 1.5C0 2.6 0 5 0 5C0 5 0 7.4 0.3 8.5C0.5 9.1 0.9 9.5 1.5 9.7C2.6 10 7 10 7 10C7 10 11.4 10 12.5 9.7C13.1 9.5 13.5 9.1 13.7 8.5C14 7.4 14 5 14 5C14 5 14 2.6 13.7 1.5ZM5.5 7.1V2.9L9.2 5L5.5 7.1Z" />
             </svg>
             <span>Watch Film</span>
-          </motion.a>
+          </a>
 
           {/* Hamburger — visible on mobile only */}
           <button

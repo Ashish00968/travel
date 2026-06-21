@@ -251,20 +251,6 @@ export default function About() {
 
   return (
     <section id="about" style={{ padding: 'clamp(80px,12vw,160px) clamp(24px,5vw,48px)', background: '#06080c' }}>
-      <style>{`
-        .social-pill:hover {
-          color: #e8c97a !important;
-          border-color: rgba(232,201,122,0.4) !important;
-          background: rgba(232,201,122,0.04) !important;
-          transform: translateY(-2px) !important;
-        }
-        .social-pill:active {
-          transform: scale(0.97) !important;
-        }
-        @media (max-width: 968px) {
-          .thematic-grid { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
       <div
         ref={ref}
         style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '64px' }}
