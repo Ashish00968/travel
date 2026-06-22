@@ -188,11 +188,7 @@ button,
   100% { width: 80%; }
 }
 
-/* Cursor ring breathe */
-@keyframes ringBreath {
-  0%, 100% { transform: translate3d(var(--cx), var(--cy), 0) scale(1); }
-  50%       { transform: translate3d(var(--cx), var(--cy), 0) scale(1.08); }
-}
+
 
 /* ─── Reveal utilities ─────────────────────────────────────────── */
 .animated {
@@ -339,21 +335,6 @@ body > div[role="dialog"] { display: none !important; }
   }
 }
 
-/* ── Custom Cursor Support (desktop only) ─────────────────────────── */
-@media (pointer: fine) and (hover: hover) {
-  html, body {
-    cursor: none;
-  }
-  a, button, [role="button"], .magnetic-btn, input, select, textarea {
-    cursor: none !important;
-  }
-}
-
-@media (hover: none) {
-  html, body, a, button, [role="button"], .magnetic-btn, input, select, textarea {
-    cursor: auto !important;
-  }
-}
 
 /* ── Mobile-specific ──────────────────────────────────────────────── */
 @media (max-width: 640px) {

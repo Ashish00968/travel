@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * Premium dual-ring cursor
- * - Inner dot: 8px, follows cursor instantly via rAF
- * - Outer ring: 36px, smoothly lerps toward cursor (spring-like)
- * - On hover over interactive: inner hides, outer expands to 52px
- * - On click: ring pulses inward then springs out
- * - All DOM writes via rAF — zero React re-renders on mousemove
+ * Optimised dual-ring cursor
+ * ─ Inner dot : 8 px, instant via rAF (no transition delay)
+ * ─ Outer ring: 36 px, lerp spring toward cursor
+ * ─ rAF loop   : self-cancels when ring reaches target (saves GPU)
+ * ─ mouseover  : checks closest interactive ancestor once per event
+ * ─ click pulse: CSS class toggle — no transform string mutation
  */
 export default function Cursor() {
   const dotRef  = useRef<HTMLDivElement>(null)
@@ -17,101 +17,97 @@ export default function Cursor() {
     const ring = ringRef.current
     if (!dot || !ring) return
 
-    let rafId = 0
-    let ringX = -80, ringY = -80
+    let rafId   = 0
+    let running = false
+    let ringX   = -80, ringY   = -80
     let targetX = -80, targetY = -80
-    let isPointer = false
-    let isClicking = false
+    let isPointer  = false
 
-    // ── Lerp ring toward target (0.15 factor = spring-like lag) ───
+    // ── Lerp ─────────────────────────────────────────────────────────
     const lerp = (a: number, b: number, t: number) => a + (b - a) * t
+    const EPS  = 0.3   // px — stop loop when ring is close enough
 
-    const animateRing = () => {
+    const tick = () => {
       ringX = lerp(ringX, targetX, 0.14)
       ringY = lerp(ringY, targetY, 0.14)
-      ring.style.transform = `translate3d(${ringX - 18}px, ${ringY - 18}px, 0)`
-      rafId = requestAnimationFrame(animateRing)
-    }
+      ring.style.transform = `translate3d(${ringX - 18}px,${ringY - 18}px,0)`
 
-    rafId = requestAnimationFrame(animateRing)
-
-    // ── Mouse move: dot follows instantly ─────────────────────────
-    const onMove = (e: MouseEvent) => {
-      targetX = e.clientX
-      targetY = e.clientY
-      dot.style.transform = `translate3d(${e.clientX - 4}px, ${e.clientY - 4}px, 0)`
-    }
-
-    // ── Detect interactive elements ───────────────────────────────
-    const onOver = (e: Event) => {
-      const t = e.target as HTMLElement
-      const pointer =
-        t.tagName === 'A' ||
-        t.tagName === 'BUTTON' ||
-        t.tagName === 'INPUT' ||
-        t.tagName === 'TEXTAREA' ||
-        t.tagName === 'SELECT' ||
-        !!t.closest('a') ||
-        !!t.closest('button') ||
-        t.classList.contains('magnetic-btn') ||
-        t.getAttribute('role') === 'button'
-
-      if (pointer === isPointer) return
-      isPointer = pointer
-
-      if (pointer) {
-        dot.style.opacity = '0'
-        dot.style.transform += ' scale(0)'
-        ring.style.width = '52px'
-        ring.style.height = '52px'
-        ring.style.borderColor = 'rgba(232,201,122,0.9)'
-        ring.style.mixBlendMode = 'difference'
-        ring.style.background = 'rgba(232,201,122,0.06)'
-        // Adjust ring offset for bigger size
+      if (Math.abs(ringX - targetX) > EPS || Math.abs(ringY - targetY) > EPS) {
+        rafId = requestAnimationFrame(tick)
       } else {
-        dot.style.opacity = '1'
-        ring.style.width = '36px'
-        ring.style.height = '36px'
-        ring.style.borderColor = 'rgba(232,201,122,0.5)'
-        ring.style.mixBlendMode = 'normal'
-        ring.style.background = 'transparent'
+        // Snap exactly and stop the loop — no more wasted frames
+        ring.style.transform = `translate3d(${targetX - 18}px,${targetY - 18}px,0)`
+        running = false
       }
     }
 
-    // ── Click pulse ───────────────────────────────────────────────
+    const ensureRunning = () => {
+      if (!running) {
+        running = true
+        rafId = requestAnimationFrame(tick)
+      }
+    }
+
+    // ── Mouse move ────────────────────────────────────────────────────
+    const onMove = (e: MouseEvent) => {
+      targetX = e.clientX
+      targetY = e.clientY
+      dot.style.transform = `translate3d(${e.clientX - 4}px,${e.clientY - 4}px,0)`
+      ensureRunning()
+    }
+
+    // ── Detect interactive elements (checks closest, not target) ──────
+    let lastPointerEl: Element | null = null
+
+    const INTERACTIVE = 'a,button,input,textarea,select,[role="button"],.magnetic-btn'
+
+    const onOver = (e: Event) => {
+      const el = (e.target as Element).closest(INTERACTIVE)
+      if (el === lastPointerEl) return   // same element — skip work
+      lastPointerEl = el
+
+      const next = el !== null
+      if (next === isPointer) return
+      isPointer = next
+
+      if (next) {
+        dot.style.opacity  = '0'
+        ring.style.width   = '52px'
+        ring.style.height  = '52px'
+        ring.style.borderColor   = 'rgba(232,201,122,0.9)'
+        ring.style.mixBlendMode  = 'difference'
+        ring.style.background    = 'rgba(232,201,122,0.06)'
+      } else {
+        dot.style.opacity  = '1'
+        ring.style.width   = '36px'
+        ring.style.height  = '36px'
+        ring.style.borderColor   = 'rgba(232,201,122,0.5)'
+        ring.style.mixBlendMode  = 'normal'
+        ring.style.background    = 'transparent'
+      }
+    }
+
+    // ── Click pulse — CSS class, not transform string hacking ─────────
     const onClick = () => {
-      if (isClicking) return
-      isClicking = true
-      ring.style.transform += ' scale(0.75)'
-      ring.style.transition = 'transform 100ms cubic-bezier(0.23, 1, 0.32, 1), width 200ms, height 200ms, border-color 200ms, background 200ms'
-      setTimeout(() => {
-        ring.style.transform = ring.style.transform.replace(' scale(0.75)', '')
-        ring.style.transition = 'width 200ms cubic-bezier(0.23, 1, 0.32, 1), height 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms, background 200ms'
-        isClicking = false
-      }, 150)
+      ring.classList.add('cursor-click')
+      setTimeout(() => ring.classList.remove('cursor-click'), 200)
     }
 
-    // ── Visibility ────────────────────────────────────────────────
-    const onLeave = () => {
-      dot.style.opacity = '0'
-      ring.style.opacity = '0'
-    }
-    const onEnter = () => {
-      dot.style.opacity = isPointer ? '0' : '1'
-      ring.style.opacity = '1'
-    }
+    // ── Visibility ────────────────────────────────────────────────────
+    const onLeave  = () => { dot.style.opacity = '0'; ring.style.opacity = '0' }
+    const onEnter  = () => { dot.style.opacity = isPointer ? '0' : '1'; ring.style.opacity = '1' }
 
-    window.addEventListener('mousemove', onMove, { passive: true })
-    window.addEventListener('mouseover', onOver, { passive: true })
-    window.addEventListener('click', onClick, { passive: true })
+    window.addEventListener('mousemove',  onMove,  { passive: true })
+    window.addEventListener('mouseover',  onOver,  { passive: true })
+    window.addEventListener('click',      onClick, { passive: true })
     document.addEventListener('mouseleave', onLeave, { passive: true })
     document.addEventListener('mouseenter', onEnter, { passive: true })
 
     return () => {
       cancelAnimationFrame(rafId)
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseover', onOver)
-      window.removeEventListener('click', onClick)
+      window.removeEventListener('mousemove',  onMove)
+      window.removeEventListener('mouseover',  onOver)
+      window.removeEventListener('click',      onClick)
       document.removeEventListener('mouseleave', onLeave)
       document.removeEventListener('mouseenter', onEnter)
     }
@@ -124,16 +120,14 @@ export default function Cursor() {
         ref={dotRef}
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: 8,
-          height: 8,
+          top: 0, left: 0,
+          width: 8, height: 8,
           borderRadius: '50%',
           background: '#e8c97a',
           pointerEvents: 'none',
           zIndex: 99999,
           willChange: 'transform',
-          transition: 'opacity 150ms ease-out, transform 150ms ease-out',
+          transition: 'opacity 150ms ease-out',
         }}
       />
       {/* Outer ring — spring-lerp follow */}
@@ -141,17 +135,21 @@ export default function Cursor() {
         ref={ringRef}
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: 36,
-          height: 36,
+          top: 0, left: 0,
+          width: 36, height: 36,
           borderRadius: '50%',
           border: '1.5px solid rgba(232,201,122,0.5)',
           background: 'transparent',
           pointerEvents: 'none',
           zIndex: 99998,
           willChange: 'transform',
-          transition: 'width 200ms cubic-bezier(0.23, 1, 0.32, 1), height 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms ease-out, background 200ms ease-out',
+          transition: [
+            'width 200ms cubic-bezier(0.23,1,0.32,1)',
+            'height 200ms cubic-bezier(0.23,1,0.32,1)',
+            'border-color 200ms ease-out',
+            'background 200ms ease-out',
+            'opacity 150ms ease-out',
+          ].join(','),
         }}
       />
     </>
