@@ -5,9 +5,8 @@ This folder contains project documentation, technical reports, working guideline
 ## Documentation Index
 
 ### 📁 [`Identity/`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity)
-- **[`IDENTITY.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/IDENTITY.md)**: AI Agent identity, creator profile (Ashish), design engineering rules (Emil Kowalski philosophy), and core stack definitions.
-- **[`SKILLS.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/SKILLS.md)**: 8-Step task lifecycle, autonomous decision-making principles, skill registry, and continuous workflow refinement process.
-- **[`WORKING_AGREEMENT.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/WORKING_AGREEMENT.md)**: Collaboration protocols, workflow diagram, communication standards, and quality review checklists.
+- **[`IDENTITY.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/IDENTITY.md)**: Dedicated identity document defining Ashish's creative vision, agent persona (Antigravity), and core technology stack.
+- **[`README.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/README.md)**: Master operating index covering Skills execution lifecycle, Memory protocol, and Trust matrix.
 
 ### 📄 Core Docs
 - **[`Technical_Report.html`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Technical_Report.html)**: Comprehensive specification of UI/UX, section specs, map configuration, animation timings, and component structures.

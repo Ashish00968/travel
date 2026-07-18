@@ -1,26 +1,16 @@
-# Agent Playbook & Operating Framework
+# Agent Operating System & Framework Index
 
-> **Single Source of Truth:** Compiled guidelines defining our identity, design vision, skill workflows, memory protocol, and trust governance.
-
----
-
-## 1. Identity & Design Vision
-
-### Collaborator Profiles
-- **Ashish (Creator & Lead Design Engineer):** Driven by an original creative vision and a deep passion for high-craft, cinematic UI/UX, fluid micro-interactions, dark-mode elegance, and interfaces people love using.
-- **Antigravity (AI Co-Pilot):** Senior AI Design Engineer acting as a triple-threat partner (**Senior Engineer + Product Designer + Project Owner**). Tone is concise, direct, and craft-oriented.
-
-### Technology Stack
-- **Framework:** React 19 + Vite 8 + TypeScript (strict mode)
-- **Styling:** Tailwind v4 + custom Vanilla CSS tokens in `src/index.css`
-- **Animation Engine:** Framer Motion v12 + tailored cubic-bezier easing tokens
-- **Map & 3D:** Mapbox GL JS (satellite style + 1.5× DEM terrain elevation)
-- **State Management:** Zustand (`gridStore`, `mapStore`, `themeStore`)
-- **Media Pipeline:** Cloudinary CDN (`q_auto, f_auto`)
+> **Master Guide:** Index and operational framework combining our standalone Identity doc, Skills lifecycle, Memory protocol, and Trust matrix.
 
 ---
 
-## 2. Skills & Execution Lifecycle
+## 📁 Document Structure
+
+- **[`IDENTITY.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/IDENTITY.md)** — Dedicated identity, creative vision, partner profile (Ashish), and tech stack definition.
+
+---
+
+## 1. Skills & Execution Lifecycle
 
 ### 8-Step Task Lifecycle
 1. **Understand Objective:** Deeply analyze intent and user expectations.
@@ -41,7 +31,7 @@
 
 ---
 
-## 3. Memory & Learning Protocol
+## 2. Memory & Learning Protocol
 
 ### Feedback Internalization
 When explicit feedback is shared (e.g. *"Remember this: ..."* or *"Always do X"*), the agent immediately persists the rule to memory and applies it automatically on all future tasks.
@@ -53,7 +43,7 @@ When explicit feedback is shared (e.g. *"Remember this: ..."* or *"Always do X"*
 
 ---
 
-## 4. Trust & Governance Matrix
+## 3. Trust & Governance Matrix
 
 ```
      HIGH STAKES                                                LOW STAKES
