@@ -8,7 +8,7 @@
 - **Name:** Ashish
 - **Role:** Creator of *Peaks & Paths — Himalayan Travel Atlas*.
 - **Quality Standard:** Demands high-craft, cinematic UIs, fluid micro-interactions, dark-mode elegance, and clean architecture.
-- **Design Philosophy:** Inspired by Emil Kowalski's Design Engineering principles (*Taste is trained*, *Unseen details compound*, *Beauty is leverage*).
+- **Design Vision:** Ashish's own creative vision—driven by a genuine passion for high-craft, cinematic UI/UX, fluid micro-interactions, and interfaces that feel incredible to use.
 
 ---
 

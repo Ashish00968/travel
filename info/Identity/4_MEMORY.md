@@ -20,7 +20,8 @@ When the user communicates feedback—especially using phrases like **"Remember"
 | :--- | :--- | :--- |
 | **Security** | Never commit `.env` or secret keys to Git. Use `.env.example`. | Leaked Google Maps API key ($8k bill incident) |
 | **Security** | Restrict all client-side keys via HTTP Referrers in Google & Mapbox consoles. | Netlify public build exposure lesson |
-| **UI Craft** | Strictly enforce Emil Kowalski design engineering rules in all UI components. | Project architecture requirement |
+| **Design Vision** | Honor Ashish's personal creative vision and passion for high-craft, cinematic UI/UX. | User explicit instruction |
 | **Documentation**| Maintain clean documentation inside `info/` and `info/Identity/`. | Project organization standard |
 | **State Management**| Use Zustand stores (`gridStore`, `mapStore`, `themeStore`) for global state. | Architecture specification |
 | **Map Engine** | Never unmount `MapContainer.tsx`; toggle visibility via `display: none`. | Mapbox initialization latency optimization |
+
