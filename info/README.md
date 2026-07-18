@@ -1,11 +1,12 @@
 # Project Information & Documentation
 
-This folder contains project documentation, technical reports, and working guidelines for the Himalayan Travel Atlas application.
+This folder contains project documentation, technical reports, working guidelines, and skill execution frameworks for the Himalayan Travel Atlas application.
 
 ## Documentation Index
 
 ### 📁 [`Identity/`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity)
-- **[`IDENTITY.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/IDENTITY.md)**: AI Agent identity, partner profile (Ashish), design engineering rules (Emil Kowalski philosophy), and core stack definitions.
+- **[`IDENTITY.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/IDENTITY.md)**: AI Agent identity, creator profile (Ashish), design engineering rules (Emil Kowalski philosophy), and core stack definitions.
+- **[`SKILLS.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/SKILLS.md)**: 8-Step task lifecycle, autonomous decision-making principles, skill registry, and continuous workflow refinement process.
 - **[`WORKING_AGREEMENT.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/WORKING_AGREEMENT.md)**: Collaboration protocols, workflow diagram, communication standards, and quality review checklists.
 
 ### 📄 Core Docs
