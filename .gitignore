@@ -30,7 +30,9 @@ dist-ssr
 # Environment variables
 .env
 .env.*
+!.env.example
 
 # Ignore agent reports
 agentInfo.md
 Technical_Report.html
+
