@@ -32,7 +32,9 @@ dist-ssr
 .env.*
 !.env.example
 
-# Ignore agent reports
+# Ignore agent reports and local documentation
 agentInfo.md
 Technical_Report.html
+info/
+
 
