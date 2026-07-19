@@ -85,3 +85,5 @@ travelglb/
 | **Trek stop layout shifts (CLS)** | Dynamic stop media loading without pre-computed heights caused page shifting. | Added `aspectRatio` metadata to `himalaya.ts` and set responsive dynamic aspect ratios on containers. |
 | **FOUT on display headers** | `Bricolage Grotesque` was imported in CSS but missing from the font preloads in `index.html`. | Preload header font stylesheet link in `index.html` head to prevent style flash. |
 | **Mapbox Redundant Reloads** | Unmounting the Mapbox component during page navigation created high load latency. | Persistent mounting using `display: none` parent container visibility toggle. |
+| **Vite 8 Build Failure** | `esbuild` was missing from `devDependencies` when requested by transpilers under Vite 8. | Explicitly install `esbuild` as a `devDependency` in `package.json`. |
+
