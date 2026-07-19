@@ -18,10 +18,11 @@
 
 ## 2. Agent Operating System & Identity
 
-The project's operating playbook, design vision, skill workflows, memory protocol, and trust matrix are organized inside the [`info/Identity/`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity) directory:
+The project's operating playbook, design vision, skill workflows, memory protocol, trust matrix, and learnings ledger are organized inside the `info/` and `info/Identity/` directories:
 
 - **[`Identity/IDENTITY.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/IDENTITY.md):** Dedicated identity file defining Ashish's creative design vision, AI Co-Pilot persona (Antigravity), and core technology stack.
 - **[`Identity/README.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/Identity/README.md):** Operational playbook indexing the 8-Step Skill Lifecycle, Memory Learning Protocol, and Trust Risk Matrix (**Automate, Augment, Consult, Own**).
+- **[`context.md`](file:///Users/apple/Documents/Development/Websites/travelglb/info/context.md):** Persistent model context resource containing project blueprints, design tokens, known guardrails, and a dynamic Mistakes & Learnings Ledger.
 
 ---
 
@@ -49,8 +50,10 @@ travelglb/
 │   ├── Identity/
 │   │   ├── IDENTITY.md       ← Ashish's creative vision & agent persona
 │   │   └── README.md         ← Skills, Memory protocol, and Trust matrix
+│   ├── context.md            ← Model context and Mistakes & Learnings Ledger
 │   ├── Technical_Report.html ← Complete v14.0 HTML specification
 │   └── README.md             ← THIS FILE (Master documentation & handoff)
+
 ├── src/
 │   ├── components/           ← All UI components
 │   │   ├── Cursor.tsx        ← Dual-ring magnetic cursor
