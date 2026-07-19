@@ -108,7 +108,7 @@ export default function Footer() {
               fontStyle: 'italic', fontSize: '15px', fontWeight: 600,
               color: '#e8c97a', letterSpacing: '-0.01em',
             }}>
-              Peaks &amp; Paths
+              Pahadi Trails
             </span>
           </a>
 
@@ -152,8 +152,9 @@ export default function Footer() {
               fontFamily: "'DM Sans', sans-serif", fontSize: '13px',
               color: 'rgba(106,100,96,0.5)', margin: '0 0 4px',
             }}>
-              © {year} Peaks &amp; Paths.
+              © {year} Pahadi Trails.
             </p>
+
             <p style={{
               fontFamily: "'Space Mono', monospace", fontSize: '8px',
               letterSpacing: '0.14em', color: 'rgba(232,201,122,0.2)',

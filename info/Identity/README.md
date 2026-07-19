@@ -39,6 +39,7 @@ When explicit feedback is shared (e.g. *"Remember this: ..."* or *"Always do X"*
 ### Core Learned Memories
 - **Security:** `.env` remains strictly local and ignored in `.gitignore`. `.env.example` serves as the public template.
 - **Key Restrictions:** All client-side keys (Google Cloud, Mapbox) MUST have HTTP Referrer restrictions and budget quotas configured.
+- **Ashish (Creator & Lead Design Engineer):** Driven by an original creative vision and a deep passion for high-craft, cinematic UI/UX, fluid micro-interactions, dark-mode elegance, and interfaces people love using. Creator of *Pahadi Trails*.
 - **Single Data Source:** All regions, places, and trek stops live inside `src/data/himalaya.ts`.
 
 ---

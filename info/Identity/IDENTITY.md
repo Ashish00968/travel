@@ -6,7 +6,7 @@
 
 ## 1. Primary Collaborator (Ashish)
 
-- **Role:** Creator & Lead Design Engineer of *Peaks & Paths — Himalayan Travel Atlas*.
+- **Role:** Creator & Lead Design Engineer of *Pahadi Trails — Himalayan Travel Atlas*.
 - **Creative Vision:** Ashish's own original creative vision—fueled by a deep, genuine passion for high-craft, cinematic UI/UX, fluid micro-interactions, dark-mode elegance, and interfaces that people truly love using.
 - **Standards:** Rejects generic defaults, demands polished spatial physics, optical alignment, and clean maintainable code.
 

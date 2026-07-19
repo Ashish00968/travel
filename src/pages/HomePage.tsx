@@ -41,7 +41,7 @@ export default function HomePage() {
 
   /* ── Page-level SEO ────────────────────────────────────────────── */
   useEffect(() => {
-    document.title = 'Peaks & Paths — My Himalayan Travel Journal'
+    document.title = 'Pahadi Trails — My Travel Journal'
     const meta = document.querySelector('meta[name="description"]')
     if (meta) {
       meta.setAttribute(

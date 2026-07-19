@@ -1,12 +1,13 @@
-# Himalayan Travel Atlas — Technical Documentation & Agent Handoff
+# Pahadi Trails — Technical Documentation & Agent Handoff
 
-> **Master Architecture & Agent Guide:** Primary context, technology stack, design system, component reference, security architecture, and operational handoff for *Peaks & Paths — Himalayan Travel Atlas*.
+> **Master Architecture & Agent Guide:** Primary context, technology stack, design system, component reference, security architecture, and operational handoff for *Pahadi Trails — Himalayan Travel Atlas*.
 
 ---
 
 ## 1. Project Overview
 
-- **Name:** Peaks & Paths — Himalayan Travel Atlas  
+- **Name:** Pahadi Trails — Himalayan Travel Atlas  
+
 - **URL (dev):** `http://localhost:5173`  
 - **Repo Root:** `/Users/apple/Documents/Development/Websites/travelglb`  
 - **Type:** Vite + React 19 + TypeScript SPA  

@@ -57,7 +57,7 @@ export default function HorizonPage() {
   const [newCoords,   setNewCoords]   = useState('')
 
   useEffect(() => {
-    document.title = 'The Horizon — Peaks & Paths'
+    document.title = 'The Horizon — Pahadi Trails'
     const saved = localStorage.getItem('explore_wishlist')
     if (saved) {
       try { setPlaces(JSON.parse(saved)) }

@@ -1,4 +1,4 @@
-# 🏔️ Himalayan Travel Atlas
+# 🏔️ Pahadi Trails — Himalayan Travel Atlas
 
 A cinematic, interactive 3D travel atlas documenting the Himalayas through high-performance geospatial storytelling. Built with **React**, **TypeScript**, **Mapbox GL JS**, and **Cloudinary**.
 

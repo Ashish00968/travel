@@ -224,9 +224,10 @@ export default function Hero() {
               color: '#e8c97a',
               textTransform: 'uppercase',
             }}>
-              Himalayan Travel Journal
+              Pahadi Trails
             </span>
           </motion.div>
+
 
           {/* Headline words */}
           <div style={{ width: '100%', marginBottom: '0px' }}>

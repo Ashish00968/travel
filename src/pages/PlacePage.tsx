@@ -26,18 +26,19 @@ export default function PlacePage() {
   /* ── SEO ─────────────────────────────────────────────────────────── */
   useEffect(() => {
     if (place && region) {
-      document.title = `${place.name} — ${region.name} | Peaks & Paths`
+      document.title = `${place.name} — ${region.name} | Pahadi Trails`
       document.querySelector('meta[name="description"]')?.setAttribute('content', place.desc.slice(0, 155))
-      document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${place.name} — Peaks & Paths`)
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', `${place.name} — Pahadi Trails`)
       document.querySelector('meta[property="og:description"]')?.setAttribute('content',
         place.experience ? place.experience.split('.')[0] + '.' : place.desc.slice(0, 120))
       if (place.image) document.querySelector('meta[property="og:image"]')?.setAttribute('content', place.image)
     }
     return () => {
-      document.title = 'Peaks & Paths — Himalayan Mountain Travel Atlas'
-      document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Peaks & Paths — Himalayan Travel Journal')
+      document.title = 'Pahadi Trails — Himalayan Travel Atlas'
+      document.querySelector('meta[property="og:title"]')?.setAttribute('content', 'Pahadi Trails — Travel Journal')
       document.querySelector('meta[property="og:description"]')?.setAttribute('content', 'Solo documenting the Himalayas since 2021.')
     }
+
   }, [place, region])
 
   const handleBack = useCallback(() => {

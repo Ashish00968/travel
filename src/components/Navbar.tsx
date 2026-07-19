@@ -152,7 +152,7 @@ export default function Navbar() {
             color: 'rgba(255,255,255,0.12)',
             textTransform: 'uppercase',
           }}>
-            Himalayan Travel Journal
+            Pahadi Trails
           </div>
         </div>
       </nav>
@@ -202,9 +202,10 @@ export default function Navbar() {
             color: 'var(--color-accent)',
             letterSpacing: '-0.01em',
           }}>
-            Peaks &amp; Paths
+            Pahadi Trails
           </span>
         </a>
+
 
         {/* Center — Nav links (hidden on mobile) */}
         <nav className="navbar-links" style={{ display: 'flex', gap: '32px' }} aria-label="Main navigation">
