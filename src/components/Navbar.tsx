@@ -213,10 +213,10 @@ export default function Navbar() {
             const id       = href.replace('#', '')
             const isActive = activeSection === id
             return (
-              <a
+              <motion.a
                 key={label}
                 href={href}
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
                   if (href.startsWith('#')) {
                     e.preventDefault()
                     scrollTo(href)
@@ -224,25 +224,31 @@ export default function Navbar() {
                 }}
                 className="nav-link"
                 data-active={isActive ? "true" : "false"}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 style={{
                   color: isActive ? 'var(--color-accent)' : 'var(--color-text-muted)',
                   opacity: 0,
                   animation: `fadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) ${0.15 + i * 0.05}s forwards`,
+                  display: 'inline-block',
                 }}
               >
                 {label}
-              </a>
+              </motion.a>
             )
           })}
         </nav>
 
         {/* Right — CTA + Hamburger */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <a
+          <motion.a
             href="https://youtube.com"
             target="_blank"
             rel="noopener noreferrer"
             className="nav-cta"
+            whileHover={{ scale: 1.05, backgroundColor: 'rgba(232, 201, 122, 0.1)' }}
+            whileTap={{ scale: 0.95 }}
             style={{
               display: 'flex', alignItems: 'center', gap: '8px',
               background: 'var(--color-border-gold)',
@@ -251,7 +257,7 @@ export default function Navbar() {
               borderRadius: '6px',
               fontFamily: 'var(--font-sans)', fontSize: '13px',
               color: 'var(--color-accent)', textDecoration: 'none',
-              transition: 'background 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms, transform 160ms cubic-bezier(0.23, 1, 0.32, 1)',
+              transition: 'background 200ms cubic-bezier(0.23, 1, 0.32, 1), border-color 200ms',
               whiteSpace: 'nowrap',
               opacity: 0,
               animation: 'fadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) 0.3s forwards',
@@ -261,7 +267,7 @@ export default function Navbar() {
               <path d="M13.7 1.5C13.5 0.9 13.1 0.5 12.5 0.3C11.4 0 7 0 7 0C7 0 2.6 0 1.5 0.3C0.9 0.5 0.5 0.9 0.3 1.5C0 2.6 0 5 0 5C0 5 0 7.4 0.3 8.5C0.5 9.1 0.9 9.5 1.5 9.7C2.6 10 7 10 7 10C7 10 11.4 10 12.5 9.7C13.1 9.5 13.5 9.1 13.7 8.5C14 7.4 14 5 14 5C14 5 14 2.6 13.7 1.5ZM5.5 7.1V2.9L9.2 5L5.5 7.1Z" />
             </svg>
             <span>Watch Film</span>
-          </a>
+          </motion.a>
 
           {/* Hamburger — visible on mobile only */}
           <button

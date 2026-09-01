@@ -1,5 +1,5 @@
-import { useMemo, memo, useRef } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { useMemo, memo } from 'react'
+import { motion, AnimatePresence, useMotionValue, useMotionTemplate } from 'framer-motion'
 import { HIMALAYA_REGIONS, type HimalayaRegion, type HimalayaSubRegion, type HimalayaPlace, TYPE_COLOR, TYPE_LABEL } from '../data/himalaya'
 import { useNavigate } from 'react-router-dom'
 import { useGridStore } from '../store/gridStore'
@@ -180,45 +180,64 @@ export default function ExpeditionGrid() {
 const StateCard = memo(function StateCard({ region, onClick }: { region: HimalayaRegion, onClick: () => void }) {
   const bg = CARD_BG[region.id] || DEFAULT_BG
   const count = useMemo(() => region.subregions.reduce((acc, s) => acc + s.places.length, 0), [region])
-  const cardRef = useRef<HTMLDivElement>(null)
   
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!cardRef.current) return
-    const rect   = cardRef.current.getBoundingClientRect()
-    const x      = e.clientX - rect.left
-    const y      = e.clientY - rect.top
-    const rotX   = ((y - rect.height / 2) / rect.height) * -7
-    const rotY   = ((x - rect.width / 2) / rect.width) * 7
-    cardRef.current.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateY(-8px)`
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const opacity = useMotionValue(0)
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    mouseX.set(e.clientX - rect.left)
+    mouseY.set(e.clientY - rect.top)
+    opacity.set(1)
   }
   
   const handleMouseLeave = () => {
-    if (!cardRef.current) return
-    cardRef.current.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0px)`
+    opacity.set(0)
   }
 
   return (
     <motion.div
       variants={cardVariants}
-      ref={cardRef}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      className="cinematic-card shimmer-card"
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+      className="cinematic-card"
       style={{
         background: bg, borderRadius: '14px', overflow: 'hidden', cursor: 'pointer',
         border: '1px solid rgba(255,255,255,0.05)',
         height: '100%', display: 'flex', flexDirection: 'column',
-        transition: 'transform 300ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 300ms cubic-bezier(0.23, 1, 0.32, 1)',
+        position: 'relative',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
       }}
     >
+      <motion.div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: useMotionTemplate`radial-gradient(circle 350px at ${mouseX}px ${mouseY}px, rgba(232, 201, 122, 0.08), transparent 80%)`,
+          opacity,
+          zIndex: 2,
+          pointerEvents: 'none',
+          transition: 'opacity 0.5s ease',
+        }}
+      />
+      
       <div style={{ height: '220px', background: IMG_GRADIENTS[region.id], display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '64px', position: 'relative', overflow: 'hidden' }}>
-        <OptimizedImage 
-          src={REGION_THUMBNAILS[region.id] || `${import.meta.env.BASE_URL}images/${region.id}/thumbnail.jpg`} 
-          alt={region.name} 
-          className="cinematic-card-img"
-          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.82, zIndex: 1 }}
-        />
+        <motion.div
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 1 }}
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
+        >
+          <OptimizedImage 
+            src={REGION_THUMBNAILS[region.id] || `${import.meta.env.BASE_URL}images/${region.id}/thumbnail.jpg`} 
+            alt={region.name} 
+            className="cinematic-card-img"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.82 }}
+          />
+        </motion.div>
         {region.badge && (
           <div className="badge-inner" style={{
             position: 'absolute', top: '14px', right: '14px', fontSize: '9px',
@@ -263,7 +282,7 @@ const SubRegionCard = memo(function SubRegionCard({ sub, regionId, onClick }: { 
     <motion.div
       variants={cardVariants}
       onClick={onClick}
-      className="cinematic-card shimmer-card"
+      className="cinematic-card"
       style={{
         background: bg, borderRadius: '12px', overflow: 'hidden', cursor: 'pointer',
         border: '1px solid rgba(255,255,255,0.05)',
@@ -294,21 +313,20 @@ const SubRegionCard = memo(function SubRegionCard({ sub, regionId, onClick }: { 
 const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: HimalayaPlace, regionId: string }) {
   const navigate = useNavigate()
   const bg = CARD_BG[regionId] || DEFAULT_BG
-  const imgRef = useRef<HTMLDivElement>(null)
+  
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const opacity = useMotionValue(0)
 
-  // Parallax: image moves opposite to cursor
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imgRef.current) return
     const rect = e.currentTarget.getBoundingClientRect()
-    const x    = (e.clientX - rect.left) / rect.width  - 0.5
-    const y    = (e.clientY - rect.top)  / rect.height - 0.5
-    // image moves at 0.5x inverse — smooth with CSS transition
-    imgRef.current.style.transform = `scale(1.08) translate(${-x * 12}px, ${-y * 8}px)`
+    mouseX.set(e.clientX - rect.left)
+    mouseY.set(e.clientY - rect.top)
+    opacity.set(1)
   }
 
   const handleMouseLeave = () => {
-    if (!imgRef.current) return
-    imgRef.current.style.transform = 'scale(1.05) translate(0px, 0px)'
+    opacity.set(0)
   }
 
   return (
@@ -317,7 +335,9 @@ const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: Himalaya
       onClick={() => navigate(`/place/${regionId}/${place.id}`, { state: { from: 'grid' } })}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
-      className="cinematic-card shimmer-card"
+      whileHover={{ y: -8 }}
+      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+      className="cinematic-card"
       style={{
         background: bg, borderRadius: '14px', overflow: 'hidden', cursor: 'pointer',
         border: '1px solid rgba(255,255,255,0.06)',
@@ -326,16 +346,29 @@ const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: Himalaya
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-end',
+        boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
       }}
     >
+      <motion.div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          background: useMotionTemplate`radial-gradient(circle 300px at ${mouseX}px ${mouseY}px, rgba(232, 201, 122, 0.08), transparent 80%)`,
+          opacity,
+          zIndex: 3,
+          pointerEvents: 'none',
+          transition: 'opacity 0.5s ease',
+        }}
+      />
+      
       <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
-        <div
-          ref={imgRef}
+        <motion.div
           style={{
             position: 'absolute', inset: '-5%',
-            transition: 'transform 400ms cubic-bezier(0.23, 1, 0.32, 1)',
-            willChange: 'transform',
+            width: '110%', height: '110%',
           }}
+          whileHover={{ scale: 1.05 }}
+          transition={{ duration: 0.8, ease: [0.23, 1, 0.32, 1] }}
         >
           {place.image ? (
             <OptimizedImage 
@@ -349,8 +382,8 @@ const PlaceCard = memo(function PlaceCard({ place, regionId }: { place: Himalaya
               {place.emoji}
             </div>
           )}
-        </div>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0) 100%)' }} />
+        </motion.div>
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0) 100%)', zIndex: 1 }} />
       </div>
 
       <div style={{ position: 'relative', padding: '22px', zIndex: 2 }}>

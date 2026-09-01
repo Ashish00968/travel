@@ -151,11 +151,6 @@ button,
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Mountain shimmer sweep — the signature effect */
-@keyframes shimmerSweep {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
 
 /* Scroll indicator bounce */
 @keyframes scrollBounce {
@@ -243,35 +238,6 @@ button,
 .reveal:nth-child(5) { transition-delay: 240ms; }
 .reveal:nth-child(6) { transition-delay: 300ms; }
 
-/* ─── Mountain Shimmer card effect ─────────────────────────────── */
-.shimmer-card {
-  position: relative;
-  overflow: hidden;
-}
-.shimmer-card::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(232, 201, 122, 0.08) 50%,
-    rgba(255, 240, 180, 0.12) 55%,
-    rgba(232, 201, 122, 0.06) 60%,
-    transparent 70%
-  );
-  background-size: 200% 100%;
-  background-position: -200% 0;
-  pointer-events: none;
-  z-index: 5;
-  transition: background-position 0s;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .shimmer-card:hover::after {
-    animation: shimmerSweep 0.7s cubic-bezier(0.23, 1, 0.32, 1) forwards;
-  }
-}
 
 /* ─── Google Maps watermark suppression ────────────────────────── */
 .gm-style-moc,
@@ -313,9 +279,6 @@ body > div[role="dialog"] { display: none !important; }
   .reveal-scale {
     transform: none !important;
     transition: opacity 0.3s ease !important;
-  }
-  .shimmer-card::after {
-    animation: none !important;
   }
   @keyframes scrollBounce {
     0%, 100% { opacity: 0.6; }

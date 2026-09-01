@@ -1,5 +1,5 @@
-import { motion, useScroll, useTransform, useMotionTemplate } from 'framer-motion'
-import { useRef } from 'react'
+import { motion, useScroll, useTransform, useMotionTemplate, useSpring, useMotionValue } from 'framer-motion'
+import { useRef, useEffect } from 'react'
 
 export default function Hero() {
   const containerRef = useRef<HTMLElement>(null)
@@ -9,48 +9,71 @@ export default function Hero() {
     target: containerRef,
     offset: ["start start", "end end"]
   })
+  
+  // Smooth scroll progress for buttery parallax
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 })
+
+  // Mouse Parallax for interactivity
+  const mouseX = useMotionValue(0)
+  const mouseY = useMotionValue(0)
+  const smoothMouseX = useSpring(mouseX, { stiffness: 50, damping: 20 })
+  const smoothMouseY = useSpring(mouseY, { stiffness: 50, damping: 20 })
+  const inverseMouseX = useTransform(smoothMouseX, (v) => -v * 0.5)
+  const inverseMouseY = useTransform(smoothMouseY, (v) => -v * 0.5)
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const { clientX, clientY } = e
+      const x = (clientX / window.innerWidth - 0.5) * 50 // Move max 25px
+      const y = (clientY / window.innerHeight - 0.5) * 50
+      mouseX.set(x)
+      mouseY.set(y)
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [mouseX, mouseY])
 
   // STEP 1: Travel (0 to 0.15)
-  const travelOpacity = useTransform(scrollYProgress, [0.02, 0.15], [0, 1])
-  const travelY       = useTransform(scrollYProgress, [0.02, 0.15], [24, 0])
-  const travelBlur    = useTransform(scrollYProgress, [0.02, 0.12], [8, 0])
+  const travelOpacity = useTransform(smoothProgress, [0.02, 0.15], [0, 1])
+  const travelY       = useTransform(smoothProgress, [0.02, 0.15], [24, 0])
+  const travelBlur    = useTransform(smoothProgress, [0.02, 0.12], [8, 0])
 
   // STEP 2: Hike (0.15 to 0.3)
-  const hikeOpacity   = useTransform(scrollYProgress, [0.15, 0.3], [0, 1])
-  const hikeY         = useTransform(scrollYProgress, [0.15, 0.3], [24, 0])
-  const hikeBlur      = useTransform(scrollYProgress, [0.15, 0.27], [8, 0])
+  const hikeOpacity   = useTransform(smoothProgress, [0.15, 0.3], [0, 1])
+  const hikeY         = useTransform(smoothProgress, [0.15, 0.3], [24, 0])
+  const hikeBlur      = useTransform(smoothProgress, [0.15, 0.27], [8, 0])
 
   // STEP 3: Film (0.3 to 0.5)
-  const filmOpacity   = useTransform(scrollYProgress, [0.3, 0.5], [0, 1])
-  const filmY         = useTransform(scrollYProgress, [0.3, 0.5], [30, 0])
-  const filmScale     = useTransform(scrollYProgress, [0.3, 0.5], [0.88, 1])
-  const filmGlowRaw   = useTransform(scrollYProgress, [0.3, 0.5], [0, 50])
+  const filmOpacity   = useTransform(smoothProgress, [0.3, 0.5], [0, 1])
+  const filmY         = useTransform(smoothProgress, [0.3, 0.5], [30, 0])
+  const filmScale     = useTransform(smoothProgress, [0.3, 0.5], [0.88, 1])
+  const filmGlowRaw   = useTransform(smoothProgress, [0.3, 0.5], [0, 50])
   const filmShadow    = useMotionTemplate`drop-shadow(0 0 ${filmGlowRaw}px rgba(232, 201, 122, 0.45))`
 
   // STEP 4: Staggered Build-up of "Disappear Into The Himalayas"
-  const disappearOpacity = useTransform(scrollYProgress, [0.35, 0.38], [0, 1])
-  const disappearY       = useTransform(scrollYProgress, [0.35, 0.38], [10, 0])
+  const disappearOpacity = useTransform(smoothProgress, [0.35, 0.38], [0, 1])
+  const disappearY       = useTransform(smoothProgress, [0.35, 0.38], [10, 0])
 
-  const intoOpacity = useTransform(scrollYProgress, [0.38, 0.41], [0, 1])
-  const intoY       = useTransform(scrollYProgress, [0.38, 0.41], [10, 0])
+  const intoOpacity = useTransform(smoothProgress, [0.38, 0.41], [0, 1])
+  const intoY       = useTransform(smoothProgress, [0.38, 0.41], [10, 0])
 
-  const theOpacity  = useTransform(scrollYProgress, [0.41, 0.44], [0, 1])
-  const theY        = useTransform(scrollYProgress, [0.41, 0.44], [10, 0])
+  const theOpacity  = useTransform(smoothProgress, [0.41, 0.44], [0, 1])
+  const theY        = useTransform(smoothProgress, [0.41, 0.44], [10, 0])
 
   // Eyebrow + buttons (0.75 to 0.85)
-  const extrasOpacity = useTransform(scrollYProgress, [0.75, 0.85], [0, 1])
+  const extrasOpacity = useTransform(smoothProgress, [0.75, 0.85], [0, 1])
 
   // Scroll indicator — visible at 0, fades at 0.05
-  const scrollHintOpacity = useTransform(scrollYProgress, [0, 0.04, 0.08], [1, 0.6, 0])
+  const scrollHintOpacity = useTransform(smoothProgress, [0, 0.04, 0.08], [1, 0.6, 0])
 
   // OUTRO: Fade text out, zoom background in
-  const contentOpacityOutro = useTransform(scrollYProgress, [0.9, 1.0], [1, 0])
-  const contentYOutro       = useTransform(scrollYProgress, [0.9, 1.0], [0, -50])
+  const contentOpacityOutro = useTransform(smoothProgress, [0.9, 1.0], [1, 0])
+  const contentYOutro       = useTransform(smoothProgress, [0.9, 1.0], [0, -50])
 
   // Background scale outro
-  const bgScale          = useTransform(scrollYProgress, [0.85, 1.0], [1, 1.12])
-  const fogOpacitySlow   = useTransform(scrollYProgress, [0.8, 1.0], [0.1, 0.38])
-  const fogOpacityFast   = useTransform(scrollYProgress, [0.8, 1.0], [0.5, 1.0])
+  const bgScale          = useTransform(smoothProgress, [0.85, 1.0], [1, 1.12])
+  const fogOpacitySlow   = useTransform(smoothProgress, [0.8, 1.0], [0.1, 0.38])
+  const fogOpacityFast   = useTransform(smoothProgress, [0.8, 1.0], [0.5, 1.0])
 
   const scrollToMap = () => {
     document.getElementById('map-section')?.scrollIntoView({ behavior: 'smooth' })
@@ -85,6 +108,8 @@ export default function Hero() {
             position: 'absolute',
             inset: 0,
             scale: bgScale,
+            x: inverseMouseX,
+            y: inverseMouseY,
             transformOrigin: 'center 40%',
             pointerEvents: 'none',
           }}
@@ -100,6 +125,7 @@ export default function Hero() {
               height: '100%',
               objectFit: 'cover',
               opacity: 0.88,
+              scale: 1.05, // Slight scale up to prevent edge gap during mouse parallax
               filter: 'brightness(0.95) contrast(1.1) saturate(0.82)',
             }}
           />
@@ -133,6 +159,8 @@ export default function Hero() {
             alignItems: 'center',
             zIndex: 15,
             textAlign: 'center',
+            x: smoothMouseX,
+            y: smoothMouseY,
           }}
         >
           {/* Disappear */}
@@ -232,7 +260,7 @@ export default function Hero() {
           {/* Headline words */}
           <div style={{ width: '100%', marginBottom: '0px' }}>
             {/* Travel */}
-            <motion.div style={{ textAlign: 'left', marginBottom: '0px', opacity: travelOpacity, y: travelY }}>
+            <motion.div style={{ textAlign: 'left', marginBottom: '0px', opacity: travelOpacity, y: travelY, x: smoothMouseX }}>
               <motion.span
                 style={{
                   fontFamily: "'Playfair Display', serif",
@@ -250,7 +278,7 @@ export default function Hero() {
             </motion.div>
 
             {/* Hike */}
-            <motion.div style={{ textAlign: 'left', marginBottom: '0px', opacity: hikeOpacity, y: hikeY }}>
+            <motion.div style={{ textAlign: 'left', marginBottom: '0px', opacity: hikeOpacity, y: hikeY, x: smoothMouseX }}>
               <motion.span
                 style={{
                   fontFamily: "'Playfair Display', serif",
@@ -273,6 +301,7 @@ export default function Hero() {
               position: 'relative',
               opacity: filmOpacity,
               y: filmY,
+              x: smoothMouseX,
               scale: filmScale,
               rotate: -14,
               transformOrigin: 'left center',

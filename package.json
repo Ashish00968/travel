@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@turf/bezier-spline": "^7.3.5",
     "@turf/helpers": "^7.3.5",
     "@turf/length": "^7.3.5",
@@ -22,6 +24,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.0",
+    "three": "^0.185.0",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
@@ -31,6 +34,7 @@
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.185.0",
     "@vitejs/plugin-react": "^6.0.1",
     "esbuild": "^0.28.1",
     "eslint": "^9.39.4",
