@@ -14,14 +14,19 @@ export default function PlacePage() {
 
   /* ── Data ────────────────────────────────────────────────────────── */
   const region = useMemo(() => HIMALAYA_REGIONS.find((r) => r.id === regionId), [regionId])
-  const { place, subRegionName } = useMemo(() => {
-    if (!region) return { place: null, subRegionName: '' }
+  const place = useMemo(() => {
+    if (!region) return null
     for (const sub of region.subregions) {
       const p = sub.places.find((sp) => sp.id === placeId)
-      if (p) return { place: p, subRegionName: sub.name }
+      if (p) return p
     }
-    return { place: null, subRegionName: '' }
+    return null
   }, [region, placeId])
+  const subRegionName = useMemo(() => {
+    if (!region || !place) return ''
+    const sub = region.subregions.find((s) => s.places.some((p) => p.id === place.id))
+    return sub ? sub.name : ''
+  }, [region, place])
 
   /* ── SEO ─────────────────────────────────────────────────────────── */
   useEffect(() => {

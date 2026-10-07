@@ -1,10 +1,9 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { blurPlaceholderFromUrl } from '../../../lib/cloudinary'
 import { useMediaQuery } from '../../../hooks/useMediaQuery'
 import type { TrekStop } from '../../../data/himalaya'
 
-export function altGradient(alt: number) {
+function altGradient(alt: number) {
   if (alt < 3000) return 'linear-gradient(145deg,#0a1a0a,#0d2010)'
   if (alt < 3500) return 'linear-gradient(145deg,#0a1015,#0d1520)'
   return 'linear-gradient(145deg,#08080f,#121228)'
@@ -38,7 +37,7 @@ export const StopBlock = React.memo(({ stop, index }: { stop: TrekStop; index: n
       {mediaUrl ? (
         <img loading="lazy" decoding="async" src={mediaUrl} alt={stop.title}
           style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transition:'transform 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94), filter 1.5s ease',
-            backgroundImage: `url("${blurPlaceholderFromUrl(mediaUrl)}")`, backgroundSize: 'cover' }}
+            backgroundColor: '#0c1218' }}
           onMouseEnter={e => { 
             (e.target as HTMLImageElement).style.transform = 'scale(1.08)';
             (e.target as HTMLImageElement).style.filter = 'saturate(1.1) brightness(1.05)';
@@ -196,7 +195,7 @@ export const SummitBlock = React.memo(({ stop }: { stop: TrekStop }) => {
       {summitMedia
         ? <img loading="lazy" decoding="async" src={summitMedia} alt={stop.title}
             style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', filter:'saturate(1.05)',
-              backgroundImage: `url("${blurPlaceholderFromUrl(summitMedia)}")`, backgroundSize: 'cover' }} />
+              backgroundColor: '#0c1218' }} />
         : <div style={{ position:'absolute', inset:0, background:'linear-gradient(145deg,#08080f,#141428)' }} />
       }
       <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at bottom, rgba(6,8,12,0.1) 0%, rgba(6,8,12,0.85) 100%)' }} />
@@ -225,7 +224,6 @@ export const SummitBlock = React.memo(({ stop }: { stop: TrekStop }) => {
           </motion.div>
         </motion.div>
       </div>
-      <style>{`@keyframes starPulse{0%,100%{opacity:0.1}50%{opacity:0.45}}`}</style>
     </motion.div>
   )
 })

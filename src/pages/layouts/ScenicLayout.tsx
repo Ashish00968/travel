@@ -18,7 +18,7 @@ export default function ScenicLayout({ place, region, subRegionName, onBack, nav
         background:'rgba(2,4,6,0.72)', backdropFilter:'blur(16px)',
         color:'#edeae2', fontSize:13, fontWeight:500,
         border:'1px solid rgba(255,255,255,0.08)',
-        cursor:'pointer', transition:'all 0.2s ease',
+        cursor:'pointer', transition:'transform 160ms var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out)',
       }}>
         <span style={{ color:'#e8c97a' }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : `Back to ${subRegionName}`}
       </button>
@@ -68,7 +68,7 @@ export default function ScenicLayout({ place, region, subRegionName, onBack, nav
               style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', aspectRatio: i % 3 === 0 ? '4/5' : '4/3', border: '1px solid rgba(255,255,255,0.05)' }}>
               
               {stop.mediaUrl ? (
-                <img src={stop.mediaUrl} alt={stop.title} style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundImage: `url("${blurPlaceholderFromUrl(stop.mediaUrl)}")`, backgroundSize: 'cover', transition: 'transform 0.7s ease' }} 
+                <img src={stop.mediaUrl} alt={stop.title} style={{ width: '100%', height: '100%', objectFit: 'cover', backgroundImage: `url("${blurPlaceholderFromUrl(stop.mediaUrl)}")`, backgroundSize: 'cover', transition: 'transform 500ms var(--ease-out)' }} 
                   onMouseEnter={e => { (e.target as HTMLImageElement).style.transform = 'scale(1.05)' }} onMouseLeave={e => { (e.target as HTMLImageElement).style.transform = 'scale(1)' }} />
               ) : (
                 <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

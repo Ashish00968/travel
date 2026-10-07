@@ -27,7 +27,7 @@ export default function App() {
   return (
     <>
 
-      <div style={{ display: location.pathname === '/' ? 'block' : 'none' }}>
+      <div style={{ display: location.pathname === '/' ? 'block' : 'none', position: 'relative' }}>
         <Suspense fallback={null}>
           <LazyHomePage />
         </Suspense>

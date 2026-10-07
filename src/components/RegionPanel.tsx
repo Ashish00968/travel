@@ -55,32 +55,19 @@ export default function RegionPanel() {
           transition={{ duration: 0.22, ease: [0.25, 0.8, 0.25, 1] }}
           style={{
             position: 'absolute',
-            top: isMobile ? 'auto' : '16px',
-            bottom: isMobile ? '0px' : 'auto',
-            right: isMobile ? '0px' : '20px',
-            width: isMobile ? '100%' : '290px',
+            top: '16px',
+            right: '20px',
+            width: '290px',
             zIndex: 500,
             background: 'rgba(6,8,12,0.96)',
             backdropFilter: 'blur(20px)',
-            border: isMobile ? 'none' : '1px solid rgba(232,201,122,0.15)',
-            borderTop: isMobile ? '1px solid rgba(232,201,122,0.15)' : '1px solid rgba(232,201,122,0.15)',
-            borderTopLeftRadius: isMobile ? '28px' : '14px',
-            borderTopRightRadius: isMobile ? '28px' : '14px',
-            borderBottomLeftRadius: isMobile ? '0' : '14px',
-            borderBottomRightRadius: isMobile ? '0' : '14px',
+            border: '1px solid rgba(232,201,122,0.15)',
+            borderRadius: '14px',
             overflow: 'hidden',
-            boxShadow: isMobile ? '0 -10px 40px rgba(0,0,0,0.8)' : '0 8px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(232,201,122,0.08)',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.6), 0 0 0 0.5px rgba(232,201,122,0.08)',
             fontFamily: "'DM Sans', sans-serif",
-            paddingBottom: isMobile ? 'env(safe-area-inset-bottom, 20px)' : '0',
           }}
         >
-          {/* ── Mobile Grab Handle ──────────────────────────────── */}
-          {isMobile && (
-            <div style={{ width: '100%', height: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.2)', borderRadius: '2px' }} />
-            </div>
-          )}
-
           {/* ── Header ─────────────────────────────────────────── */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -122,7 +109,7 @@ export default function RegionPanel() {
                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
                 color: '#7a7570', fontSize: '16px', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0, transition: 'all 0.3s ease',
+                flexShrink: 0, transition: 'transform 200ms var(--ease-out), background 200ms var(--ease-out)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'rotate(90deg) scale(1.1)';
@@ -136,7 +123,7 @@ export default function RegionPanel() {
           </div>
 
           {/* ── Body ───────────────────────────────────────────── */}
-          <div style={{ maxHeight: isMobile ? '35vh' : '320px', overflowY: 'auto', scrollbarWidth: 'none' }}>
+          <div style={{ maxHeight: '320px', overflowY: 'auto', scrollbarWidth: 'none' }}>
             <AnimatePresence mode="wait">
 
               {/* Level 1 — Sub-regions */}

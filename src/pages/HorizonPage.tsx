@@ -45,7 +45,15 @@ const DEFAULT_PLACES: WishlistPlace[] = [
 
 export default function HorizonPage() {
   const navigate = useNavigate()
-  const [places, setPlaces] = useState<WishlistPlace[]>([])
+  const [places, setPlaces] = useState<WishlistPlace[]>(() => {
+    if (typeof window === 'undefined') return DEFAULT_PLACES
+    const saved = localStorage.getItem('explore_wishlist')
+    if (saved) {
+      try { return JSON.parse(saved) }
+      catch { return DEFAULT_PLACES }
+    }
+    return DEFAULT_PLACES
+  })
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newName,     setNewName]     = useState('')
@@ -58,13 +66,6 @@ export default function HorizonPage() {
 
   useEffect(() => {
     document.title = 'The Horizon — Pahadi Trails'
-    const saved = localStorage.getItem('explore_wishlist')
-    if (saved) {
-      try { setPlaces(JSON.parse(saved)) }
-      catch { setPlaces(DEFAULT_PLACES) }
-    } else {
-      setPlaces(DEFAULT_PLACES)
-    }
   }, [])
 
   const savePlaces = (updated: WishlistPlace[]) => {
@@ -325,7 +326,7 @@ export default function HorizonPage() {
                         boxShadow: place.completed ? '0 0 12px rgba(74,184,160,0.5)' : 'none',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         cursor: 'pointer',
-                        transition: 'all 250ms cubic-bezier(0.23, 1, 0.32, 1)',
+                        transition: 'transform 200ms cubic-bezier(0.23, 1, 0.32, 1), background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease',
                       }}
                       onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1.15)'}
                       onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = 'scale(1)'}
@@ -405,7 +406,7 @@ export default function HorizonPage() {
                           {place.idealSeason}
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '24px', marginBottom: '20px' }}>
+                        <div className="horizon-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: '24px', marginBottom: '20px' }}>
                           <div>
                             <h4 style={{ fontFamily: "'Space Mono', monospace", fontSize: '9px', color: '#e8c97a', textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.12em' }}>Overview</h4>
                             <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '13.5px', color: '#9a9490', lineHeight: 1.75, margin: '0 0 16px' }}>
@@ -470,13 +471,6 @@ export default function HorizonPage() {
           </div>
         )}
       </div>
-
-      <style>{`
-        @media (max-width: 640px) {
-          .horizon-detail-grid { grid-template-columns: 1fr !important; }
-        }
-        .back-btn:hover span { transform: translateX(-4px) !important; }
-      `}</style>
     </div>
   )
 }

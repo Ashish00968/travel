@@ -28,7 +28,7 @@ export default function RoadLayout({ place, region, subRegionName, onBack, navFr
         background:'rgba(7,9,15,0.72)', backdropFilter:'blur(16px)',
         color:'var(--color-text)', fontSize:13, fontWeight:500,
         border:'1px solid var(--color-border)',
-        cursor:'pointer', transition:'all 0.2s ease',
+        cursor:'pointer', transition:'transform 160ms var(--ease-out), background 160ms var(--ease-out), border-color 160ms var(--ease-out)',
       }}>
         <span style={{ color:'var(--color-accent)' }}>←</span> {navFrom === 'grid' ? "Back to Where I've Been" : `Back to ${subRegionName}`}
       </button>

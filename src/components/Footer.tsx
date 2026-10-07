@@ -25,7 +25,6 @@ export default function Footer() {
   return (
     <footer
       ref={sectionRef}
-      className="reveal"
       style={{
         position: 'relative',
         background: '#030507',

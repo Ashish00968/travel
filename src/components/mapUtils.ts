@@ -40,8 +40,7 @@ export function buildStateMarkerEl(region: HimalayaRegion, idx: number): HTMLEle
   el.style.cssText =
     'cursor:pointer;display:flex;flex-direction:column;align-items:center;user-select:none;transition:opacity .4s ease,transform .4s ease;'
   el.innerHTML = `
-    <style>@keyframes sf${idx}{0%,100%{transform:translateY(0);filter:drop-shadow(0 8px 24px rgba(232,201,122,.7));}50%{transform:translateY(-8px);filter:drop-shadow(0 18px 36px rgba(232,201,122,1));}}</style>
-    <div style="animation:sf${idx} ${2.2 + idx * 0.4}s ease-in-out infinite;display:flex;flex-direction:column;align-items:center;">
+    <div class="state-marker-float" style="animation-delay:${idx * 0.4}s;animation-duration:${2.2 + idx * 0.4}s;display:flex;flex-direction:column;align-items:center;">
       <span style="font-size:26px;line-height:1;margin-bottom:-4px;filter:drop-shadow(0 2px 8px rgba(0,0,0,1));">${region.emoji}</span>
       <svg width="42" height="54" viewBox="0 0 42 54" fill="none">
         <path d="M21 3L2 44H40L21 3Z" fill="#e8c97a" stroke="#06080c" stroke-width="1.8" stroke-linejoin="round"/>
@@ -89,11 +88,8 @@ export function buildPlaceMarkerEl(place: HimalayaPlace): HTMLElement {
 export function buildSummitMarkerEl(): HTMLElement {
   const el = document.createElement('div')
   el.innerHTML = `
-    <style>
-      @keyframes summitPulse{0%{transform:scale(1);opacity:0.9}50%{transform:scale(2);opacity:0.2}100%{transform:scale(1);opacity:0.9}}
-    </style>
     <div style="position:relative;width:24px;height:24px;">
-      <div style="position:absolute;inset:0;border-radius:50%;background:rgba(232,201,122,0.3);animation:summitPulse 1.5s ease-in-out infinite;"></div>
+      <div class="summit-pulse-ring" style="position:absolute;inset:0;border-radius:50%;background:rgba(232,201,122,0.3);"></div>
       <div style="position:absolute;top:8px;left:8px;width:8px;height:8px;border-radius:50%;background:#e8c97a;box-shadow:0 0 12px rgba(232,201,122,0.8);"></div>
     </div>`
   return el

@@ -59,9 +59,10 @@ export function buildCloudinaryPlaceholder(
  *   // → https://res.cloudinary.com/dehriwm1o/image/upload/w_50,e_blur:200,q_10,f_auto/14SummitSelfie.jpg
  */
 export function blurPlaceholderFromUrl(url: string): string {
-  // Replace the transform segment between /upload/ and the public-id path.
-  // Works for any Cloudinary URL regardless of how many transform parts there are.
-  return url.replace(/\/upload\/[^/]+\//, `/upload/${PLACEHOLDER_TRANSFORMS}/`)
+  // If the URL already contains a version tag without transforms or is direct, skip blur placeholder
+  // to avoid Cloudinary strict transformation 401 errors
+  if (!url || !url.includes('/upload/')) return ''
+  return ''
 }
 
 // ─── Video URLs ────────────────────────────────────────────────

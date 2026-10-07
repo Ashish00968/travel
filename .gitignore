@@ -36,5 +36,7 @@ dist-ssr
 agentInfo.md
 Technical_Report.html
 info/
+.playwright-mcp/
+*.tsbuildinfo
 
 

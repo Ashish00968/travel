@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
-// @ts-ignore
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useMapStore } from '../store/mapStore'
@@ -62,22 +61,6 @@ function FlyingOverlay({ flying }: { flying: FlyingState | null }) {
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       animation: 'flyOverlayFade 3s ease forwards',
     }}>
-      <style>{`
-        @keyframes flyOverlayFade {
-          0%   { opacity: 0; background: rgba(6,8,12,0); }
-          20%  { opacity: 1; background: rgba(6,8,12,0.72); }
-          75%  { opacity: 1; background: rgba(6,8,12,0.72); }
-          100% { opacity: 0; background: rgba(6,8,12,0); }
-        }
-        @keyframes flyEmojiScale {
-          0%   { transform: scale(1); }
-          100% { transform: scale(1.15); }
-        }
-        @keyframes flyProgress {
-          0%   { width: 0%; }
-          100% { width: 100%; }
-        }
-      `}</style>
 
       {flying.image ? (
         <div style={{
@@ -532,6 +515,10 @@ export default function MapContainer() {
             await flyToCamera(map, {
               lat: 30.76, lng: 79.48, zoom: 12.5, pitch: 50, bearing: -10, duration: 2000
             })
+          } else if (placeName.includes('Jogni')) {
+            await flyToCamera(map, {
+              lat: 32.260, lng: 77.180, zoom: 14.2, pitch: 58, bearing: 40, duration: 2000
+            })
           } else {
             await flyToCamera(map, {
               lat: 32.305, lng: 77.155, zoom: 11.5, pitch: 50, bearing: 20, duration: 2000
@@ -562,6 +549,10 @@ export default function MapContainer() {
             pullBackLat = 30.75
             pullBackLng = 79.49
             pullBackBearing = 330
+          } else if (placeName.includes('Jogni')) {
+            pullBackLat = 32.264
+            pullBackLng = 77.182
+            pullBackBearing = 50
           } else {
             pullBackLat = 32.336
             pullBackLng = 77.172
@@ -773,7 +764,7 @@ export default function MapContainer() {
           }
         } else {
           setTimeout(() => setFlyingTo(null), 1500)
-          const isCinematic = ['patalsu-peak', 'rohtang-pass', 'kedarnath', 'vasudhara-falls'].includes(place.id)
+          const isCinematic = ['patalsu-peak', 'rohtang-pass', 'kedarnath', 'vasudhara-falls', 'jogni-falls'].includes(place.id)
           await drawTrekPath(place.trekPath!, place.name, isCinematic)
         }
 
@@ -1057,6 +1048,7 @@ export default function MapContainer() {
       isCancelled = true
       map.remove()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const activateMap = () => {
